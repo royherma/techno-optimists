@@ -30,16 +30,21 @@ Do not restate or re-derive it — link to it.
 - Never ship "this is a prototype" / "not built yet" into user-facing copy. That goes to Roy.
 - Plain words, hyphen not em-dash.
 
-## No prod until a domain is bought
+## Two deploy targets
 
-Roy's call, 2026-09-10. **Dev/staging is the only deploy target.** `deploy:prod` stays
-parked and `npm run deploy:dev` is the ship command.
+`technooptimists.org` was bought 2026-09-10 and prod is live on it. The lock that
+stood here until then is lifted - Roy's call, same day.
 
-- Do not deploy prod, do not un-park `deploy:prod`, and do not propose it as a next step
-  or a "quick win" - the answer is already no until Roy says a domain exists.
-- A `workers.dev` URL is not a launch. Verified-domain email (`techguyverlabs.org`) does
-  not change this: mail sending and the public URL are separate decisions.
-- The prod bindings in `wrangler.jsonc` are correct and dry-run clean. Leave them.
+- `npm run deploy:dev` -> `techno-optimists-dev.<subdomain>.workers.dev`, throwaway data.
+- `npm run deploy:prod` -> `technooptimists.org`, real data. The apex and `www` are
+  custom domains declared in `wrangler.jsonc`, so the deploy creates their DNS records.
+- `workers_dev` is **false** in prod. One public address, so no second URL gets
+  bookmarked. Do not turn it back on to "check something" - use dev for that.
+- **The build prerenders from LOCAL D1.** `db:reset:local` before `deploy:prod` puts
+  local seed rows on the public domain. Empty local D1 (`npm run db:local`, no seed)
+  is what prod ships from until real Challenges exist.
+- Prod D1 starts empty on purpose: 7 tables, zero rows. Seeds are a dev fixture and
+  never belong on the domain.
 
 ## Code is truth
 

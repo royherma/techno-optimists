@@ -71,13 +71,21 @@
       ]
     },
 
-    // PARKED until a domain is bought. The config below is correct and
-    // dry-run clean - only `npm run deploy:prod` is disabled, so re-enabling
-    // is a one-line change to that script. Nothing has ever been deployed
-    // here and its D1 is empty (0 tables).
+    // Live on technooptimists.org (bought 2026-09-10, zone active on this
+    // account). The apex and www are custom domains, so `wrangler deploy`
+    // creates their DNS records itself - the OAuth token needs no DNS scope.
+    //
+    // `workers_dev: false` on purpose: two public addresses for one site
+    // splits links and lets the workers.dev one get bookmarked. The domain is
+    // the address now, so the subdomain is turned off rather than left as a
+    // quiet alias.
     "prod": {
       "name": "techno-optimists",
-      "workers_dev": true,
+      "workers_dev": false,
+      "routes": [
+        { "pattern": "technooptimists.org", "custom_domain": true },
+        { "pattern": "www.technooptimists.org", "custom_domain": true }
+      ],
       "observability": { "enabled": true },
       "vars": { "ENVIRONMENT": "prod" },
       "assets": {
