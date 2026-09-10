@@ -28,7 +28,17 @@ export default function SessionNav() {
       </a>
       {me ? (
         <>
-          <span className="hidden text-(--color-ink-faint) sm:inline">@{me.handle}</span>
+          {/*
+            The handle is the way in to the account page. It was already
+            printed here and already the thing a reader would point at to mean
+            "me", so making it the link costs no room in a nav that has none.
+          */}
+          <a
+            href="/settings"
+            className="ink-transition ink-underline hidden text-(--color-ink-faint) hover:text-(--color-ink) hover:decoration-current sm:inline"
+          >
+            @{me.handle}
+          </a>
           <button
             onClick={async () => { await signOut(); window.location.reload() }}
             className="ink-transition ink-underline text-(--color-ink-faint) hover:text-(--color-ink) hover:decoration-current"

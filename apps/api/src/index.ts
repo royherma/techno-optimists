@@ -857,8 +857,6 @@ app.get('/c/:slug', async (c) => {
   })
 })
 
-app.all('/api/*', (c) => c.json({ error: 'not_found' }, 404))
-
 /**
  * Proves the error boundary is live on a deployment, and nothing else.
  *
@@ -869,11 +867,17 @@ app.all('/api/*', (c) => c.json({ error: 'not_found' }, 404))
  *
  * Never in prod: a public endpoint that reliably 500s is a free way to fill
  * someone's logs. It 404s there, like any other unknown path.
+ *
+ * Registered ABOVE the catch-all below, because Hono answers with the first
+ * route that matches. Declared after it, this returned {"error":"not_found"}
+ * and the deploy looked fine while the boundary went unexercised.
  */
 app.get('/api/_throw', (c) => {
   if (c.env.ENVIRONMENT === 'prod') return c.json({ error: 'not_found' }, 404)
   throw new Error('deliberate: verifying the error boundary')
 })
+
+app.all('/api/*', (c) => c.json({ error: 'not_found' }, 404))
 
 export { app }
 export default {
