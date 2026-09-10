@@ -34,6 +34,18 @@ base URL or CORS.
 Picked 2026-09-10 - all Cloudflare. Astro 7 + React islands on the front, Hono on Workers
 behind it, D1/R2/KV for data. Full table + why: [`docs/2026-09-10-stack.md`](docs/2026-09-10-stack.md).
 
+## Docs
+
+Four permanent, one job each. Anything time-boxed is `docs/YYYY-MM-DD-slug.md`, dated so
+staleness shows.
+
+| File | Job |
+|---|---|
+| [`CLAUDE.md`](CLAUDE.md) | Rules for whoever edits: vocabulary, copy rules, how not to lose work |
+| [`PRODUCT.md`](PRODUCT.md) | What is being built and why |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | One row per decision and the trap it avoids |
+| [`docs/2026-09-10-concept.md`](docs/2026-09-10-concept.md) | The raw brainstorm this came from |
+
 ## Run it
 
 Node 22 (`.nvmrc`). First time, create the local D1 tables and seed them:
