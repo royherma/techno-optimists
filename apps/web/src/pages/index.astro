@@ -27,6 +27,18 @@ const depth = depthScale(challenges)
       never do.
     -->
     <div class="lg:grid lg:grid-cols-[1fr_19.5rem] lg:items-stretch">
+      <!--
+        On a phone the legend used to sit under all 24 rows, where a reader
+        meets it only after scrolling past everything it was meant to explain.
+        It is first in source order so it comes first there, and `lg:order-2`
+        returns it to the right-hand column once the grid exists. `order` only
+        applies inside a grid or flex container, so below lg the source order
+        is the only thing doing the work.
+      -->
+      <div class="border-b border-(--color-rule) p-3 lg:order-2 lg:border-b-0 lg:border-l">
+        <div class="lg:sticky lg:top-3"><SheetLegend /></div>
+      </div>
+
       <!-- The index proper. -->
       <div class="min-w-0 lg:order-1">
         <nav
@@ -55,12 +67,12 @@ const depth = depthScale(challenges)
           same five names the legend uses; a reader who learns the legend has
           already learned this strip.
         -->
-        <div class="sticky top-0 z-10 grid grid-cols-[2.6rem_1fr_4.5rem] border-b-2 border-(--color-rule) bg-(--color-paper) font-[family-name:--font-mono] text-[0.68rem] font-bold uppercase tracking-[0.06em] sm:grid-cols-[3rem_9.5rem_1fr_6rem_8rem]">
+        <div class="sticky top-0 z-10 hidden border-b-2 border-(--color-rule) bg-(--color-paper) font-[family-name:--font-mono] text-[0.68rem] font-bold uppercase tracking-[0.06em] sm:grid sm:grid-cols-[3rem_9.5rem_1fr_6rem_8rem]">
           <span class="border-r border-(--color-rule) px-1 py-1.5 text-center">No.</span>
-          <span class="col-span-2 border-(--color-rule) px-2.5 py-1.5 sm:col-span-1 sm:border-r">Grid ref.</span>
-          <span class="hidden border-r border-(--color-rule) px-2.5 py-1.5 sm:block">Challenge</span>
-          <span class="col-start-3 row-start-1 border-(--color-rule) px-1 py-1.5 text-center sm:col-start-4 sm:row-start-auto sm:border-r">Impact</span>
-          <span class="hidden px-2.5 py-1.5 text-center sm:block">Stage</span>
+          <span class="border-(--color-rule) px-2.5 py-1.5 sm:border-r">Grid ref.</span>
+          <span class="border-r border-(--color-rule) px-2.5 py-1.5">Challenge</span>
+          <span class="border-(--color-rule) px-1 py-1.5 text-center sm:border-r">Impact</span>
+          <span class="px-2.5 py-1.5 text-center">Stage</span>
         </div>
 
         {challenges.length === 0 ? (
@@ -72,15 +84,6 @@ const depth = depthScale(challenges)
             <ChallengeRow challenge={c} rings={depth(c)} index={i} priority={i < 2} />
           ))
         )}
-      </div>
-
-      <!--
-        On a phone the legend used to sit under all 24 rows, where a reader
-        meets it only after scrolling past everything it was meant to explain.
-        It goes first there and stays in the right-hand column from lg up.
-      -->
-      <div class="border-b border-(--color-rule) p-3 lg:order-2 lg:border-b-0 lg:border-l">
-        <div class="lg:sticky lg:top-3"><SheetLegend /></div>
       </div>
     </div>
   </Sheet>

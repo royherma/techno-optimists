@@ -15,10 +15,25 @@ import { DEPTH_LABEL, LEGEND_ACTIONS, LEGEND_ACTION_LABEL, STAGE_MEANING, STAGE_
  * legend exists to prevent.
  */
 ---
-<aside class="border-2 border-(--color-rule) bg-(--color-paper)" aria-label="Legend">
-  <h2 class="border-b border-(--color-rule) px-3 py-1.5 font-[family-name:--font-display] text-[1.15rem] font-bold uppercase tracking-[0.02em]">
+<!--
+  On a phone the legend is closed. Open, it runs 823px - five ring tiers, seven
+  stages and five actions - so a reader met a full screen of apparatus before
+  the first Challenge. Putting it last was worse (it landed at 4254px, after
+  everything it explains), so neither end of the page is the answer: it sits
+  above row one as a single line the reader can open when a mark puzzles them.
+
+  From lg the sidebar has the room to show it whole, so the disclosure stops
+  being one: the summary is hidden and the sections are revealed in CSS. A
+  media query cannot add or remove the `open` attribute, which is why the
+  breakpoint reveals the content rather than toggling state.
+-->
+<details class="sheet-legend group border-2 border-(--color-rule) bg-(--color-paper)" aria-label="Legend" open>
+  <summary class="cursor-pointer list-none border-b border-(--color-rule) px-3 py-1.5 font-[family-name:--font-display] text-[1.15rem] font-bold uppercase tracking-[0.02em]">
     Legend
-  </h2>
+    <span class="float-right font-[family-name:--font-mono] text-[0.7rem] font-normal normal-case tracking-normal text-(--color-ink-soft) group-open:hidden">
+      what the marks mean
+    </span>
+  </summary>
 
   <section class="border-b border-(--color-rule) px-3 py-2.5">
     <h3 class="font-[family-name:--font-mono] text-[0.68rem] font-bold uppercase tracking-[0.06em]">
@@ -72,4 +87,51 @@ import { DEPTH_LABEL, LEGEND_ACTIONS, LEGEND_ACTION_LABEL, STAGE_MEANING, STAGE_
       ))}
     </ul>
   </section>
-</aside>
+</details>
+
+<style>
+  /*
+   * From lg the legend lives in its own column, where there is room to show it
+   * whole - so the disclosure stops being a disclosure: the summary goes, and
+   * the sections show whether or not the element carries `open`. A media query
+   * cannot remove the `open` attribute, so the content is revealed in CSS
+   * rather than by toggling state.
+   */
+  @media (min-width: 64rem) {
+    /*
+     * The summary stays - it is the legend's heading, and hiding the whole
+     * element took the word LEGEND off the sidebar with it. Only the parts
+     * that offer to open something go: the marker and the hint.
+     */
+    .sheet-legend > summary {
+      cursor: default;
+      pointer-events: none;
+    }
+    .sheet-legend > summary > span {
+      display: none;
+    }
+  }
+</style>
+
+<script is:inline>
+  /*
+   * The element ships `open` so it is complete without JavaScript and in the
+   * sidebar, where there is room for it. Only the phone needs it shut, and no
+   * media query can remove an attribute - so the one place state has to change
+   * is the one place CSS cannot reach.
+   */
+  ;(() => {
+    const mq = window.matchMedia('(min-width: 64rem)')
+    const sync = () => {
+      for (const el of document.querySelectorAll('.sheet-legend')) {
+        if (!mq.matches && !el.dataset.touched) el.open = false
+        if (mq.matches) el.open = true
+      }
+    }
+    for (const el of document.querySelectorAll('.sheet-legend')) {
+      el.addEventListener('toggle', () => { el.dataset.touched = '1' })
+    }
+    sync()
+    mq.addEventListener('change', sync)
+  })()
+</script>
