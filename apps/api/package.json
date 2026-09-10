@@ -16,6 +16,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241224.0",
     "estree-walker": "^3.0.3",
+    "expect-type": "^1.4.0",
     "typescript": "^5.7.0",
     "vitest": "^5.0.0",
     "wrangler": "^4.0.0"
