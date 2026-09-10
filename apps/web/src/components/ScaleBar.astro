@@ -1,0 +1,25 @@
+---
+/*
+ * A bar scale, drawn the way a map draws one: alternating filled and open
+ * blocks so you can lay a distance against it. It is honest about what it
+ * measures - not kilometres, but how many people it takes before a mark on this
+ * sheet changes size. The tick labels are the real ring thresholds.
+ */
+const TICKS = ['0', '5', '10', '20', '50 km']
+---
+<figure class="w-full max-w-[20rem]">
+  <div class="flex justify-between font-[family-name:--font-mono] text-[0.6rem] font-semibold" aria-hidden="true">
+    {TICKS.map((t) => <span>{t}</span>)}
+  </div>
+  <svg viewBox="0 0 320 14" class="mt-0.5 w-full" role="img" aria-label="Scale bar, 1 to 250,000">
+    <rect x="0" y="0" width="80" height="10" fill="currentColor" />
+    <rect x="80" y="0" width="80" height="10" fill="none" stroke="currentColor" stroke-width="1.5" />
+    <rect x="160" y="0" width="80" height="10" fill="currentColor" />
+    <rect x="240" y="0" width="80" height="10" fill="none" stroke="currentColor" stroke-width="1.5" />
+    <line x1="240" y1="0" x2="240" y2="14" stroke="currentColor" stroke-width="1.5" />
+    <line x1="280" y1="0" x2="280" y2="14" stroke="currentColor" stroke-width="1.5" />
+  </svg>
+  <figcaption class="mt-1 text-center font-[family-name:--font-mono] text-[0.6rem] font-semibold uppercase tracking-[0.08em]">
+    Scale 1 : 250,000
+  </figcaption>
+</figure>

@@ -21,15 +21,19 @@ export const STAGE_STAMP: Record<Stage, string> = {
   build: 'Build', test: 'Test', learn: 'Learn', improve: 'Improve',
 }
 
-/** What each stage means, shown once in the legend so the sheet teaches itself. */
+/**
+ * What each stage means, shown once in the legend so the sheet teaches itself.
+ * Two words where two words will do: the legend is read down a narrow column
+ * beside the index, and a phrase that wraps stops being scannable.
+ */
 export const STAGE_MEANING: Record<Stage, string> = {
-  spot: 'noticed and shared',
-  understand: 'explored and defined',
-  ideas: 'solutions proposed',
-  build: 'being made',
-  test: 'trialled in the real world',
-  learn: 'results written up',
-  improve: 'refined and spread',
+  spot: 'notice and share',
+  understand: 'explore and define',
+  ideas: 'propose solutions',
+  build: 'develop and make',
+  test: 'trial and evaluate',
+  learn: 'reflect and share',
+  improve: 'scale and sustain',
 }
 
 /** The seven typed actions. No generic Like, by design. */
@@ -57,7 +61,28 @@ export const ACTION_DOING: Record<ActionKind, string> = {
   follow: 'following',
 }
 
-export const typeColor = (t: ChallengeType) =>
+/**
+ * The actions the legend teaches, in the order it teaches them. Five, not
+ * seven: 'want this' and 'building this' are the same two marks as 'have this
+ * problem' and 'I can help' seen from the other side of a Challenge, and a
+ * legend that draws one symbol twice teaches nobody anything.
+ */
+export const LEGEND_ACTIONS: ActionKind[] = [
+  'have_problem', 'have_idea', 'can_help', 'will_test', 'follow',
+]
+
+/** Legend wording. First person, because that is how the buttons read. */
+export const LEGEND_ACTION_LABEL: Record<ActionKind, string> = {
+  have_problem: 'I have this problem',
+  want_this: 'I want this',
+  have_idea: 'I have an idea',
+  can_help: 'I can help',
+  will_test: 'I will test this',
+  building_this: "I'm building this",
+  follow: 'Follow progress',
+}
+
+export const typeColor = (t: ChallengeType) =
   t === 'build' ? 'var(--color-build-type)' : `var(--color-${t})`
 
 export const stageColor = (s: Stage) => `var(--color-${s})`
