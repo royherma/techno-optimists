@@ -62,6 +62,52 @@ export const nameFromEmail = (email: string) => {
   return base.split(/\s+/).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') || 'Builder'
 }
 
+/**
+ * What a person may change their @handle to.
+ *
+ * Stricter than `handleFromEmail` produces, on purpose: that function only has
+ * to survive whatever an email local part contains, while this one is a name
+ * someone chose and that appears in URLs and beside every Challenge they post.
+ *
+ * The rules and why each exists:
+ *  - lowercase a-z, 0-9, underscore only. Mixed case would make @Roy and @roy
+ *    two accounts that read as one, which is the shape impersonation takes.
+ *  - 3 to 20 characters. One and two-character handles are a landgrab.
+ *  - must not be all digits: `@1234` reads as an id, not a person.
+ *
+ * Callers lowercase before validating - a reader typing `Roy` means `roy` and
+ * being told their own handle is invalid is a bug, not a rule.
+ */
+export const HANDLE_MIN = 3
+export const HANDLE_MAX = 20
+
+/** Handles nobody may take: they would impersonate the site or a route. */
+const HANDLE_BLOCKED = new Set([
+  'admin', 'administrator', 'root', 'system', 'support', 'help', 'staff',
+  'moderator', 'mod', 'official', 'technooptimists', 'technooptimist',
+  'api', 'auth', 'signin', 'signout', 'login', 'logout', 'settings', 'post',
+  'map', 'about', 'me', 'you', 'null', 'undefined', 'anonymous', 'deleted',
+])
+
+export type HandleProblem = 'too_short' | 'too_long' | 'bad_chars' | 'all_digits' | 'reserved'
+
+/**
+ * Returns null when the handle is usable, or the reason it is not. Returning
+ * the reason rather than a boolean is what lets the form say which rule was
+ * broken - "3 characters at least" instead of a generic refusal.
+ */
+export const handleProblem = (handle: string): HandleProblem | null => {
+  if (handle.length < HANDLE_MIN) return 'too_short'
+  if (handle.length > HANDLE_MAX) return 'too_long'
+  if (!/^[a-z0-9_]+$/.test(handle)) return 'bad_chars'
+  if (/^[0-9]+$/.test(handle)) return 'all_digits'
+  if (HANDLE_BLOCKED.has(handle)) return 'reserved'
+  return null
+}
+
+/** Lowercase and trim. The form may send `  Roy `; that means `roy`. */
+export const normalizeHandle = (raw: string) => raw.trim().toLowerCase()
+
 export const cookie = (token: string, secure: boolean) => {
   const parts = [
     `${SESSION_COOKIE}=${token}`,
