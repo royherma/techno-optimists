@@ -13,7 +13,7 @@ import { getFeed } from '../lib/api'
  */
 const { challenges } = await getFeed('?limit=3')
 ---
-<Base title="Not on this sheet - Techno Optimists" description="That Challenge is not on this sheet.">
+<Base title="Not on this sheet - Techno Optimists" description="That Challenge is not on this sheet." noindex>
   <Sheet sheet="00" live={challenges.length}>
     <main class="px-5 py-16">
       <p class="font-[family-name:--font-mono] text-[0.7rem] uppercase tracking-[0.1em] text-(--color-ink-soft)">
