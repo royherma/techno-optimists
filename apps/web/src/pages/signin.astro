@@ -5,18 +5,9 @@ import SignInForm from '../components/SignInForm.tsx'
 import { getFeed } from '../lib/api'
 import { sheetNo } from '../lib/vocab'
 
-// /api/auth/callback sends the reader back here with a reason. They all end in
-// the same action - ask for a new link - but naming the right one matters: a
-// reader who requested a link twice and clicked the older mail is not looking
-// at an expired link, and being told so reads as the product being wrong.
-const REASON: Record<string, string> = {
-  expired: 'That link has expired. Links last 15 minutes - ask for a new one.',
-  used: 'That link has already been used. Ask for a new one.',
-  unknown: 'That link is no longer valid. Ask for a new one.',
-  missing: 'That link was incomplete. Ask for a new one.',
-}
-const error = Astro.url.searchParams.get('error')
-const reason = error ? REASON[error] ?? REASON.unknown : null
+// The ?error= copy lives in SignInForm, not here. This page is prerendered, so
+// Astro.url.searchParams is empty at build time and anything gated on it is
+// dropped from the HTML - the reader saw nothing at all.
 const { challenges } = await getFeed('?limit=50')
 ---
 <Base title="Sign in - Techno Optimists">
@@ -31,12 +22,6 @@ const { challenges } = await getFeed('?limit=50')
       <p class="mt-2.5 mb-8 text-lg leading-relaxed text-(--color-ink-soft)">
         We send a link. No password to remember.
       </p>
-
-      {reason && (
-        <p class="mb-6 border-l-2 border-(--color-problem) bg-(--color-paper-sunk) px-3 py-2 text-sm text-(--color-ink-soft)">
-          {reason}
-        </p>
-      )}
 
       <SignInForm client:load />
     </div>
