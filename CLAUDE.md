@@ -61,6 +61,28 @@ away from gone with no recovery - only a commit survives, via the reflog.
 
 Full protocol: `~/.claude/reference/rules/never-lose-work.md`.
 
+## Docs
+
+Four permanent files, one job each. Everything else is dated or throwaway. If a new
+document does not fit a slot below, it does not belong in the repo - which is the
+point: no dangling markdown.
+
+| File | Job |
+|---|---|
+| `CLAUDE.md` | Rules for whoever edits: vocabulary, copy rules, how not to lose work |
+| `README.md` | How to run it, and where the other docs are |
+| `PRODUCT.md` | What is being built and why - the product argument |
+| `docs/DECISIONS.md` | One row per decision and the trap it avoids |
+
+- `DECISIONS.md` is **append-only**. Add a row, never rewrite one. `git log` records what
+  changed; that table records why, and what not to try again. A row earns its place by
+  naming a trap that cost real time, not by narrating a preference.
+- Anything time-boxed - a PRD, a spike writeup, a stack evaluation - is
+  `docs/YYYY-MM-DD-slug.md`. The date is the staleness warning.
+- Throwaway probes and scripts go in the session scratchpad, never the repo. `*-tmp.mjs`
+  is gitignored for the ones that land here anyway.
+- No status, progress or roadmap sections in any of them. See "Code is truth" above.
+
 ## Conventions
 
 - Docs: `docs/YYYY-MM-DD-slug.md`.
