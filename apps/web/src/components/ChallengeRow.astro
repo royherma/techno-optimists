@@ -38,11 +38,17 @@ const ACTIONS = ['have_problem', 'have_idea', 'can_help', 'will_test'] as const
     the same row, and stacking them into separate ruled cells spent two blocks
     of vertical space saying where you are. The ruled cells return at sm.
   -->
-  <div class="flex items-baseline gap-2.5 px-2.5 pt-3 sm:hidden">
+  <div class="flex min-w-0 items-baseline gap-2.5 px-2.5 pt-3 sm:hidden">
     <span class="font-[family-name:--font-mono] text-[0.82rem] font-semibold tabular-nums">{rowNo(index)}</span>
     <span class="font-[family-name:--font-mono] text-[0.82rem] font-medium tracking-tight">{ref}</span>
+    <!--
+      `truncate` is inert without a bounded width, and a location runs to 120
+      characters, so this line used to push the row off a phone instead of
+      ending in an ellipsis. The flex parent needs `min-w-0` as much as the
+      span does: without it the parent refuses to shrink below its content.
+    -->
     {c.location && (
-      <span class="truncate text-[0.66rem] uppercase tracking-[0.06em] text-(--color-ink-soft)">
+      <span class="min-w-0 flex-1 truncate text-[0.66rem] uppercase tracking-[0.06em] text-(--color-ink-soft)">
         {c.location}
       </span>
     )}
@@ -87,7 +93,14 @@ const ACTIONS = ['have_problem', 'have_idea', 'can_help', 'will_test'] as const
           <h2 class="font-[family-name:--font-display] text-[1.3rem] leading-[1.15] tracking-tight sm:text-[1.4rem]">
             {c.title}
           </h2>
-          <p class="mt-1 max-w-2xl text-[0.85rem] leading-snug text-(--color-ink-soft)">{c.summary}</p>
+          <!--
+            A summary runs to 280 characters. Ordinary prose wraps, but one
+            unbroken 280-character token (a pasted URL) is a single word no
+            amount of `min-w-0` can fold, so it rules a line straight through
+            the neighbouring cells. Clamped to two lines in the index; the
+            entry page shows it whole.
+          -->
+          <p class="mt-1 line-clamp-2 max-w-2xl text-[0.85rem] leading-snug break-words text-(--color-ink-soft)">{c.summary}</p>
         </a>
 
         <!--
