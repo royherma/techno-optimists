@@ -1,0 +1,67 @@
+---
+import type { Media } from '../../../../packages/types/index'
+import { ratioOf } from '../../../../packages/types/index'
+
+/*
+ * One media object, drawn at its own shape.
+ *
+ * Every surface used to hardcode a ratio - 4:3 on the index, 16:9 on an entry -
+ * and object-cover whatever arrived. That is fine for the seed art, which is
+ * uniformly 1200x900, and wrong for everything a phone produces: a portrait
+ * photo lost its top and bottom, a panorama lost both ends, and an 8px sprite
+ * was stretched across a hero.
+ *
+ * So the plate takes its ratio from the file. `fit="contain"` is the honest
+ * mode - the whole frame, letterboxed onto its own tint - and is what an entry
+ * page uses, where the picture is the subject. `fit="cover"` stays available
+ * for the index, where a row of ragged heights would wreck the table, but the
+ * box it crops into is now derived from the real shape rather than assumed.
+ *
+ * `ratio` bounds are in width/height. Clamping matters: a 32:9 panorama in a
+ * narrow column collapses to a few pixels tall, and a 9:16 portrait in a wide
+ * one runs off the screen. Unknown dimensions fall back to `ratio.default`.
+ */
+interface Props {
+  media?: Media
+  fit?: 'cover' | 'contain'
+  min?: number
+  max?: number
+  fallback?: number
+  eager?: boolean
+  class?: string
+}
+const {
+  media, fit = 'contain', min = 0.6, max = 2.4, fallback = 4 / 3,
+  eager = false, class: className = '',
+} = Astro.props
+
+const raw = ratioOf(media)
+const ratio = Math.min(max, Math.max(min, raw ?? fallback))
+
+// A frame the image does not fill gets the tint behind it, so the letterbox
+// reads as part of the plate rather than as a hole in the page.
+const tint = media?.tint ?? 'var(--color-paper-sunk)'
+---
+<div
+  class:list={['relative overflow-hidden border border-(--color-rule)', className]}
+  style={`aspect-ratio:${ratio};background:${tint}`}
+>
+  {media?.kind === 'video' ? (
+    <video
+      src={media.url}
+      class:list={['h-full w-full', fit === 'cover' ? 'object-cover' : 'object-contain']}
+      muted playsinline preload="metadata"
+    ></video>
+  ) : media ? (
+    <img
+      src={media.url}
+      alt={media.alt ?? ''}
+      loading={eager ? 'eager' : 'lazy'}
+      decoding="async"
+      width={media.w}
+      height={media.h}
+      class:list={['h-full w-full', fit === 'cover' ? 'object-cover' : 'object-contain']}
+      onerror="this.remove()"
+    />
+  ) : null}
+</div>

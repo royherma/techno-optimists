@@ -52,10 +52,29 @@ export interface Person {
 export interface Media {
   kind: 'image' | 'video'
   url: string
+  /**
+   * Intrinsic pixel size, recorded when the file is uploaded.
+   *
+   * Without these the page cannot know an image's shape until it has loaded,
+   * so every surface has to guess a ratio and crop whatever arrives - which
+   * cuts the roof off a portrait photo and pillarboxes a panorama. Optional
+   * because rows predating the capture still exist; treat a missing pair as
+   * "unknown shape" and fall back, never as a default ratio.
+   */
+  w?: number
+  h?: number
   /** Dominant colour, used as the placeholder while the image loads. */
   tint?: string
   alt?: string
 }
+
+/**
+ * Aspect ratio of a media object, or null when it was stored without one.
+ * Callers that need a number should pick their own fallback rather than
+ * inheriting one from here, so the guess stays visible at the call site.
+ */
+export const ratioOf = (m: Pick<Media, 'w' | 'h'> | undefined | null): number | null =>
+  m?.w && m?.h ? m.w / m.h : null
 
 export interface Challenge {
   id: string

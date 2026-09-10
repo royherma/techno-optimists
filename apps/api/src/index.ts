@@ -4,7 +4,7 @@ import {
   SESSION_COOKIE, clearCookie, cookie, currentPerson, handleFromEmail, hashToken,
   linkExpiry, mintToken, nameFromEmail, normalizeEmail, readCookie, sessionExpiry,
 } from './auth'
-import { MAX_BYTES, checkUpload, mediaKey, mediaUrl } from './media'
+import { MAX_BYTES, checkUpload, dimensionsOf, mediaKey, mediaUrl } from './media'
 import { slugify } from './slug'
 import {
   ACTION_KINDS, CHALLENGE_TYPES, EMPTY_ACTIONS, FEED_SORTS, HELP_KINDS, STAGES,
@@ -130,9 +130,15 @@ app.get('/api/challenges', async (c) => {
   })
 })
 
+// 20000 is past any real camera and short of a number that could be used to
+// make a layout allocate something absurd.
+const pixels = z.number().int().positive().max(20_000).optional()
+
 const mediaItem = z.object({
   kind: z.enum(['image', 'video']),
   url: z.string().max(500),
+  w: pixels,
+  h: pixels,
   tint: z.string().max(20).optional(),
   alt: z.string().max(300).optional(),
 })
@@ -329,19 +335,35 @@ app.put('/api/uploads', async (c) => {
   if (!c.req.raw.body) return c.json({ error: 'empty_body' }, 400)
 
   const key = mediaKey(me.id, check.ext, mintToken().slice(0, 12))
-  const stored = await c.env.MEDIA.put(key, c.req.raw.body, {
+
+  /*
+   * Buffer once, then store and measure from the same bytes. Streaming the body
+   * straight through is cheaper, but the stream is consumed by the put and the
+   * dimensions are only readable from the header - and a second read of an R2
+   * object to recover them costs more than holding a file we already cap at
+   * 100MB.
+   */
+  const bytes = new Uint8Array(await c.req.raw.arrayBuffer())
+  if (bytes.byteLength === 0) return c.json({ error: 'empty_body' }, 400)
+
+  // A client can lie in content-length, so the cap is enforced on what actually
+  // arrived, before anything is written.
+  if (bytes.byteLength > MAX_BYTES) return c.json({ error: 'too_large', max_bytes: MAX_BYTES }, 413)
+
+  const stored = await c.env.MEDIA.put(key, bytes, {
     httpMetadata: { contentType: c.req.header('content-type')!.split(';')[0].trim() },
     customMetadata: { person_id: me.id },
   })
 
-  // A client can lie in content-length, so enforce the cap on what actually
-  // landed and remove it if it was over.
-  if (stored && stored.size > MAX_BYTES) {
-    await c.env.MEDIA.delete(key)
-    return c.json({ error: 'too_large', max_bytes: MAX_BYTES }, 413)
-  }
+  // A format this cannot parse (video, HEIC) returns null and the surfaces fall
+  // back to their own shape, which is why w/h are optional on Media.
+  const size = dimensionsOf(bytes)
 
-  return c.json({ ok: true, media: { kind: check.kind, url: mediaUrl(key), key }, bytes: stored?.size ?? null })
+  return c.json({
+    ok: true,
+    media: { kind: check.kind, url: mediaUrl(key), key, ...(size ?? {}) },
+    bytes: stored?.size ?? bytes.byteLength,
+  })
 })
 
 /**
