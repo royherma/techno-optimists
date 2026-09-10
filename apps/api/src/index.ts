@@ -1,6 +1,10 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
 import {
+  SESSION_COOKIE, clearCookie, cookie, currentPerson, handleFromEmail, hashToken,
+  linkExpiry, mintToken, nameFromEmail, normalizeEmail, readCookie, sessionExpiry,
+} from './auth'
+import {
   ACTION_KINDS, CHALLENGE_TYPES, EMPTY_ACTIONS, FEED_SORTS, HELP_KINDS,
   type ActionKind, type Challenge, type Media, type Update,
 } from '../../../packages/types/index'
@@ -10,6 +14,12 @@ type Env = {
   ANALYTICS_DB?: D1Database
   CACHE?: KVNamespace
   ASSETS?: Fetcher
+  MEDIA?: R2Bucket
+  ENVIRONMENT?: string
+  /** Absent in dev: the magic link is logged instead of emailed. */
+  RESEND_API_KEY?: string
+  /** From address for magic links. Falls back to the Resend sandbox sender. */
+  MAIL_FROM?: string
 }
 
 const app = new Hono<{ Bindings: Env }>()
@@ -171,20 +181,19 @@ const actionBody = z.object({
   note: z.string().max(500).optional(),
 })
 
-// No auth yet, so the actor is passed explicitly and must already exist. This
-// endpoint gets an auth guard the same day sign-in lands - it is not open by design.
+// Requires a session. The actor is the signed-in person and cannot be spoofed
+// by a header - see apps/api/src/auth.ts.
 app.post('/api/challenges/:slug/action', async (c) => {
   const parsed = actionBody.safeParse(await c.req.json().catch(() => null))
   if (!parsed.success) return c.json({ error: 'bad_body', detail: parsed.error.issues }, 400)
   const { kind, help_kind, note } = parsed.data
 
-  const personId = c.req.header('x-person-id')
-  if (!personId) return c.json({ error: 'no_actor', hint: 'send x-person-id until auth ships' }, 401)
+  const me = await currentPerson(c)
+  if (!me) return c.json({ error: 'sign_in_required' }, 401)
+  const personId = me.id
 
   const challenge = await c.env.DB.prepare('SELECT id FROM challenges WHERE slug = ?').bind(c.req.param('slug')).first()
   if (!challenge) return c.json({ error: 'not_found' }, 404)
-  const person = await c.env.DB.prepare('SELECT id FROM people WHERE id = ?').bind(personId).first()
-  if (!person) return c.json({ error: 'unknown_person' }, 401)
 
   await c.env.DB.batch([
     c.env.DB.prepare(
@@ -204,6 +213,127 @@ app.post('/api/challenges/:slug/action', async (c) => {
   const real: Record<string, number> = {}
   for (const a of ((counts.results ?? []) as Row[])) real[String(a.kind)] = Number(a.n)
   return c.json({ ok: true, actions: mergeActions(real, seed?.seed_actions) })
+})
+
+/* -------------------------------------------------------------------------- */
+/* Auth                                                                       */
+/* -------------------------------------------------------------------------- */
+
+const emailBody = z.object({ email: z.string().email().max(254) })
+
+/**
+ * Sends a magic link. Always answers the same way whether or not the address is
+ * known - the response must not reveal who has an account here.
+ */
+app.post('/api/auth/request', async (c) => {
+  const parsed = emailBody.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return c.json({ error: 'bad_email' }, 400)
+  const email = normalizeEmail(parsed.data.email)
+
+  // One live link per address at a time: requesting a second invalidates the
+  // first, so a forwarded old email cannot be used to take the account.
+  const token = mintToken()
+  await c.env.DB.batch([
+    c.env.DB.prepare("UPDATE magic_links SET used_at = datetime('now') WHERE email = ? AND used_at IS NULL").bind(email),
+    c.env.DB.prepare('INSERT INTO magic_links (token_hash, email, expires_at) VALUES (?, ?, ?)')
+      .bind(await hashToken(token), email, linkExpiry()),
+  ])
+
+  const link = `${new URL(c.req.url).origin}/api/auth/callback?token=${token}`
+  const sent = await sendMagicLink(c.env, email, link)
+
+  // In dev there is no mail key, so the link goes to the Worker log. Never in prod.
+  if (!sent) console.log(`[auth] magic link for ${email}: ${link}`)
+  return c.json({ ok: true, sent, ...(sent ? {} : { dev_link: link }) })
+})
+
+/** Returns true if the mail actually went out. */
+const sendMagicLink = async (env: Env, email: string, link: string): Promise<boolean> => {
+  if (!env.RESEND_API_KEY) return false
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${env.RESEND_API_KEY}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: env.MAIL_FROM ?? 'Techno Optimists <onboarding@resend.dev>',
+      to: email,
+      subject: 'Your sign-in link',
+      text: `Sign in to Techno Optimists:\n\n${link}\n\nThis link works once and expires in 15 minutes.`,
+    }),
+  })
+  if (!res.ok) {
+    console.log(`[auth] resend failed ${res.status}: ${await res.text()}`)
+    return false
+  }
+  return true
+}
+
+/**
+ * Redeems a link and starts a session. Creates the person on first click - this
+ * is the only place a person row is born.
+ */
+app.get('/api/auth/callback', async (c) => {
+  const token = new URL(c.req.url).searchParams.get('token')
+  if (!token) return c.redirect('/signin?error=missing', 302)
+
+  const hash = await hashToken(token)
+  const link = await c.env.DB.prepare(
+    "SELECT email FROM magic_links WHERE token_hash = ? AND used_at IS NULL AND expires_at > datetime('now')",
+  ).bind(hash).first()
+  if (!link) return c.redirect('/signin?error=expired', 302)
+
+  const email = String(link.email)
+  let person = await c.env.DB.prepare(
+    'SELECT p.id FROM identities i JOIN people p ON p.id = i.person_id WHERE i.email = ?',
+  ).bind(email).first()
+
+  if (!person) {
+    const id = `p_${mintToken().slice(0, 16)}`
+    const handle = await uniqueHandle(c.env.DB, handleFromEmail(email))
+    await c.env.DB.batch([
+      c.env.DB.prepare('INSERT INTO people (id, handle, name) VALUES (?, ?, ?)')
+        .bind(id, handle, nameFromEmail(email)),
+      c.env.DB.prepare('INSERT INTO identities (person_id, email) VALUES (?, ?)').bind(id, email),
+    ])
+    person = { id }
+  }
+
+  const session = mintToken()
+  await c.env.DB.batch([
+    c.env.DB.prepare("UPDATE magic_links SET used_at = datetime('now') WHERE token_hash = ?").bind(hash),
+    c.env.DB.prepare('INSERT INTO sessions (token_hash, person_id, expires_at, user_agent) VALUES (?, ?, ?, ?)')
+      .bind(await hashToken(session), person.id, sessionExpiry(), c.req.header('user-agent') ?? null),
+    c.env.DB.prepare("UPDATE identities SET last_login_at = datetime('now') WHERE email = ?").bind(email),
+  ])
+
+  c.header('set-cookie', cookie(session, new URL(c.req.url).protocol === 'https:'))
+  return c.redirect('/', 302)
+})
+
+/** First free handle: mei, mei2, mei3... Races are caught by the UNIQUE index. */
+const uniqueHandle = async (db: D1Database, base: string) => {
+  for (let n = 1; n <= 50; n++) {
+    const candidate = n === 1 ? base : `${base}${n}`
+    const taken = await db.prepare('SELECT 1 FROM people WHERE handle = ?').bind(candidate).first()
+    if (!taken) return candidate
+  }
+  return `${base}${mintToken().slice(0, 6)}`
+}
+
+app.get('/api/auth/me', async (c) => {
+  const me = await currentPerson(c)
+  return c.json({ person: me })
+})
+
+app.post('/api/auth/signout', async (c) => {
+  const token = readCookie(c.req.header('cookie'), SESSION_COOKIE)
+  if (token) {
+    await c.env.DB.prepare('DELETE FROM sessions WHERE token_hash = ?').bind(await hashToken(token)).run()
+  }
+  c.header('set-cookie', clearCookie(new URL(c.req.url).protocol === 'https:'))
+  return c.json({ ok: true })
 })
 
 app.get('/api/health', async (c) => {
