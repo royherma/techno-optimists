@@ -78,10 +78,21 @@ app.onError((err, c) => {
  * usual way analytics takes a site down.
  *
  * The column layout is fixed by Analytics Engine - blobs are strings, doubles
- * are numbers, and there is one index, which is the sampling/grouping key. Read
- * it back with, e.g.
- *   SELECT blob1 AS path, count() FROM to_events
- *   WHERE timestamp > NOW() - INTERVAL '1' DAY GROUP BY path ORDER BY 2 DESC
+ * are numbers, and there is one index, which is the sampling/grouping key.
+ *
+ * Read it back over the SQL API (POST, the query as the raw body, a token with
+ * Account Analytics Read - the wrangler OAuth token already carries it):
+ *   https://api.cloudflare.com/client/v4/accounts/<account_id>/analytics_engine/sql
+ *
+ *   SELECT blob1 AS path, blob2 AS kind, double2 AS status, count() AS n
+ *   FROM to_events WHERE timestamp > NOW() - INTERVAL '24' HOUR
+ *   GROUP BY path, kind, status ORDER BY n DESC
+ *
+ * `timestamp` is UTC. A window of '1' HOUR against a +07 wall clock returns
+ * nothing and reads exactly like "telemetry is broken" - it is not.
+ *
+ * A dataset that does not exist also answers 200 with count() = 0, so an empty
+ * result never proves the write path works. Query without a time filter first.
  */
 export const track = (
   env: Env,
