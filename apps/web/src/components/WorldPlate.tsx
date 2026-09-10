@@ -12,11 +12,32 @@ import { GRATICULE, LAND_PATHS, ATLAS_H, ATLAS_W, project } from '../lib/atlas'
  * Both map surfaces share it: the picker on the capture form and the map page.
  * They differ only in what they draw on top, which is what `children` is for.
  */
+/** One mark on the plate. lat/lng, not x/y - the caller never does geometry. */
+export type Pin = {
+  lat: number
+  lng: number
+  /** Ring radius in SVG units. */
+  r: number
+  color: string
+  /** Set when the pin should be a link into the Challenge. */
+  href?: string
+  label?: string
+}
+
 export default function WorldPlate({
+  pins = [],
   children,
   onPick,
   className = '',
 }: {
+  /*
+   * Pins arrive as data, never as slotted children. This component hydrates
+   * (`client:load`), and SVG elements rendered by Astro into the children slot
+   * do not survive that hydration - React re-renders the subtree and the
+   * server-drawn nodes vanish, leaving an empty plate whose markup still
+   * contains every pin. Props serialize, so they cross the boundary intact.
+   */
+  pins?: Pin[]
   children?: React.ReactNode
   /** When set the plate is a control: clicking it reports a position. */
   onPick?: (lat: number, lng: number) => void
@@ -67,6 +88,27 @@ export default function WorldPlate({
 
       {/* The equator reads slightly heavier - the one line a reader orients from. */}
       <line x1="0" y1={ATLAS_H / 2} x2={ATLAS_W} y2={ATLAS_H / 2} stroke="var(--color-grid-ink)" strokeWidth="0.8" opacity="0.45" />
+
+      {pins.map((p, i) => {
+        const { x, y } = project(p.lat, p.lng)
+        const mark = (
+          <>
+            <circle cx={x} cy={y} r={p.r} fill="none" stroke={p.color} strokeWidth="2.2" />
+            <circle cx={x} cy={y} r="2.6" fill={p.color} />
+          </>
+        )
+        return p.href ? (
+          <a key={i} href={p.href} className="map-pin">
+            {p.label && <title>{p.label}</title>}
+            {mark}
+          </a>
+        ) : (
+          <g key={i}>
+            {p.label && <title>{p.label}</title>}
+            {mark}
+          </g>
+        )
+      })}
 
       {children}
     </svg>
