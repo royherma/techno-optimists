@@ -5,9 +5,18 @@ import SignInForm from '../components/SignInForm.tsx'
 import { getFeed } from '../lib/api'
 import { sheetNo } from '../lib/vocab'
 
-// ?error=expired lands here from /api/auth/callback when a link is stale or
-// already used. Both cases mean the same thing to the reader: ask for another.
+// /api/auth/callback sends the reader back here with a reason. They all end in
+// the same action - ask for a new link - but naming the right one matters: a
+// reader who requested a link twice and clicked the older mail is not looking
+// at an expired link, and being told so reads as the product being wrong.
+const REASON: Record<string, string> = {
+  expired: 'That link has expired. Links last 15 minutes - ask for a new one.',
+  used: 'That link has already been used. Ask for a new one.',
+  unknown: 'That link is no longer valid. Ask for a new one.',
+  missing: 'That link was incomplete. Ask for a new one.',
+}
 const error = Astro.url.searchParams.get('error')
+const reason = error ? REASON[error] ?? REASON.unknown : null
 const { challenges } = await getFeed('?limit=50')
 ---
 <Base title="Sign in - Techno Optimists">
@@ -23,9 +32,9 @@ const { challenges } = await getFeed('?limit=50')
         We send a link. No password to remember.
       </p>
 
-      {error && (
+      {reason && (
         <p class="mb-6 border-l-2 border-(--color-problem) bg-(--color-paper-sunk) px-3 py-2 text-sm text-(--color-ink-soft)">
-          That link has been used or has expired. Ask for a new one.
+          {reason}
         </p>
       )}
 

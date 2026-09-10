@@ -109,6 +109,55 @@ describe('routes', () => {
  * carries it where a stranger can POST an address, that stranger owns the
  * account. Dev keeps the convenience; prod must fail closed.
  */
+/**
+ * The callback calls first() twice - once for the row, once for the expiry
+ * check - so the shared stub's single canned value cannot tell the branches
+ * apart. This one answers each call in turn.
+ */
+const stubSeq = (...firsts: unknown[]) => {
+  let i = 0
+  return {
+    prepare: () => ({
+      bind: function () { return this },
+      all: async () => ({ results: [] }),
+      first: async () => firsts[i++] ?? null,
+    }),
+    batch: async () => [],
+  }
+}
+
+describe('a failed sign-in says which thing went wrong', () => {
+  const redeem = (db: unknown) =>
+    app.request('/api/auth/callback?token=' + 'a'.repeat(64), {}, {
+      DB: db as D1Database,
+    })
+
+  it('names an expired link when the row is past its expiry', async () => {
+    const r = await redeem(stubSeq(
+      { email: 'a@b.com', used_at: null, expires_at: '2020-01-01 00:00:00' },
+      null,
+    ))
+    expect(r.headers.get('location')).toBe('/signin?error=expired')
+  })
+
+  it('names a used link rather than calling it expired', async () => {
+    const r = await redeem(stubSeq(
+      { email: 'a@b.com', used_at: '2026-01-01 00:00:00', expires_at: '2099-01-01 00:00:00' },
+    ))
+    expect(r.headers.get('location')).toBe('/signin?error=used')
+  })
+
+  it('does not claim a link expired when its row is gone', async () => {
+    const r = await redeem(stubSeq(null))
+    expect(r.headers.get('location')).toBe('/signin?error=unknown')
+  })
+
+  it('still rejects a request with no token at all', async () => {
+    const r = await app.request('/api/auth/callback', {}, env())
+    expect(r.headers.get('location')).toBe('/signin?error=missing')
+  })
+})
+
 describe('magic link is never returned to the caller in prod', () => {
   const requestLink = (environment?: string) =>
     app.request('/api/auth/request', {

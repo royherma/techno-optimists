@@ -468,11 +468,22 @@ app.get('/api/auth/callback', async (c) => {
   const token = new URL(c.req.url).searchParams.get('token')
   if (!token) return c.redirect('/signin?error=missing', 302)
 
+  // Look the row up by hash alone, then say which of the three things went
+  // wrong. Folding them into one WHERE returns "expired" for a link that was
+  // superseded a minute ago, or for one whose row is simply gone - a reader
+  // who just asked for it reads that as the product lying to them.
   const hash = await hashToken(token)
   const link = await c.env.DB.prepare(
-    "SELECT email FROM magic_links WHERE token_hash = ? AND used_at IS NULL AND expires_at > datetime('now')",
+    'SELECT email, used_at, expires_at FROM magic_links WHERE token_hash = ?',
+  ).bind(hash).first<{ email: string; used_at: string | null; expires_at: string }>()
+
+  if (!link) return c.redirect('/signin?error=unknown', 302)
+  if (link.used_at) return c.redirect('/signin?error=used', 302)
+
+  const stillValid = await c.env.DB.prepare(
+    "SELECT 1 ok FROM magic_links WHERE token_hash = ? AND expires_at > datetime('now')",
   ).bind(hash).first()
-  if (!link) return c.redirect('/signin?error=expired', 302)
+  if (!stillValid) return c.redirect('/signin?error=expired', 302)
 
   const email = String(link.email)
   let person = await c.env.DB.prepare(
