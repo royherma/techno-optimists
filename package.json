@@ -1,0 +1,27 @@
+{
+  "name": "techno-optimists",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "wrangler dev",
+    "dev:web": "npm --workspace web run dev",
+    "build:web": "node scripts/build-web.mjs",
+    "typecheck": "npm --workspace api run typecheck",
+    "test": "npm --workspace api run test",
+    "db:local": "wrangler d1 execute techno-optimists --local --file packages/db/schema.sql",
+    "db:seed:local": "wrangler d1 execute techno-optimists --local --file packages/db/seed.sql",
+    "db:reset:local": "npm run db:local && npm run db:seed:local",
+    "deploy": "npm run build:web && wrangler deploy",
+    "build:web:only": "npm --workspace web run build"
+  },
+  "overrides": {
+    "vite": "^8.2.2"
+  }
+}

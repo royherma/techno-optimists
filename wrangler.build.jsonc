@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "techno-optimists-build",
+  "main": "apps/api/src/index.ts",
+  "compatibility_date": "2026-06-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // API only, NO assets binding. Astro's getStaticPaths fetches this at build
+  // time; the main config serves apps/web/dist, and `astro build` empties that
+  // directory mid-build, which takes the dev server down with it. Same local D1
+  // state (.wrangler/state is shared by database_name), different port.
+
+  "d1_databases": [
+    { "binding": "DB", "database_name": "techno-optimists", "database_id": "195e34f1-f441-49ce-9d47-21eb7ad78209" },
+    { "binding": "ANALYTICS_DB", "database_name": "to-analytics", "database_id": "547efc7a-46d0-4648-b2ad-9839de409a3d" }
+  ],
+
+  "kv_namespaces": [
+    { "binding": "CACHE", "id": "2a687cc473ea4b01bc133135b98c69e5" }
+  ]
+}

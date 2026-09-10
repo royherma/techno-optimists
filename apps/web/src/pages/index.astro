@@ -1,0 +1,36 @@
+---
+import Base from '../layouts/Base.astro'
+import ChallengeCard from '../components/ChallengeCard.astro'
+import { getFeed } from '../lib/api'
+import { TYPE_LABEL } from '../lib/vocab'
+import { CHALLENGE_TYPES } from '../../../../packages/types/index'
+
+const { challenges } = await getFeed('?limit=24')
+---
+<Base title="Techno Optimists - find real problems, help solve them">
+  <main class="mx-auto max-w-6xl px-5">
+    <section class="border-b border-(--color-rule) py-12 sm:py-16">
+      <h1 class="max-w-3xl font-[family-name:--font-display] text-4xl leading-[1.1] tracking-tight sm:text-[3.25rem]">
+        See something that could be better? Help make it better.
+      </h1>
+      <p class="mt-4 max-w-xl text-lg leading-relaxed text-(--color-ink-soft)">
+        Real problems from everywhere. Anyone can spot one, and documenting a
+        good problem with no solution is a complete contribution.
+      </p>
+    </section>
+
+    <nav class="flex flex-wrap gap-2 py-6" aria-label="Filter by type">
+      <a href="/" class="rounded-full border border-(--color-ink) bg-(--color-ink) px-3.5 py-1.5 text-sm text-(--color-paper)">Everything</a>
+      {CHALLENGE_TYPES.map((t) => (
+        <a href={`/?type=${t}`}
+           class="rounded-full border border-(--color-rule) px-3.5 py-1.5 text-sm transition-colors hover:border-(--color-ink-faint)">
+          {TYPE_LABEL[t]}
+        </a>
+      ))}
+    </nav>
+
+    <div class="grid grid-cols-1 gap-x-6 gap-y-10 pb-16 sm:grid-cols-2 lg:grid-cols-3">
+      {challenges.map((c, i) => <ChallengeCard challenge={c} priority={i < 3} />)}
+    </div>
+  </main>
+</Base>
