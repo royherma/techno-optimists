@@ -36,7 +36,20 @@ const {
 } = Astro.props
 
 const raw = ratioOf(media)
-const ratio = Math.min(max, Math.max(min, raw ?? fallback))
+
+/*
+ * Cover crops, so its box has to be clamped or a 32:9 row collapses to a sliver
+ * and a 9:16 one towers over the table.
+ *
+ * Contain must not be clamped. Clamping there gives the frame one ratio and the
+ * picture another, and the difference comes back as empty tint - a portrait shot
+ * in a 2.6-wide box was about 60% letterbox. Taking the true ratio means the
+ * frame IS the picture, and height is bounded by the caller's max-height class
+ * instead, which shrinks the whole plate rather than padding it.
+ */
+const ratio = fit === 'cover'
+  ? Math.min(max, Math.max(min, raw ?? fallback))
+  : (raw ?? fallback)
 
 // A frame the image does not fill gets the tint behind it, so the letterbox
 // reads as part of the plate rather than as a hole in the page.
