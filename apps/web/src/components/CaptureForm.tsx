@@ -144,6 +144,13 @@ export default function CaptureForm() {
           media: shots.filter((s) => s.media).map((s) => s.media),
         }),
       })
+      // A session can expire while a Challenge is being written, and "try
+      // again" sends the writer back into the same 401 forever. Sign in and
+      // come back to the form, the way the action bar already does.
+      if (r.status === 401) {
+        window.location.href = '/signin?next=/post'
+        return
+      }
       if (!r.ok) throw new Error(String(r.status))
       const { challenge } = await r.json()
       window.location.href = `/c/${challenge.slug}`
