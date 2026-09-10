@@ -57,6 +57,10 @@ const toChallenge = (r: Row, actionRows: Row[]): Challenge => {
     body: r.body == null ? null : String(r.body),
     media: json<Media[]>(r.media, []),
     location: r.location == null ? null : String(r.location),
+    // Number(null) is 0, which would drop every unplaced Challenge onto the
+    // Gulf of Guinea. The null has to survive the whole way to the map.
+    lat: r.lat == null ? null : Number(r.lat),
+    lng: r.lng == null ? null : Number(r.lng),
     tags: json<string[]>(r.tags, []),
     // No `name`. The public identity is the handle - see the Person type.
     author: {
@@ -150,6 +154,11 @@ const createBody = z.object({
   body: z.string().max(20_000).optional(),
   media: z.array(mediaItem).max(8).default([]),
   location: z.string().max(120).optional(),
+  // Bounded to the real ranges rather than left as free numbers: a client that
+  // sends degrees-times-1e7, or swaps the pair, is a bug worth rejecting at the
+  // door rather than storing and discovering later as a pin in the wrong ocean.
+  lat: z.number().min(-90).max(90).optional(),
+  lng: z.number().min(-180).max(180).optional(),
   tags: z.array(z.string().trim().toLowerCase().min(2).max(30)).max(6).default([]),
 })
 
@@ -164,17 +173,24 @@ app.post('/api/challenges', async (c) => {
 
   const parsed = createBody.safeParse(await c.req.json().catch(() => null))
   if (!parsed.success) return c.json({ error: 'bad_body', detail: parsed.error.issues }, 400)
-  const { type, title, summary, body, media, location, tags } = parsed.data
+  const { type, title, summary, body, media, location, lat, lng, tags } = parsed.data
 
   const id = `c_${mintToken().slice(0, 16)}`
   const slug = await uniqueSlug(c.env.DB, slugify(title))
 
+  // A half-pair is not a position, so one without the other is stored as
+  // neither. Zod validates each number alone; only this pairing makes them mean
+  // a place.
+  const placed = lat != null && lng != null
+
   await c.env.DB.prepare(
-    `INSERT INTO challenges (id, slug, type, stage, title, summary, body, media, location, tags, author_id)
-     VALUES (?, ?, ?, 'spot', ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO challenges (id, slug, type, stage, title, summary, body, media, location, lat, lng, tags, author_id)
+     VALUES (?, ?, ?, 'spot', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).bind(
     id, slug, type, title, summary, body ?? null,
-    JSON.stringify(media), location ?? null, JSON.stringify([...new Set(tags)]), me.id,
+    JSON.stringify(media), location ?? null,
+    placed ? lat : null, placed ? lng : null,
+    JSON.stringify([...new Set(tags)]), me.id,
   ).run()
 
   const row = await c.env.DB.prepare(`${SELECT_CHALLENGE} WHERE c.id = ?`).bind(id).first()

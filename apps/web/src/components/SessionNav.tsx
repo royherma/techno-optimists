@@ -20,7 +20,10 @@ export default function SessionNav() {
 
   return (
     <span className="flex items-center gap-3 font-[family-name:--font-mono] text-[0.7rem] tracking-[0.06em] uppercase">
-      <a href="/post" className="border border-(--color-rule) px-3 py-1.5 hover:bg-(--color-paper-sunk)">
+      <a
+        href="/post"
+        className="ink-transition border border-(--color-rule) px-3 py-1.5 hover:bg-(--color-ink) hover:text-(--color-paper) active:bg-(--color-ink) active:text-(--color-paper-sunk)"
+      >
         + Post
       </a>
       {me ? (
@@ -28,7 +31,7 @@ export default function SessionNav() {
           <span className="hidden text-(--color-ink-faint) sm:inline">@{me.handle}</span>
           <button
             onClick={async () => { await signOut(); window.location.reload() }}
-            className="text-(--color-ink-faint) hover:text-(--color-ink)"
+            className="ink-transition ink-underline text-(--color-ink-faint) hover:text-(--color-ink) hover:decoration-current"
           >
             Sign out
           </button>
@@ -36,7 +39,7 @@ export default function SessionNav() {
       ) : (
         <a
           href={`/signin?next=${encodeURIComponent(window.location.pathname)}`}
-          className="text-(--color-ink-faint) hover:text-(--color-ink)"
+          className="ink-transition ink-underline text-(--color-ink-faint) hover:text-(--color-ink) hover:decoration-current"
         >
           Sign in
         </a>

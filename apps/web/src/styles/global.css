@@ -60,6 +60,37 @@
   --ease-ink: 120ms ease-out;
 }
 
+/*
+ * The one underline convention for every text link on the sheet: a rule sitting
+ * off the baseline that draws in on hover/focus, rather than the browser's
+ * default colour swap. `ink-underline` is opt-out (an element can override
+ * text-decoration-color itself); `ink-underline-static` is for a link that is
+ * already underlined at rest, so hover only has to thicken and darken it.
+ */
+@utility ink-underline {
+  text-underline-offset: 3px;
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  transition: text-decoration-color var(--ease-ink), color var(--ease-ink);
+}
+@utility ink-underline-static {
+  text-underline-offset: 3px;
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  transition: text-decoration-thickness var(--ease-ink), color var(--ease-ink);
+}
+/*
+ * The general-purpose hover/focus/active timing for anything that swaps
+ * colour, background or border on interaction (pills, rows, stations) - so a
+ * component only has to name which properties move, not how fast.
+ */
+@utility ink-transition {
+  transition-timing-function: ease-out;
+  transition-duration: 120ms;
+  transition-property: color, background-color, border-color, text-decoration-color;
+}
+
 @layer base {
   html { -webkit-text-size-adjust: 100%; }
   body {

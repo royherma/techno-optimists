@@ -34,6 +34,14 @@ CREATE TABLE challenges (
   body             TEXT,
   media            TEXT NOT NULL DEFAULT '[]',   -- json array of Media
   location         TEXT,
+  -- Where it actually is, when the author placed it. NULL is the common case and
+  -- always will be: a Challenge is complete without coordinates, and the map is
+  -- an optional view of the subset that carries them - never a required field.
+  -- Distinct from `location`, which is the human label ("Chiang Mai, Thailand")
+  -- and is what every text surface renders. These two are set independently:
+  -- a pin with no label and a label with no pin are both valid rows.
+  lat              REAL,
+  lng              REAL,
   tags             TEXT NOT NULL DEFAULT '[]',   -- json array
   author_id        TEXT NOT NULL REFERENCES people(id),
   created_at       TEXT NOT NULL DEFAULT (datetime('now')),

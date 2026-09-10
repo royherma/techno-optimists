@@ -85,20 +85,25 @@ export default function ActionBar({ slug, type, actions }: {
     <div className="flex flex-wrap gap-2">
       {FOR_TYPE[realType].map((kind) => {
         const on = mine.includes(kind)
+        const pending = busy === kind
         return (
           <button
             key={kind}
             onClick={() => act(kind)}
             disabled={on || busy === kind}
             aria-pressed={on}
-            className={`rounded-full border px-4 py-2 text-sm transition-colors ${
+            className={`ink-transition rounded-full border px-4 py-2 text-sm ${
               on
-                ? 'border-(--color-ink) bg-(--color-paper-sunk) text-(--color-ink)'
-                : 'border-(--color-rule-soft) text-(--color-ink-soft) hover:border-(--color-rule) hover:text-(--color-ink)'
+                ? 'border-(--color-ink) bg-(--color-ink) text-(--color-paper) cursor-default'
+                : pending
+                  ? 'border-(--color-rule) bg-(--color-paper-sunk) text-(--color-ink-soft) cursor-wait'
+                  : 'border-(--color-rule-soft) text-(--color-ink-soft) hover:border-(--color-rule) hover:bg-(--color-paper-sunk) hover:text-(--color-ink) active:bg-(--color-table)'
             }`}
           >
             {ACTION_LABEL[kind]}
-            <span className="ml-2 tabular-nums text-(--color-ink-faint)">{count(counts[kind])}</span>
+            <span className={`ml-2 tabular-nums ${on ? 'text-(--color-paper)' : 'text-(--color-ink-faint)'}`}>
+              {count(counts[kind])}
+            </span>
           </button>
         )
       })}
