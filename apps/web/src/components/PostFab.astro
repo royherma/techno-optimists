@@ -1,0 +1,35 @@
+---
+/*
+ * The way in to posting, always on screen.
+ *
+ * The product's first principle is that browsing comes before contributing -
+ * but the reader who spots something they have too has to be able to act on it
+ * without scrolling back to the top nav. So: fixed, bottom right, out of the
+ * reading column.
+ *
+ * It is a link, not a button, because it goes to a page. That keeps
+ * middle-click, cmd-click and "open in new tab" working, which a button
+ * handling onClick would silently break.
+ */
+---
+<a
+  href="/post"
+  class="post-fab ink-transition fixed right-4 bottom-4 z-30 flex items-center gap-2 border-2 border-(--color-rule) bg-(--color-ink) px-4 py-3 font-[family-name:--font-mono] text-[0.75rem] uppercase tracking-[0.08em] text-(--color-paper) hover:bg-(--color-paper) hover:text-(--color-ink) sm:right-6 sm:bottom-6"
+>
+  <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" class="shrink-0">
+    <path d="M12 4v16M4 12h16" stroke="currentColor" stroke-width="3" stroke-linecap="square" />
+  </svg>
+  <span>Post a Challenge</span>
+</a>
+
+<style>
+  /*
+   * On a phone the label would sit over the last row of the index, so below sm
+   * the control is the mark alone - the same plus the sheet already uses for
+   * "I have this problem", at a size that clears the 44px touch target.
+   */
+  @media (max-width: 26rem) {
+    .post-fab span { display: none; }
+    .post-fab { padding: 0.95rem; }
+  }
+</style>
