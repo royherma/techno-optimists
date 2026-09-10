@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+/*
+ * Tokens live here and ONLY here. No raw hex in components.
+ *
+ * The look: paper, not dashboard. This is a place where a farmer in Chiang Mai
+ * and a physicist in California read the same page, so it leans editorial -
+ * generous type, real photographs, restrained colour. Colour carries meaning
+ * (a Challenge's type and stage) rather than decoration.
+ */
+@theme static {
+  --color-paper:       oklch(98.4% 0.005 85);
+  --color-paper-sunk:  oklch(96.2% 0.008 85);
+  --color-ink:         oklch(23% 0.012 65);
+  --color-ink-soft:    oklch(48% 0.012 65);
+  --color-ink-faint:   oklch(66% 0.010 65);
+  --color-rule:        oklch(90% 0.008 75);
+
+  /* One accent, used sparingly: live activity and primary action. */
+  --color-signal:      oklch(58% 0.17 42);
+  --color-signal-soft: oklch(94% 0.035 42);
+
+  /* Challenge type. Each entry point reads differently at a glance. */
+  --color-problem:     oklch(56% 0.16 28);
+  --color-idea:        oklch(60% 0.14 85);
+  --color-experiment:  oklch(56% 0.12 250);
+  --color-build:       oklch(52% 0.13 155);
+
+  --font-display: "Instrument Serif", ui-serif, Georgia, serif;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--color-signal-soft); }
+  :focus-visible { outline: 2px solid var(--color-signal); outline-offset: 2px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

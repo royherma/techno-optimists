@@ -1,0 +1,54 @@
+---
+import type { Challenge } from '../../../../packages/types/index'
+import { ACTION_SHORT, STAGE_LABEL, TYPE_LABEL, ago, count, typeColor } from '../lib/vocab'
+interface Props { challenge: Challenge; priority?: boolean }
+const { challenge: c, priority = false } = Astro.props
+const hero = c.media[0]
+
+// The two counts that say the most about a Challenge, chosen per card rather
+// than shown as a uniform row of seven. Demand first, then capacity.
+const demand = c.type === 'problem' ? 'have_problem' : 'want_this'
+const shown = ([demand, 'can_help', 'have_idea'] as const)
+  .map((k) => [k, c.actions[k]] as const)
+  .filter(([, n]) => n > 0)
+---
+<article class="group">
+  <a href={`/c/${c.slug}`} class="block">
+    <div
+      class="relative aspect-[4/3] overflow-hidden rounded-lg"
+      style={`background:${hero?.tint ?? 'var(--color-paper-sunk)'}`}
+    >
+      {hero && (
+        <img
+          src={hero.url}
+          alt={hero.alt ?? ''}
+          loading={priority ? 'eager' : 'lazy'}
+          decoding="async"
+          class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+        />
+      )}
+      <span
+        class="absolute left-3 top-3 rounded-full px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm"
+        style={`background:color-mix(in oklch, ${typeColor(c.type)} 88%, transparent)`}
+      >{TYPE_LABEL[c.type]}</span>
+    </div>
+
+    <h2 class="mt-3 font-[family-name:--font-display] text-[1.35rem] leading-[1.25] tracking-tight">
+      {c.title}
+    </h2>
+    <p class="mt-1.5 text-[0.94rem] leading-snug text-(--color-ink-soft)">{c.summary}</p>
+  </a>
+
+  <div class="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8rem] text-(--color-ink-faint)">
+    <span class="text-(--color-ink-soft)">{STAGE_LABEL[c.stage]}</span>
+    {c.location && <><span>·</span><span>{c.location}</span></>}
+    <span>·</span><span>{ago(c.last_activity_at)}</span>
+  </div>
+
+  <div class="mt-2 flex flex-wrap gap-x-3.5 gap-y-1 text-[0.82rem]">
+    {shown.map(([k, n]) => (
+      <span><strong class="font-semibold tabular-nums">{count(n)}</strong>
+        <span class="text-(--color-ink-faint)"> {ACTION_SHORT[k]}</span></span>
+    ))}
+  </div>
+</article>

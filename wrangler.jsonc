@@ -1,0 +1,33 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "techno-optimists",
+  "main": "apps/api/src/index.ts",
+  "compatibility_date": "2026-06-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "account_id": "db9eee5d30dc91c467044f8746e45206",
+  "workers_dev": true,
+  "observability": { "enabled": true },
+
+  // Astro builds static output here; the Worker serves /api/* and the assets
+  // handle everything else. run_worker_first is off - no HTML rewriting needed.
+  "assets": {
+    "directory": "apps/web/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "html_handling": "drop-trailing-slash"
+  },
+
+  "d1_databases": [
+    { "binding": "DB", "database_name": "techno-optimists", "database_id": "195e34f1-f441-49ce-9d47-21eb7ad78209" },
+    // Split from day one - see docs/2026-09-10-stack.md. A telemetry burst must
+    // never be able to queue a feed read.
+    { "binding": "ANALYTICS_DB", "database_name": "to-analytics", "database_id": "547efc7a-46d0-4648-b2ad-9839de409a3d" }
+  ],
+
+  "kv_namespaces": [
+    { "binding": "CACHE", "id": "2a687cc473ea4b01bc133135b98c69e5" }
+  ]
+
+  // Deliberately absent until they earn their place (all cost money or are
+  // pre-validation): r2_buckets, images, media, ai, vectorize, queues.
+}

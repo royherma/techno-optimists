@@ -1,0 +1,33 @@
+---
+import '../styles/global.css'
+interface Props { title: string; description?: string }
+const { title, description = 'Find interesting real-world problems and help solve them.' } = Astro.props
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" />
+  </head>
+  <body class="min-h-screen">
+    <header class="border-b border-(--color-rule)">
+      <div class="mx-auto flex max-w-6xl items-baseline gap-6 px-5 py-4">
+        <a href="/" class="font-[family-name:--font-display] text-xl tracking-tight">Techno Optimists</a>
+        <p class="hidden text-sm text-(--color-ink-soft) sm:block">
+          Things can be better. We can build better.
+        </p>
+      </div>
+    </header>
+    <slot />
+    <footer class="mt-24 border-t border-(--color-rule)">
+      <div class="mx-auto max-w-6xl px-5 py-8 text-sm text-(--color-ink-faint)">
+        Local problems. Global brains. Technology to build the solution.
+      </div>
+    </footer>
+  </body>
+</html>
