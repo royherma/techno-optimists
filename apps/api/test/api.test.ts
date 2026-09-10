@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { app, json, mergeActions } from '../src/index'
+import { app, json, mergeActions, track } from '../src/index'
 import { ACTION_KINDS, EMPTY_ACTIONS } from '../../../packages/types/index'
 
 describe('json', () => {
@@ -55,6 +55,81 @@ const stubDb = (rows: Record<string, unknown>[] = [], first: unknown = null) => 
 })
 
 const env = () => ({ DB: stubDb() as unknown as D1Database })
+
+/**
+ * The boundary is what turned a bare "Internal Server Error" into something
+ * diagnosable. A D1 throw used to reach the client with no request id, no path
+ * and nothing in the log - see docs/DECISIONS.md for the sign-in outage that
+ * cost an afternoon.
+ */
+describe('an unhandled throw becomes a diagnosable 500', () => {
+  // A DB whose every query throws the way D1 does on a schema mismatch.
+  const throwingDb = () => ({
+    prepare: () => ({
+      bind: function () { return this },
+      all: async () => { throw new Error('D1_ERROR: no such column: is_admin') },
+      first: async () => { throw new Error('D1_ERROR: no such column: is_admin') },
+    }),
+    batch: async () => { throw new Error('D1_ERROR: no such column: is_admin') },
+  })
+  const boom = () => app.request('/api/health', {
+    headers: { 'cf-ray': '8f2a1b3c4d5e6f70-SIN' },
+  }, { DB: throwingDb() as unknown as D1Database })
+
+  it('answers 500 rather than letting the throw escape', async () => {
+    expect((await boom()).status).toBe(500)
+  })
+
+  it('returns the ray, so a log line can be found from the response alone', async () => {
+    const body = await (await boom()).json() as { error: string; ray: string }
+    expect(body.error).toBe('server_error')
+    expect(body.ray).toBe('8f2a1b3c4d5e6f70-SIN')
+  })
+
+  it('never leaks the D1 message - it names columns and tables', async () => {
+    const text = await (await boom()).text()
+    expect(text).not.toContain('is_admin')
+    expect(text).not.toContain('D1_ERROR')
+  })
+
+  it('still answers when there is no ray header at all', async () => {
+    const r = await app.request('/api/health', {}, { DB: throwingDb() as unknown as D1Database })
+    expect(r.status).toBe(500)
+    expect((await r.json() as { ray: string }).ray).toBe('no-ray')
+  })
+})
+
+/**
+ * Telemetry must never be the reason a page fails. track() is called on paths
+ * that work; if the dataset is missing or writeDataPoint throws, the request
+ * has to carry on regardless.
+ */
+describe('track never breaks a request', () => {
+  it('does nothing when no dataset is bound', () => {
+    expect(() => track({ DB: stubDb() } as never, 'pageview', '/')).not.toThrow()
+  })
+
+  it('swallows a dataset that throws', () => {
+    const env = {
+      DB: stubDb(),
+      ANALYTICS: { writeDataPoint: () => { throw new Error('AE down') } },
+    }
+    expect(() => track(env as never, 'pageview', '/')).not.toThrow()
+  })
+
+  it('writes path and kind positionally, and indexes by kind', () => {
+    const seen: unknown[] = []
+    const env = { DB: stubDb(), ANALYTICS: { writeDataPoint: (p: unknown) => seen.push(p) } }
+    track(env as never, 'pageview', '/c/well-pump', { country: 'TH', status: 200 })
+    expect(seen).toHaveLength(1)
+    const p = seen[0] as { blobs: string[]; doubles: number[]; indexes: string[] }
+    expect(p.blobs[0]).toBe('/c/well-pump')
+    expect(p.blobs[1]).toBe('pageview')
+    expect(p.blobs[2]).toBe('TH')
+    expect(p.doubles[1]).toBe(200)
+    expect(p.indexes).toEqual(['pageview'])
+  })
+})
 
 describe('routes', () => {
   it('GET /api/health returns ok', async () => {

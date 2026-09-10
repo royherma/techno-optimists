@@ -100,6 +100,32 @@ await check('sign-in accepts a request', async () => {
   }
 })
 
+await check('sitemap is XML, not the 404 page', async () => {
+  // robots.txt names one sitemap URL. If that URL serves the 404 HTML page,
+  // Search Console rejects the submission and reports "couldn't fetch" - which
+  // reads as a network problem rather than a wrong filename.
+  const robots = await (await fetch(`${BASE}/robots.txt`)).text()
+  const named = robots.match(/^Sitemap:\s*(\S+)/mi)?.[1]
+  if (!named) return { ok: false, detail: 'robots.txt names no sitemap' }
+  const r = await fetch(named)
+  const ctype = r.headers.get('content-type') ?? ''
+  return {
+    ok: r.status === 200 && ctype.includes('xml'),
+    detail: `${named} -> ${r.status} ${ctype}`,
+  }
+})
+
+await check('a server error carries a ray', async () => {
+  // The boundary in apps/api/src/index.ts answers a throw with {error, ray}
+  // instead of a bare "Internal Server Error". A 500 with no ray means the
+  // deploy predates the boundary, and the next outage is opaque again.
+  // A healthy route must NOT 500 - so this asserts the shape only when one does.
+  const r = await fetch(`${BASE}/api/health`)
+  if (r.status !== 500) return { ok: true, detail: `${r.status}, no error to shape` }
+  const d = await r.json().catch(() => ({}))
+  return { ok: Boolean(d.ray), detail: `500 ray=${d.ray ?? 'MISSING'}` }
+})
+
 const failed = results.filter((r) => !r.ok)
 console.log(`\n${results.length - failed.length}/${results.length} passed\n`)
 if (failed.length) {
