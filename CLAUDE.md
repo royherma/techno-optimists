@@ -30,6 +30,17 @@ Do not restate or re-derive it — link to it.
 - Never ship "this is a prototype" / "not built yet" into user-facing copy. That goes to Roy.
 - Plain words, hyphen not em-dash.
 
+## No prod until a domain is bought
+
+Roy's call, 2026-09-10. **Dev/staging is the only deploy target.** `deploy:prod` stays
+parked and `npm run deploy:dev` is the ship command.
+
+- Do not deploy prod, do not un-park `deploy:prod`, and do not propose it as a next step
+  or a "quick win" - the answer is already no until Roy says a domain exists.
+- A `workers.dev` URL is not a launch. Verified-domain email (`techguyverlabs.org`) does
+  not change this: mail sending and the public URL are separate decisions.
+- The prod bindings in `wrangler.jsonc` are correct and dry-run clean. Leave them.
+
 ## Code is truth
 
 The code is the only source of truth about what exists. This file, the README and every
