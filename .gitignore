@@ -41,3 +41,8 @@ outputs/
 .shots/
 .claude/deploy-lock.json
 *-tmp.mjs
+
+# impeccable: runtime state (pids, ports, heartbeats, logs) is local-only.
+# config.json and mocks/ ARE tracked - they are design-decision artifacts.
+.impeccable/questions/
+.impeccable/build/
