@@ -28,7 +28,7 @@ export default function LiveChallenge() {
       }
       setText('[data-field="title"]', challenge.title)
       setText('[data-field="summary"]', challenge.summary)
-      setText('[data-field="author"]', challenge.author.name)
+      setText('[data-field="author"]', `@${challenge.author.handle}`)
 
       const bodyEl = document.querySelector('[data-field="body"]')
       if (bodyEl) bodyEl.textContent = challenge.body ?? ''

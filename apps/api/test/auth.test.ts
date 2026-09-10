@@ -27,7 +27,7 @@ describe('tokens', () => {
 
 describe('email handling', () => {
   it('lowercases and trims', () => {
-    expect(normalizeEmail('  Roy@Example.COM ')).toBe('roy@example.com')
+    expect(normalizeEmail('  Sam@Example.COM ')).toBe('sam@example.com')
   })
 
   it('keeps gmail dots and plus tags - they can be different people', () => {
@@ -35,7 +35,7 @@ describe('email handling', () => {
   })
 
   it('derives a usable handle', () => {
-    expect(handleFromEmail('roy.herma+news@gmail.com')).toBe('royhermanews')
+    expect(handleFromEmail('sam.rivera+news@example.com')).toBe('samriveranews')
   })
 
   it('falls back when the local part has no usable characters', () => {
@@ -47,7 +47,7 @@ describe('email handling', () => {
   })
 
   it('title-cases a display name', () => {
-    expect(nameFromEmail('roy.herma@gmail.com')).toBe('Roy Herma')
+    expect(nameFromEmail('sam.rivera@example.com')).toBe('Sam Rivera')
   })
 })
 

@@ -58,10 +58,10 @@ const toChallenge = (r: Row, actionRows: Row[]): Challenge => {
     media: json<Media[]>(r.media, []),
     location: r.location == null ? null : String(r.location),
     tags: json<string[]>(r.tags, []),
+    // No `name`. The public identity is the handle - see the Person type.
     author: {
       id: String(r.author_id),
       handle: String(r.author_handle),
-      name: String(r.author_name),
       avatar_url: r.author_avatar == null ? null : String(r.author_avatar),
       location: r.author_location == null ? null : String(r.author_location),
     },
@@ -73,7 +73,7 @@ const toChallenge = (r: Row, actionRows: Row[]): Challenge => {
 }
 
 const SELECT_CHALLENGE = `
-  SELECT c.*, p.handle author_handle, p.name author_name,
+  SELECT c.*, p.handle author_handle,
          p.avatar_url author_avatar, p.location author_location,
          (SELECT COUNT(*) FROM updates u WHERE u.challenge_id = c.id) updates_count
   FROM challenges c JOIN people p ON p.id = c.author_id`
@@ -237,11 +237,11 @@ app.get('/api/challenges/:slug', async (c) => {
   const [counts, updates, helpers] = await Promise.all([
     c.env.DB.prepare('SELECT kind, COUNT(*) n FROM challenge_actions WHERE challenge_id = ? GROUP BY kind').bind(row.id).all(),
     c.env.DB.prepare(
-      `SELECT u.*, p.handle author_handle, p.name author_name, p.avatar_url author_avatar
+      `SELECT u.*, p.handle author_handle, p.avatar_url author_avatar
        FROM updates u JOIN people p ON p.id = u.author_id
        WHERE u.challenge_id = ? ORDER BY u.created_at ASC`).bind(row.id).all(),
     c.env.DB.prepare(
-      `SELECT p.id, p.handle, p.name, p.avatar_url, p.location, p.skills, p.roles,
+      `SELECT p.id, p.handle, p.avatar_url, p.location, p.skills, p.roles,
               GROUP_CONCAT(a.kind) kinds, MAX(a.created_at) latest
        FROM challenge_actions a JOIN people p ON p.id = a.person_id
        WHERE a.challenge_id = ? AND a.kind IN ('can_help','will_test','building_this')
@@ -257,7 +257,6 @@ app.get('/api/challenges/:slug', async (c) => {
       challenge_id: String(u.challenge_id),
       author: {
         id: String(u.author_id), handle: String(u.author_handle),
-        name: String(u.author_name),
         avatar_url: u.author_avatar == null ? null : String(u.author_avatar),
       },
       stage: (u.stage ?? null) as Update['stage'],
@@ -266,7 +265,7 @@ app.get('/api/challenges/:slug', async (c) => {
       created_at: String(u.created_at),
     })),
     people: ((helpers.results ?? []) as Row[]).map((p) => ({
-      id: String(p.id), handle: String(p.handle), name: String(p.name),
+      id: String(p.id), handle: String(p.handle),
       avatar_url: p.avatar_url == null ? null : String(p.avatar_url),
       location: p.location == null ? null : String(p.location),
       skills: json<string[]>(p.skills, []),

@@ -56,7 +56,7 @@ const ranked = ACTION_KINDS.map((k) => [k, c.actions[k]] as const)
         </h1>
         <p data-field="summary" class="mt-2.5 max-w-2xl text-lg leading-relaxed text-(--color-ink-soft)">{c.summary}</p>
         <p class="mt-3 text-sm text-(--color-ink-soft)">
-          Spotted by <span data-field="author" class="font-medium text-(--color-ink)">{c.author.name}</span>
+          Spotted by <span data-field="author" class="font-medium text-(--color-ink)">@{c.author.handle}</span>
           {c.author.location && <span class="text-(--color-ink-faint)"> · {c.author.location}</span>}
         </p>
       </div>
@@ -145,7 +145,7 @@ const ranked = ACTION_KINDS.map((k) => [k, c.actions[k]] as const)
                   ></span>
                   <div>
                     <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
-                      <span class="font-medium">{u.author.name}</span>
+                      <span class="font-medium">@{u.author.handle}</span>
                       {u.stage && <StageStamp stage={u.stage} class="text-[0.72rem]" />}
                       <span class="text-xs text-(--color-ink-faint)">{ago(u.created_at)}</span>
                     </div>
@@ -164,7 +164,7 @@ const ranked = ACTION_KINDS.map((k) => [k, c.actions[k]] as const)
           <ul class="mt-3 border-t border-(--color-rule-soft)">
             {people.map((p) => (
               <li class="border-b border-(--color-rule-soft) py-2.5">
-                <p class="text-sm font-medium">{p.name}</p>
+                <p class="text-sm font-medium">@{p.handle}</p>
                 <p class="text-xs text-(--color-ink-soft)">
                   {p.kinds.map((k) => ACTION_DOING[k]).join(' · ')}
                 </p>

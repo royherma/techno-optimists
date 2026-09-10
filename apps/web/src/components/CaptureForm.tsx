@@ -302,7 +302,7 @@ export default function CaptureForm() {
         </button>
         {error && <p className="text-sm text-(--color-problem)">{error}</p>}
         <p className="text-center text-xs text-(--color-ink-faint)">
-          Posted as {me.name} (@{me.handle})
+          Posted as @{me.handle}
         </p>
       </div>
     </form>
