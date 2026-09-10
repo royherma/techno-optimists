@@ -8,6 +8,11 @@
   "workers_dev": true,
   "observability": { "enabled": true },
 
+  // A thrown error in a Worker reports the line number of the BUNDLE, which is
+  // one minified file and tells you nothing. This uploads the source map with
+  // the deploy so the stack trace in the dashboard names the .ts file and line.
+  "upload_source_maps": true,
+
   // Astro builds static output here; the Worker serves /api/* and the assets
   // handle everything else.
   "assets": {
@@ -31,6 +36,15 @@
 
   "kv_namespaces": [
     { "binding": "CACHE", "id": "2a687cc473ea4b01bc133135b98c69e5" }
+  ],
+
+  // Traffic goes here, not to the ANALYTICS_DB above. Analytics Engine is built
+  // for write-many/aggregate-later: no per-write row cost, no single-threaded
+  // queue in front of it, 3 months retention, read back over SQL at
+  // /accounts/{id}/analytics_engine/sql. Datasets are created on first write -
+  // there is nothing to provision before deploying.
+  "analytics_engine_datasets": [
+    { "binding": "ANALYTICS", "dataset": "to_events" }
   ],
 
   // Media earned its place: the capture path (photo/video of a real problem) is
@@ -65,6 +79,12 @@
       ],
       "kv_namespaces": [
         { "binding": "CACHE", "id": "33b2cb019ab648c78507f7a2a5a4b226" }
+      ],
+      // Bindings are NOT inherited by a named environment - every d1, kv and r2
+      // above is redeclared here for that reason, and this is no different. A
+      // separate dataset so dev traffic never lands in the prod numbers.
+      "analytics_engine_datasets": [
+        { "binding": "ANALYTICS", "dataset": "to_events_dev" }
       ],
       "r2_buckets": [
         { "binding": "MEDIA", "bucket_name": "techno-optimists-media-dev" }
@@ -101,6 +121,9 @@
       ],
       "kv_namespaces": [
         { "binding": "CACHE", "id": "2a687cc473ea4b01bc133135b98c69e5" }
+      ],
+      "analytics_engine_datasets": [
+        { "binding": "ANALYTICS", "dataset": "to_events" }
       ],
       "r2_buckets": [
         { "binding": "MEDIA", "bucket_name": "techno-optimists-media" }
