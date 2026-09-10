@@ -103,3 +103,30 @@ describe('routes', () => {
     expect(r.status).toBe(400)
   })
 })
+
+/**
+ * The magic link is a bearer token for the account. If the response body ever
+ * carries it where a stranger can POST an address, that stranger owns the
+ * account. Dev keeps the convenience; prod must fail closed.
+ */
+describe('magic link is never returned to the caller in prod', () => {
+  const requestLink = (environment?: string) =>
+    app.request('/api/auth/request', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: 'stranger@example.com' }),
+    }, { DB: stubDb() as unknown as D1Database, ENVIRONMENT: environment })
+
+  it('withholds the link in prod, with no mail key configured', async () => {
+    const r = await requestLink('prod')
+    const body = await r.json() as { ok: boolean; sent: boolean; dev_link?: string }
+    expect(r.status).toBe(200)
+    expect(body.sent).toBe(false)
+    expect(body.dev_link).toBeUndefined()
+  })
+
+  it('still returns the link in dev, so local sign-in works without mail', async () => {
+    const body = await (await requestLink('dev')).json() as { dev_link?: string }
+    expect(body.dev_link).toMatch(/\/api\/auth\/callback\?token=[0-9a-f]{64}/)
+  })
+})
