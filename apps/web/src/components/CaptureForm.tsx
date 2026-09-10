@@ -172,13 +172,13 @@ export default function CaptureForm() {
       <section className="space-y-3">
         <Legend n="01" label="What you saw" />
         <div className="flex flex-wrap gap-3">
+          {/*
+            The thumbnail keeps the photo's own shape, bounded so a panorama
+            cannot run off the row and a tall portrait cannot tower over it.
+            Contain, not cover: this is the last look before posting, so it has
+            to show what will actually be sent.
+          */}
           {shots.map((shot) => (
-            {/*
-              The thumbnail keeps the photo's own shape, bounded so a panorama
-              cannot run off the row and a tall portrait cannot tower over it.
-              Contain, not cover: this is the last look before posting, so it
-              has to show what will actually be sent.
-            */}
             <figure
               key={shot.id}
               className="relative h-28 overflow-hidden border border-(--color-rule-soft) bg-(--color-paper-sunk)"
