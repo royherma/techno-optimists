@@ -26,8 +26,13 @@ docs/       concept, PRDs, decisions
 scripts/    one-off and dev scripts
 ```
 
+## Stack
+
+Picked 2026-09-10 - all Cloudflare. Astro 7 + React islands on the front, Hono on Workers
+behind it, D1/R2/KV for data. Full table + why: [`docs/2026-09-10-stack.md`](docs/2026-09-10-stack.md).
+
 ## Next
 
-1. Pick the stack and scaffold `apps/web` (feed + challenge page, fake data).
+1. Scaffold `apps/web` (feed + Challenge page, fake data).
 2. Challenge data shape in `packages/types`.
 3. AI ingest spike: media -> transcript -> structured Challenge draft.
