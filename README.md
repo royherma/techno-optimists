@@ -17,7 +17,7 @@ and converges on one lifecycle: Spot -> Understand -> Ideas -> Build -> Test -> 
 ## Layout
 
 ```
-apps/web        Astro static site: feed + Challenge page, one React island
+apps/web        Astro static site: index, Challenge, post, sign-in + 6 React islands
 apps/api        Hono API on Workers
 packages/types  the vocabulary lock - Challenge types, stages, the 7 actions
 packages/db     D1 schema + generated seed
@@ -26,7 +26,8 @@ scripts/        seed generation, build orchestration
 ```
 
 One Worker serves both: the assets binding handles pages, the Hono app handles
-`/api/*`. Same origin, so the browser never needs a base URL or CORS.
+`/api/*`, `/media/*` and `/c/:slug`. Same origin, so the browser never needs a
+base URL or CORS.
 
 ## Stack
 
