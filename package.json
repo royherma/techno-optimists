@@ -20,12 +20,10 @@
     "db:reset:local": "npm run db:local && npm run db:seed:local",
     "build:web:only": "npm --workspace web run build",
     "deploy:dev": "npm run build:web && wrangler deploy --env dev",
-    "deploy:prod": "npm run build:web && wrangler deploy --env prod",
+    "deploy:prod": "echo \"prod is parked until the domain is bought - see wrangler.jsonc env.prod. To deploy anyway: npm run build:web && npx wrangler deploy --env prod\" && exit 1",
     "db:dev": "wrangler d1 execute techno-optimists-dev --remote --file packages/db/schema.sql",
     "db:seed:dev": "wrangler d1 execute techno-optimists-dev --remote --file packages/db/seed.sql",
     "db:reset:dev": "npm run db:dev && npm run db:seed:dev",
-    "db:prod": "wrangler d1 execute techno-optimists --remote --file packages/db/schema.sql",
-    "db:seed:prod": "wrangler d1 execute techno-optimists --remote --file packages/db/seed.sql",
     "tail:dev": "wrangler tail --env dev",
     "tail:prod": "wrangler tail --env prod"
   },

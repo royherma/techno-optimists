@@ -59,6 +59,10 @@
       ]
     },
 
+    // PARKED until a domain is bought. The config below is correct and
+    // dry-run clean - only `npm run deploy:prod` is disabled, so re-enabling
+    // is a one-line change to that script. Nothing has ever been deployed
+    // here and its D1 is empty (0 tables).
     "prod": {
       "name": "techno-optimists",
       "workers_dev": true,
