@@ -20,6 +20,26 @@ const arg = (flag) => {
 }
 const EMAIL = arg('--email') ?? 'claude-e2e-probe@example.com'
 
+/**
+ * `--inspect <token-or-url>` answers "why did THIS link fail?" without spending
+ * it. Hashing the token and reading the row tells us which of the four states
+ * it is in - the callback would tell us the same thing and consume the link
+ * doing it, which is how a reader's one live link kept disappearing.
+ */
+const INSPECT = arg('--inspect')
+if (INSPECT) {
+  const token = INSPECT.match(/token=([0-9a-f]+)/)?.[1] ?? INSPECT.trim()
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token))
+  const hash = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
+  console.log(`token  ${token.slice(0, 16)}...\nhash   ${hash}\n`)
+  console.log('Read the row with:')
+  console.log(`  npx wrangler d1 execute techno-optimists-dev --remote --json --command "SELECT email, used_at, expires_at, datetime('now') now FROM magic_links WHERE token_hash='${hash}';"`)
+  console.log('\nno row      -> the link was superseded by a newer request (error=unknown)')
+  console.log('used_at set -> already redeemed (error=used)')
+  console.log('expires_at past -> timed out (error=expired)')
+  process.exit(0)
+}
+
 let failed = false
 const step = (ok, label, detail) => {
   if (!ok) failed = true
