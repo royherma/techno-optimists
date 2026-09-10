@@ -40,6 +40,27 @@ doc go stale the moment a commit lands; they describe intent, never state.
 - Found a doc that contradicts the code? The doc is wrong. Fix it in the same commit.
 - No status or progress sections in this file. `git log` and the code already say it.
 
+## Never lose work
+
+Two people edit this repo at once. An untracked file is one parallel `git checkout`
+away from gone with no recovery - only a commit survives, via the reflog.
+
+- Commit the moment a change compiles, not when it feels done: `git add -A &&
+  git commit -m "wip: <what>"`. `wip:` is a normal state here, not an apology.
+- Push after committing. The push is the only off-machine backup.
+- `git status` before every build, deploy, checkout or branch switch. Files you did
+  not touch showing as modified means the other session is live - commit first,
+  investigate second.
+- Never `git stash`, `reset --hard`, `checkout -- .` or `clean -fd` on a dirty tree.
+  A wip commit is the stash.
+- Untracked `??` files are someone's work in progress, never junk. Commit them or
+  gitignore them - do not delete. Safe to ignore without asking: `*.swp`,
+  `.DS_Store`, build output, `*-tmp.mjs` probes.
+- Committing someone else's in-flight files is correct when they compile. Say plainly
+  in the message that it is a safety commit, not a claim the feature is finished.
+
+Full protocol: `~/.claude/reference/rules/never-lose-work.md`.
+
 ## Conventions
 
 - Docs: `docs/YYYY-MM-DD-slug.md`.
