@@ -1,0 +1,33 @@
+---
+import SheetFrame from './SheetFrame.astro'
+import TitleBlock from './TitleBlock.astro'
+import { EASTINGS, editionOf, northings } from '../lib/vocab'
+
+/*
+ * One sheet, drawn once, used by every page. The margins carry the graticule,
+ * the neatline is the heavy inner border, and everything else sits inside it.
+ * Both pages share this so the index and a single entry are visibly the same
+ * document at two scales, which is the whole conceit.
+ */
+interface Props { sheet: string; live: number; rows?: number }
+const { sheet, live, rows = 9 } = Astro.props
+const edition = editionOf()
+---
+<div class="relative mx-auto max-w-[104rem] px-2 sm:px-3">
+  <div class="relative [--sheet-margin:1.5rem] sm:[--sheet-margin:1.75rem]">
+    <SheetFrame eastings={EASTINGS} northings={northings(rows)} />
+
+    <!-- The neatline. Everything a reader is meant to read lives inside it. -->
+    <div class="m-(--sheet-margin) border-2 border-(--color-rule) bg-(--color-paper)">
+      <TitleBlock sheet={sheet} edition={edition} live={live} />
+      <slot />
+
+      <!-- Bottom strip: publisher, strapline, sheet number. Standard furniture. -->
+      <div class="flex flex-wrap items-baseline gap-x-6 gap-y-1 border-t-2 border-(--color-rule) px-4 py-2 font-[family-name:--font-mono] text-[0.66rem] uppercase tracking-[0.12em] text-(--color-ink-soft)">
+        <span>Techno Optimists</span>
+        <span class="mx-auto hidden text-center sm:block">Stronger communities through brighter ideas</span>
+        <span class="ml-auto sm:ml-0">Sheet {sheet} &mdash; {edition}</span>
+      </div>
+    </div>
+  </div>
+</div>

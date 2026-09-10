@@ -14,25 +14,13 @@ const { title, description = 'Find interesting real-world problems and help solv
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" />
   </head>
-  <body class="min-h-screen">
-    <!-- The title block of a sheet: who published it, and what it covers. -->
-    <header class="border-b-2 border-(--color-rule)">
-      <div class="mx-auto flex max-w-[88rem] flex-wrap items-baseline gap-x-6 gap-y-1 px-5 py-3">
-        <a href="/" class="text-[1.25rem] font-bold uppercase tracking-[-0.01em]">Techno Optimists</a>
-        <p class="hidden text-[0.72rem] uppercase tracking-[0.14em] text-(--color-ink-soft) md:block">
-          People / Ideas / Places / Brighter tomorrows
-        </p>
-        <p class="ml-auto text-[0.72rem] uppercase tracking-[0.1em] text-(--color-ink-soft)">
-          Things can be better. We can build better.
-        </p>
-      </div>
-    </header>
+  <!--
+    The page is the drawing table: faint graph paper, and the sheet laid on top
+    of it. The paper is not texture for its own sake - it is what makes the
+    sheet read as a sheet, an object with edges, rather than as a page that
+    happens to have a border drawn on it.
+  -->
+  <body class="min-h-screen bg-(--color-table) py-4 sm:py-7">
     <slot />
-    <footer class="mt-16 border-t border-(--color-rule)">
-      <div class="mx-auto flex max-w-[88rem] flex-wrap gap-x-6 gap-y-1 px-5 py-5 text-[0.72rem] uppercase tracking-[0.1em] text-(--color-ink-soft)">
-        <span>Techno Optimists</span>
-        <span class="ml-auto normal-case tracking-normal text-[0.78rem]">For people who believe technology can build a better present and a better future.</span>
-      </div>
-    </footer>
   </body>
 </html>
