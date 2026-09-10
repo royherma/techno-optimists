@@ -3,6 +3,9 @@
 -- can never queue the product database. creators-of-today learned this the hard
 -- way and split it after the fact; we start split.
 
+DROP TABLE IF EXISTS sessions;
+DROP TABLE IF EXISTS magic_links;
+DROP TABLE IF EXISTS identities;
 DROP TABLE IF EXISTS challenge_actions;
 DROP TABLE IF EXISTS updates;
 DROP TABLE IF EXISTS challenges;
@@ -78,3 +81,43 @@ CREATE TABLE updates (
 );
 
 CREATE INDEX idx_updates_challenge ON updates(challenge_id, created_at DESC);
+
+-- ---------------------------------------------------------------------------
+-- Auth. Email magic links only: no passwords to leak, no OAuth dependency on a
+-- company that can change its terms. A person is created on first successful
+-- link click, never before - an unclicked link must not litter the people table.
+-- ---------------------------------------------------------------------------
+
+-- Email lives here, NOT on people. people is read by every feed query and gets
+-- returned to other users; email is private and must never ride along by
+-- accident on a SELECT p.*.
+CREATE TABLE identities (
+  person_id      TEXT PRIMARY KEY REFERENCES people(id) ON DELETE CASCADE,
+  email          TEXT NOT NULL UNIQUE,
+  created_at     TEXT NOT NULL DEFAULT (datetime('now')),
+  last_login_at  TEXT
+);
+
+-- A pending magic link. Stores a SHA-256 of the token, never the token itself:
+-- a leaked database read must not let anyone log in as anyone.
+CREATE TABLE magic_links (
+  token_hash  TEXT PRIMARY KEY,
+  email       TEXT NOT NULL,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  expires_at  TEXT NOT NULL,
+  -- Set when redeemed. A link works exactly once.
+  used_at     TEXT
+);
+
+CREATE INDEX idx_magic_links_email ON magic_links(email, created_at DESC);
+
+-- Live sessions. Same hashing rule as magic_links, same reason.
+CREATE TABLE sessions (
+  token_hash  TEXT PRIMARY KEY,
+  person_id   TEXT NOT NULL REFERENCES people(id) ON DELETE CASCADE,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  expires_at  TEXT NOT NULL,
+  user_agent  TEXT
+);
+
+CREATE INDEX idx_sessions_person ON sessions(person_id, created_at DESC);
