@@ -4,10 +4,7 @@
 
 Things can be better. We can build better.
 
-## Status
-
-The feed and Challenge page run locally on seed data. The concept lives in
-[`docs/2026-09-10-concept.md`](docs/2026-09-10-concept.md) - read that first.
+The concept lives in [`docs/2026-09-10-concept.md`](docs/2026-09-10-concept.md) - read that first.
 
 ## What this is
 
@@ -55,9 +52,3 @@ and the build empties `apps/web/dist`, which the main config serves.
 
 Seed art in `apps/web/public/seed/` is generated - `node scripts/gen-seed-art.mjs`
 redraws it, `node scripts/gen-seed.mjs` rebuilds `packages/db/seed.sql`.
-
-## Next
-
-1. Auth. The action endpoint trusts an `x-person-id` header until it lands.
-2. Submit a Challenge - there is no write path from the UI yet.
-3. AI ingest spike: media -> transcript -> structured Challenge draft.
