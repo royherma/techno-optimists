@@ -14,12 +14,9 @@ import { getFeed } from '../lib/api'
 const { challenges } = await getFeed('?limit=3')
 ---
 <Base title="Not on this sheet - Techno Optimists" description="That Challenge is not on this sheet." noindex>
-  <Sheet sheet="00" live={challenges.length}>
+  <Sheet>
     <main class="px-5 py-16">
-      <p class="font-[family-name:--font-mono] text-[0.7rem] uppercase tracking-[0.1em] text-(--color-ink-soft)">
-        Sheet 00 - no such entry
-      </p>
-      <h1 class="mt-3 max-w-2xl font-[family-name:--font-display] text-[1.75rem] leading-[1.12] tracking-tight sm:text-[2.1rem]">
+      <h1 class="max-w-2xl font-[family-name:--font-display] text-[1.75rem] leading-[1.12] tracking-tight sm:text-[2.1rem]">
         That Challenge is not on this sheet
       </h1>
       <p class="mt-3 max-w-xl text-lg leading-relaxed text-(--color-ink-soft)">

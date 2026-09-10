@@ -1,42 +1,17 @@
 ---
 /*
- * The title block. On a survey sheet this is the first thing you read and the
- * only place the sheet describes itself: who drew it, what edition, how much is
- * live on it.
+ * The masthead. Just the name, linking home.
  *
- * It used to carry four more panels: a specification list (GRID 1000 m,
- * PROJECTION LOCAL TM, DATUM TO-2026, CONTOUR INTERVAL 1 STAGE), a scale bar
- * reading 1:250,000, and a north arrow. Every one of those was fiction. The
- * sheet has no projection, no datum and no scale - the grid references are an
- * index derived from an id, which vocab.ts says outright - so the panel
- * described measurements that do not exist. It read as authority and carried
- * none, and it cost the top of every page on the site.
+ * It used to carry the apparatus of a survey sheet: a specification list, a
+ * scale bar, a north arrow, a sheet number and edition, a live count, and a
+ * vertical strapline. Every one of those was fiction - the sheet has no
+ * projection, datum or scale, the sheet number was a filter index and the
+ * edition a date arithmetic. They read as authority, carried none, and cost
+ * the top of every page.
  */
-interface Props { sheet: string; edition: string; live: number }
-const { sheet, edition, live } = Astro.props
 ---
-<div class="grid border-b-2 border-(--color-rule) lg:grid-cols-[minmax(0,1fr)_auto]">
-  <!-- Who and what. The count is live, which is the point of an edition. -->
-  <div class="border-(--color-rule) px-5 py-4 lg:border-r">
-    <a href="/" class="block font-[family-name:--font-display] text-[2.1rem] font-bold uppercase leading-[0.95] tracking-[-0.02em] sm:text-[2.6rem]">
-      Techno Optimists
-    </a>
-    <p class="mt-2 font-[family-name:--font-mono] text-[0.72rem] font-semibold uppercase tracking-[0.06em]">
-      Sheet {sheet} - Edition {edition}
-    </p>
-    <p class="font-[family-name:--font-mono] text-[0.72rem] font-semibold uppercase tracking-[0.06em]">
-      Live challenges: <span class="tabular-nums">{live.toLocaleString('en-US')}</span>
-    </p>
-  </div>
-
-  <!--
-    The strapline, set as a stack the way a sheet sets its subtitle. It is the
-    one piece of furniture here that says something true about the product, so
-    it is what survived.
-  -->
-  <div class="hidden items-center px-5 py-4 lg:flex">
-    <p class="font-[family-name:--font-mono] text-[0.68rem] uppercase leading-[1.7] tracking-[0.22em] text-(--color-ink-soft)">
-      People<br />Ideas<br />Places<br />Brighter<br />Tomorrows
-    </p>
-  </div>
+<div class="border-b-2 border-(--color-rule) px-5 py-4">
+  <a href="/" class="block font-[family-name:--font-display] text-[2.1rem] font-bold uppercase leading-[0.95] tracking-[-0.02em] sm:text-[2.6rem]">
+    Techno Optimists
+  </a>
 </div>

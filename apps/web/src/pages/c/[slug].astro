@@ -9,7 +9,7 @@ import StageStamp from '../../components/StageStamp.astro'
 import { getChallenge, getFeed } from '../../lib/api'
 import {
   ACTION_DOING, ACTION_SHORT, STAGE_ORDER, STAGE_STAMP,
-  TYPE_LABEL, ago, count, depthLabel, depthScale, gridRef, sheetNo, stageColor,
+  TYPE_LABEL, ago, count, depthLabel, depthScale, gridRef, stageColor,
 } from '../../lib/vocab'
 import { ACTION_KINDS } from '../../../../../packages/types/index'
 
@@ -31,7 +31,7 @@ const ranked = ACTION_KINDS.map((k) => [k, c.actions[k]] as const)
   .filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1])
 ---
 <Base title={`${c.title} - Techno Optimists`} description={c.summary}>
-  <Sheet sheet={sheetNo(c.type)} live={peers.length}>
+  <Sheet>
   <main class="px-5 py-6">
     <a href="/" class="ink-transition ink-underline font-[family-name:--font-mono] text-[0.7rem] uppercase tracking-[0.1em] text-(--color-ink-soft) hover:text-(--color-ink) hover:decoration-current">
       ← Back to the index

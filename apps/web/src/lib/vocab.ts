@@ -171,32 +171,5 @@ export const ago = (iso: string) => {
   return `${Math.floor(d / 365)}y ago`
 }
 
-/**
- * The graticule printed in the sheet margins. It is one continuous coordinate
- * space, spaced evenly, so the numbers on the left edge and the right edge of a
- * row agree - which is the only property that makes margin coordinates worth
- * printing at all.
- */
-export const EASTINGS = [4400, 4500, 4600, 4700, 4800, 4900, 5000, 5100, 5200, 5300]
-
-export const northings = (rows: number) => {
-  const n = Math.max(3, Math.min(12, Math.ceil(rows / 2) + 2))
-  return Array.from({ length: n }, (_, i) => 2150 - i * 50)
-}
-
-/**
- * Sheet number and edition. Both are derived, never typed in: the sheet number
- * comes from which slice of the index you are reading, and the edition from the
- * date it was drawn. A sheet that claims an edition it cannot justify is the
- * cartographic equivalent of a fake timestamp.
- */
-export const editionOf = (d = new Date()) =>
-  `${d.getUTCFullYear()}.${Math.floor(d.getUTCMonth() / 4) + 1}`
-
-export const sheetNo = (filter: string) => {
-  const i = ['', 'problem', 'idea', 'experiment', 'build'].indexOf(filter)
-  return String((i < 0 ? 0 : i) + 4).padStart(2, '0')
-}
-
 /** Row number in the index column: 01, 02, ... as printed on the sheet. */
 export const rowNo = (i: number) => String(i + 1).padStart(2, '0')
