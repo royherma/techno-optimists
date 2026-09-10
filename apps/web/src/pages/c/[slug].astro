@@ -8,7 +8,7 @@ import MediaPlate from '../../components/MediaPlate.astro'
 import StageStamp from '../../components/StageStamp.astro'
 import { getChallenge, getFeed } from '../../lib/api'
 import {
-  ACTION_DOING, ACTION_SHORT, STAGE_MEANING, STAGE_ORDER, STAGE_STAMP,
+  ACTION_DOING, ACTION_SHORT, STAGE_ORDER, STAGE_STAMP,
   TYPE_LABEL, ago, count, depthLabel, depthScale, gridRef, sheetNo, stageColor,
 } from '../../lib/vocab'
 import { ACTION_KINDS } from '../../../../../packages/types/index'
@@ -56,14 +56,13 @@ const ranked = ACTION_KINDS.map((k) => [k, c.actions[k]] as const)
         </p>
       </div>
 
-      <div class="flex items-center gap-4">
-        <div class="text-(--color-ink)">
-          <ContourRings rings={rings} color={stageColor(c.stage)} label={`Impact: ${depthLabel(rings)}`} size={54} />
-        </div>
-        <div>
-          <StageStamp stage={c.stage} class="text-[1.3rem]" />
-          <p class="mt-0.5 text-[0.75rem] text-(--color-ink-soft)">{STAGE_MEANING[c.stage]}</p>
-        </div>
+      <!--
+        Rings only. The stage stamp and its meaning used to sit here too, and
+        the lifecycle strip immediately below says both again, in sequence and
+        in colour - so this cluster was restating its neighbour.
+      -->
+      <div class="shrink-0 text-(--color-ink)">
+        <ContourRings rings={rings} color={stageColor(c.stage)} label={`Impact: ${depthLabel(rings)}`} size={54} />
       </div>
     </div>
 

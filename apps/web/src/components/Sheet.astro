@@ -14,7 +14,14 @@ const { sheet, live, rows = 9 } = Astro.props
 const edition = editionOf()
 ---
 <div class="relative mx-auto max-w-[104rem] px-2 sm:px-3">
-  <div class="relative [--sheet-margin:1.5rem] sm:[--sheet-margin:1.75rem]">
+  <!--
+    The margin carries the graticule, so it cannot go to zero without taking
+    the sheet's edges with it. But at 390px a 1.5rem margin on both sides, plus
+    the 2px neatline and the content padding, left roughly 150px of text column
+    and the entry title set one word per line. The phone gets a hairline
+    margin; the graticule earns its full width from the first breakpoint up.
+  -->
+  <div class="relative [--sheet-margin:0.5rem] sm:[--sheet-margin:1.75rem]">
     <SheetFrame eastings={EASTINGS} northings={northings(rows)} />
 
     <!-- The neatline. Everything a reader is meant to read lives inside it. -->

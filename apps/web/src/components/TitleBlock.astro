@@ -1,29 +1,21 @@
 ---
-import NorthArrow from './NorthArrow.astro'
-import ScaleBar from './ScaleBar.astro'
-
 /*
  * The title block. On a survey sheet this is the first thing you read and the
- * only place the sheet describes itself: who drew it, what edition, what the
- * marks are measured in. It earns its size here because it does the same job -
- * a reader who has never seen the product learns from this strip that the sheet
- * is a survey of live problems, and that the units are Challenges.
+ * only place the sheet describes itself: who drew it, what edition, how much is
+ * live on it.
  *
- * The specification panel is honest: every value is either fixed by the design
- * or read off the feed. Nothing here is a number we cannot defend.
+ * It used to carry four more panels: a specification list (GRID 1000 m,
+ * PROJECTION LOCAL TM, DATUM TO-2026, CONTOUR INTERVAL 1 STAGE), a scale bar
+ * reading 1:250,000, and a north arrow. Every one of those was fiction. The
+ * sheet has no projection, no datum and no scale - the grid references are an
+ * index derived from an id, which vocab.ts says outright - so the panel
+ * described measurements that do not exist. It read as authority and carried
+ * none, and it cost the top of every page on the site.
  */
 interface Props { sheet: string; edition: string; live: number }
 const { sheet, edition, live } = Astro.props
-
-const SPEC: [string, string][] = [
-  ['GRID', '1000 m'],
-  ['PROJECTION', 'LOCAL TM'],
-  ['DATUM', 'TO-2026'],
-  ['CONTOUR INTERVAL', '1 STAGE'],
-  ['UNITS', 'CHALLENGES'],
-]
 ---
-<div class="grid border-b-2 border-(--color-rule) lg:grid-cols-[minmax(0,1fr)_auto_auto_minmax(14rem,1fr)_auto]">
+<div class="grid border-b-2 border-(--color-rule) lg:grid-cols-[minmax(0,1fr)_auto]">
   <!-- Who and what. The count is live, which is the point of an edition. -->
   <div class="border-(--color-rule) px-5 py-4 lg:border-r">
     <a href="/" class="block font-[family-name:--font-display] text-[2.1rem] font-bold uppercase leading-[0.95] tracking-[-0.02em] sm:text-[2.6rem]">
@@ -37,28 +29,14 @@ const SPEC: [string, string][] = [
     </p>
   </div>
 
-  <!-- The strapline, set as a stack the way a sheet sets its subtitle. -->
-  <div class="hidden items-center border-r border-(--color-rule) px-5 py-4 lg:flex">
+  <!--
+    The strapline, set as a stack the way a sheet sets its subtitle. It is the
+    one piece of furniture here that says something true about the product, so
+    it is what survived.
+  -->
+  <div class="hidden items-center px-5 py-4 lg:flex">
     <p class="font-[family-name:--font-mono] text-[0.68rem] uppercase leading-[1.7] tracking-[0.22em] text-(--color-ink-soft)">
       People<br />Ideas<br />Places<br />Brighter<br />Tomorrows
     </p>
-  </div>
-
-  <!-- What the marks mean, in the units the sheet is drawn in. -->
-  <dl class="hidden border-r border-(--color-rule) px-5 py-4 font-[family-name:--font-mono] text-[0.68rem] uppercase leading-[1.65] tracking-[0.04em] lg:block">
-    {SPEC.map(([k, v]) => (
-      <div class="flex gap-2">
-        <dt class="text-(--color-ink-soft)">{k}:</dt>
-        <dd>{v}</dd>
-      </div>
-    ))}
-  </dl>
-
-  <div class="hidden items-center justify-center border-r border-(--color-rule) px-6 py-4 lg:flex">
-    <ScaleBar />
-  </div>
-
-  <div class="hidden items-center justify-center px-6 py-4 lg:flex">
-    <NorthArrow />
   </div>
 </div>
