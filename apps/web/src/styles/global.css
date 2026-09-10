@@ -50,6 +50,14 @@
   --font-display: "Instrument Serif", ui-serif, Georgia, serif;
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+
+  /*
+   * One timing for every hover/focus/active response on the sheet - a rule
+   * thickening, a tint washing in, an underline drawing. Ad-hoc durations per
+   * component read as jitter once several are on screen together; a single
+   * shared value keeps every affordance moving at the same speed.
+   */
+  --ease-ink: 120ms ease-out;
 }
 
 @layer base {
