@@ -3,31 +3,43 @@
 /*
  * Tokens live here and ONLY here. No raw hex in components.
  *
- * The look: paper, not dashboard. This is a place where a farmer in Chiang Mai
- * and a physicist in California read the same page, so it leans editorial -
- * generous type, real photographs, restrained colour. Colour carries meaning
- * (a Challenge's type and stage) rather than decoration.
+ * The look: a working survey sheet, not a dashboard and not a social feed.
+ * White ground, black rules, and saturated ink that always MEANS something -
+ * one colour per lifecycle stage, never decoration. A farmer in Chiang Mai and
+ * a physicist in California read the same page, so legibility outranks
+ * atmosphere and every mark on the sheet encodes a real quantity.
  */
 @theme static {
-  --color-paper:       oklch(98.4% 0.005 85);
-  --color-paper-sunk:  oklch(96.2% 0.008 85);
-  --color-ink:         oklch(23% 0.012 65);
-  --color-ink-soft:    oklch(48% 0.012 65);
-  --color-ink-faint:   oklch(66% 0.010 65);
-  --color-rule:        oklch(90% 0.008 75);
+  --color-paper:       oklch(100% 0 0);
+  --color-paper-sunk:  oklch(97% 0 0);
+  --color-ink:         oklch(15% 0 0);
+  --color-ink-soft:    oklch(45% 0 0);
+  --color-ink-faint:   oklch(62% 0 0);
+  --color-rule:        oklch(15% 0 0);
+  --color-rule-soft:   oklch(86% 0 0);
 
-  /* One accent, used sparingly: live activity and primary action. */
-  --color-signal:      oklch(58% 0.17 42);
-  --color-signal-soft: oklch(94% 0.035 42);
+  /*
+   * The seven lifecycle stages. Colour is the primary carrier of stage on the
+   * sheet, so these must stay maximally distinguishable from each other -
+   * changing one to "look nicer" breaks the legend's promise.
+   */
+  --color-spot:        oklch(55% 0.22 258);
+  --color-understand:  oklch(56% 0.21 27);
+  --color-ideas:       oklch(52% 0.17 148);
+  --color-build:       oklch(64% 0.19 48);
+  --color-test:        oklch(50% 0.24 300);
+  --color-learn:       oklch(62% 0.13 205);
+  --color-improve:     oklch(60% 0.26 350);
 
-  /* Challenge type. Each entry point reads differently at a glance. */
-  --color-problem:     oklch(56% 0.16 28);
-  --color-idea:        oklch(60% 0.14 85);
-  --color-experiment:  oklch(56% 0.12 250);
-  --color-build:       oklch(52% 0.13 155);
+  /* Challenge type. How it entered the world, distinct from where it sits now. */
+  --color-problem:     oklch(56% 0.21 27);
+  --color-idea:        oklch(64% 0.19 48);
+  --color-experiment:  oklch(50% 0.24 300);
+  --color-build-type:  oklch(52% 0.17 148);
 
   --font-display: "Instrument Serif", ui-serif, Georgia, serif;
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
 }
 
 @layer base {
@@ -38,8 +50,8 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
-  ::selection { background: var(--color-signal-soft); }
-  :focus-visible { outline: 2px solid var(--color-signal); outline-offset: 2px; }
+  ::selection { background: oklch(88% 0.06 258); }
+  :focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

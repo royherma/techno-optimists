@@ -1,36 +1,96 @@
 ---
 import Base from '../layouts/Base.astro'
-import ChallengeCard from '../components/ChallengeCard.astro'
+import ChallengeRow from '../components/ChallengeRow.astro'
+import SheetLegend from '../components/SheetLegend.astro'
 import { getFeed } from '../lib/api'
-import { TYPE_LABEL } from '../lib/vocab'
-import { CHALLENGE_TYPES } from '../../../../packages/types/index'
+import { STAGE_STAMP, TYPE_LABEL, count, depthScale } from '../lib/vocab'
+import { CHALLENGE_TYPES, STAGES } from '../../../../packages/types/index'
 
-const { challenges } = await getFeed('?limit=24')
+const type = Astro.url.searchParams.get('type') ?? ''
+const valid = (CHALLENGE_TYPES as readonly string[]).includes(type)
+const { challenges } = await getFeed(`?limit=24${valid ? `&type=${type}` : ''}`)
+
+// Ring depth is relative to the sheet in front of the reader, so it is scaled
+// once here rather than per row.
+const depth = depthScale(challenges)
+
+/*
+ * The sheet states its own contents. This is the survey-sheet equivalent of a
+ * quantity table: how much work sits at each stage right now, counted off the
+ * same feed the index below is built from, so the two can never disagree.
+ */
+const byStage = STAGES.map((s) => [s, challenges.filter((c) => c.stage === s).length] as const)
 ---
 <Base title="Techno Optimists - find real problems, help solve them">
-  <main class="mx-auto max-w-6xl px-5">
-    <section class="border-b border-(--color-rule) py-12 sm:py-16">
-      <h1 class="max-w-3xl font-[family-name:--font-display] text-4xl leading-[1.1] tracking-tight sm:text-[3.25rem]">
-        See something that could be better? Help make it better.
-      </h1>
-      <p class="mt-4 max-w-xl text-lg leading-relaxed text-(--color-ink-soft)">
-        Real problems from everywhere. Anyone can spot one, and documenting a
-        good problem with no solution is a complete contribution.
-      </p>
+  <main class="mx-auto max-w-[88rem] px-5">
+    <section class="grid gap-8 border-b border-(--color-rule) py-8 sm:py-10 lg:grid-cols-[1fr_17rem] lg:gap-10">
+      <div class="min-w-0">
+        <h1 class="max-w-3xl font-[family-name:--font-display] text-4xl leading-[1.08] tracking-tight sm:text-[3.25rem]">
+          See something that could be better? Help make it better.
+        </h1>
+        <p class="mt-3 max-w-xl text-lg leading-relaxed text-(--color-ink-soft)">
+          Real problems from everywhere. Anyone can spot one, and documenting a
+          good problem with no solution is a complete contribution.
+        </p>
+      </div>
+
+      <!-- Quantities on this sheet, read off the same feed as the index. -->
+      <dl class="self-end border-t border-(--color-rule) pt-3 text-[0.8rem]">
+        <div class="flex items-baseline justify-between pb-2">
+          <dt class="text-[0.7rem] font-semibold uppercase tracking-[0.12em]">On this sheet</dt>
+          <dd class="tabular-nums font-semibold">{count(challenges.length)}</dd>
+        </div>
+        {byStage.map(([s, n]) => (
+          <div class="flex items-baseline gap-2 border-t border-(--color-rule-soft) py-1">
+            <span class="h-2 w-2 shrink-0" style={n > 0 ? `background:var(--color-${s})` : 'background:var(--color-rule-soft)'}></span>
+            <dt class:list={['uppercase tracking-[0.05em] text-[0.72rem] font-semibold', n === 0 && 'text-(--color-ink-faint)']}
+                style={n > 0 ? `color:var(--color-${s})` : ''}>{STAGE_STAMP[s]}</dt>
+            <dd class:list={['ml-auto tabular-nums', n === 0 ? 'text-(--color-ink-faint)' : 'text-(--color-ink)']}>{n}</dd>
+          </div>
+        ))}
+      </dl>
     </section>
 
-    <nav class="flex flex-wrap gap-2 py-6" aria-label="Filter by type">
-      <a href="/" class="rounded-full border border-(--color-ink) bg-(--color-ink) px-3.5 py-1.5 text-sm text-(--color-paper)">Everything</a>
-      {CHALLENGE_TYPES.map((t) => (
-        <a href={`/?type=${t}`}
-           class="rounded-full border border-(--color-rule) px-3.5 py-1.5 text-sm transition-colors hover:border-(--color-ink-faint)">
-          {TYPE_LABEL[t]}
-        </a>
-      ))}
-    </nav>
+    <div class="gap-10 lg:grid lg:grid-cols-[1fr_17rem]">
+      <div class="min-w-0">
+        <nav
+          class="flex flex-wrap items-baseline gap-x-5 gap-y-2 border-b border-(--color-rule) py-3"
+          aria-label="Filter by type"
+        >
+          <span class="text-[0.7rem] uppercase tracking-[0.14em] text-(--color-ink-soft)">Index</span>
+          <a
+            href="/"
+            aria-current={valid ? undefined : 'page'}
+            class:list={['text-[0.85rem]', valid ? 'text-(--color-ink-soft) hover:text-(--color-ink)' : 'font-semibold underline underline-offset-4']}
+          >Everything</a>
+          {CHALLENGE_TYPES.map((t) => (
+            <a
+              href={`/?type=${t}`}
+              aria-current={type === t ? 'page' : undefined}
+              class:list={['text-[0.85rem]', type === t ? 'font-semibold underline underline-offset-4' : 'text-(--color-ink-soft) hover:text-(--color-ink)']}
+            >{TYPE_LABEL[t]}</a>
+          ))}
+          <span class="ml-auto text-[0.7rem] uppercase tracking-[0.1em] text-(--color-ink-soft)">
+            <span class="tabular-nums text-(--color-ink)">{count(challenges.length)}</span> live
+          </span>
+        </nav>
 
-    <div class="grid grid-cols-1 gap-x-6 gap-y-10 pb-16 sm:grid-cols-2 lg:grid-cols-3">
-      {challenges.map((c, i) => <ChallengeCard challenge={c} priority={i < 3} />)}
+        {challenges.length === 0 ? (
+          <p class="py-16 text-(--color-ink-soft)">
+            Nothing on this sheet yet. Try another part of the index.
+          </p>
+        ) : (
+          challenges.map((c, i) => <ChallengeRow challenge={c} rings={depth(c)} priority={i < 2} />)
+        )}
+      </div>
+
+      <div class="hidden py-6 lg:block">
+        <div class="sticky top-6"><SheetLegend /></div>
+      </div>
+    </div>
+
+    <div class="border-t border-(--color-rule) py-8 lg:hidden">
+      <SheetLegend />
     </div>
   </main>
 </Base>

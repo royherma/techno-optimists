@@ -15,18 +15,23 @@ const { title, description = 'Find interesting real-world problems and help solv
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" />
   </head>
   <body class="min-h-screen">
-    <header class="border-b border-(--color-rule)">
-      <div class="mx-auto flex max-w-6xl items-baseline gap-6 px-5 py-4">
-        <a href="/" class="font-[family-name:--font-display] text-xl tracking-tight">Techno Optimists</a>
-        <p class="hidden text-sm text-(--color-ink-soft) sm:block">
+    <!-- The title block of a sheet: who published it, and what it covers. -->
+    <header class="border-b-2 border-(--color-rule)">
+      <div class="mx-auto flex max-w-[88rem] flex-wrap items-baseline gap-x-6 gap-y-1 px-5 py-3">
+        <a href="/" class="text-[1.25rem] font-bold uppercase tracking-[-0.01em]">Techno Optimists</a>
+        <p class="hidden text-[0.72rem] uppercase tracking-[0.14em] text-(--color-ink-soft) md:block">
+          People / Ideas / Places / Brighter tomorrows
+        </p>
+        <p class="ml-auto text-[0.72rem] uppercase tracking-[0.1em] text-(--color-ink-soft)">
           Things can be better. We can build better.
         </p>
       </div>
     </header>
     <slot />
-    <footer class="mt-24 border-t border-(--color-rule)">
-      <div class="mx-auto max-w-6xl px-5 py-8 text-sm text-(--color-ink-faint)">
-        Local problems. Global brains. Technology to build the solution.
+    <footer class="mt-16 border-t border-(--color-rule)">
+      <div class="mx-auto flex max-w-[88rem] flex-wrap gap-x-6 gap-y-1 px-5 py-5 text-[0.72rem] uppercase tracking-[0.1em] text-(--color-ink-soft)">
+        <span>Techno Optimists</span>
+        <span class="ml-auto normal-case tracking-normal text-[0.78rem]">For people who believe technology can build a better present and a better future.</span>
       </div>
     </footer>
   </body>

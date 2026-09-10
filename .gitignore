@@ -39,3 +39,4 @@ pnpm-debug.log*
 tmp/
 outputs/
 .shots/
+.claude/deploy-lock.json

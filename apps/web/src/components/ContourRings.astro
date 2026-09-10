@@ -1,0 +1,23 @@
+---
+/*
+ * Investigation depth as concentric rings, read the way a contour map is read:
+ * more rings means more has accumulated here. Deliberately BLACK, never the
+ * stage colour - the sheet uses two channels and they must stay separate.
+ * Colour means stage, rings mean depth. Tying them together would make one of
+ * the two redundant and halve what a glance tells you.
+ */
+interface Props { rings: number; label: string; size?: number }
+const { rings, label, size = 46 } = Astro.props
+const n = Math.min(5, Math.max(1, rings))
+const c = size / 2
+// Evenly spaced radii, largest ring just inside the box.
+const radii = Array.from({ length: n }, (_, i) => (c - 2) * ((i + 1) / n))
+---
+<svg
+  width={size} height={size} viewBox={`0 0 ${size} ${size}`}
+  role="img" aria-label={label} class="shrink-0 overflow-visible"
+>
+  {radii.map((r) => (
+    <circle cx={c} cy={c} r={r} fill="none" stroke="currentColor" stroke-width="1.75" />
+  ))}
+</svg>
