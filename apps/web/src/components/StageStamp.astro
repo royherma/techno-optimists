@@ -1,0 +1,10 @@
+---
+import type { Stage } from '../../../../packages/types/index'
+import { STAGE_STAMP } from '../lib/vocab'
+interface Props { stage: Stage; class?: string }
+const { stage, class: cls = '' } = Astro.props
+---
+<span
+  class:list={['font-semibold uppercase tracking-[0.06em] tabular-nums', cls]}
+  style={`color:var(--color-${stage})`}
+>{STAGE_STAMP[stage]}</span>

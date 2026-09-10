@@ -1,0 +1,83 @@
+---
+import type { Challenge } from '../../../../packages/types/index'
+import ContourRings from './ContourRings.astro'
+import StageStamp from './StageStamp.astro'
+import { ACTION_LABEL, count, depthLabel, gridRef } from '../lib/vocab'
+
+interface Props { challenge: Challenge; rings: number; priority?: boolean }
+const { challenge: c, rings, priority = false } = Astro.props
+const hero = c.media[0]
+const ref = gridRef(c.id)
+
+/*
+ * Four typed actions on every row, in a fixed order. Fixed matters: the sheet's
+ * whole argument is that you learn the apparatus once and then read any row
+ * without re-reading it, so these never reorder per Challenge the way the old
+ * card's counts did.
+ */
+const ACTIONS = ['have_problem', 'have_idea', 'can_help', 'will_test'] as const
+---
+<article class="grid grid-cols-[auto_1fr] gap-x-4 border-b border-(--color-rule) py-5 sm:grid-cols-[7.5rem_13rem_1fr_8.25rem] sm:gap-x-5">
+  <!-- Index column: where this sits on the sheet, and how deep it runs. -->
+  <div class="col-start-1 row-start-1 flex flex-col gap-1.5 sm:row-span-2">
+    <span class="font-[family-name:--font-mono] text-[0.78rem] font-medium tracking-tight">{ref}</span>
+    {c.location && (
+      <span class="text-[0.7rem] uppercase tracking-[0.08em] text-(--color-ink-soft)">{c.location}</span>
+    )}
+    <div class="mt-1 hidden text-(--color-ink) sm:block">
+      <ContourRings rings={rings} label={`Investigation depth: ${depthLabel(rings)}`} />
+    </div>
+  </div>
+
+  <!-- The photograph. Whatever someone uploaded, in a plain keyline box. -->
+  <a href={`/c/${c.slug}`} class="col-start-2 row-start-1 block sm:col-start-2">
+    <div
+      class="aspect-[4/3] w-full overflow-hidden border border-(--color-rule)"
+      style={`background:${hero?.tint ?? 'var(--color-paper-sunk)'}`}
+    >
+      {hero && (
+        <img
+          src={hero.url}
+          alt={hero.alt ?? ''}
+          loading={priority ? 'eager' : 'lazy'}
+          decoding="async"
+          class="h-full w-full object-cover"
+        />
+      )}
+    </div>
+  </a>
+
+  <!-- The problem, stated plainly. The one thing a reader must not miss. -->
+  <div class="col-span-2 row-start-2 mt-3 sm:col-span-1 sm:col-start-3 sm:row-start-1 sm:mt-0">
+    <a href={`/c/${c.slug}`} class="block">
+      <h2 class="font-[family-name:--font-display] text-[1.45rem] leading-[1.2] tracking-tight sm:text-[1.6rem]">
+        {c.title}
+      </h2>
+      <p class="mt-1.5 max-w-2xl text-[0.94rem] leading-snug text-(--color-ink-soft)">{c.summary}</p>
+    </a>
+
+    <div class="mt-3 flex flex-wrap gap-2">
+      {ACTIONS.map((k) => (
+        <button
+          type="button"
+          data-action={k}
+          data-challenge={c.slug}
+          class="border border-(--color-rule-soft) px-2.5 py-1.5 text-[0.8rem] transition-colors hover:border-(--color-rule) hover:bg-(--color-paper-sunk)"
+        >
+          {ACTION_LABEL[k]}
+          {c.actions[k] > 0 && (
+            <span class="ml-1.5 font-semibold tabular-nums">{count(c.actions[k])}</span>
+          )}
+        </button>
+      ))}
+    </div>
+  </div>
+
+  <!-- Margin stamp. On narrow screens it rides above the title instead. -->
+  <div class="col-start-2 row-start-1 self-start justify-self-end sm:col-start-4 sm:justify-self-start">
+    <StageStamp stage={c.stage} class="text-[0.95rem] sm:text-[1.05rem]" />
+    <div class="mt-1.5 text-(--color-ink) sm:hidden">
+      <ContourRings rings={rings} label={`Investigation depth: ${depthLabel(rings)}`} size={30} />
+    </div>
+  </div>
+</article>

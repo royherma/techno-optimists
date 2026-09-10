@@ -30,9 +30,15 @@ Do not restate or re-derive it — link to it.
 - Never ship "this is a prototype" / "not built yet" into user-facing copy. That goes to Roy.
 - Plain words, hyphen not em-dash.
 
-## State
+## Code is truth
 
-Shell only — no app code, no stack chosen yet. Do not scaffold a framework without asking.
+The code is the only source of truth about what exists. This file, the README and every
+doc go stale the moment a commit lands; they describe intent, never state.
+
+- Never report status from a doc. Read the code, run the command, paste the artifact.
+- Never say a thing is missing without the grep that found nothing.
+- Found a doc that contradicts the code? The doc is wrong. Fix it in the same commit.
+- No status or progress sections in this file. `git log` and the code already say it.
 
 ## Conventions
 
