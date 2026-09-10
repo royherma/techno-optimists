@@ -118,5 +118,15 @@ if (token) {
   step(false, 'GET /api/auth/me', 'no cookie to replay')
 }
 
+// A full pass proves the flow works for a NEW account, which is exactly what it
+// looks like after `db:reset:dev` wipes the identities table: every step green
+// while a real person's account and links no longer exist. That reset is shared
+// - the dev D1 is remote, so another session running it deletes live links out
+// from under whoever is mid-sign-in. Say so, since 6/6 PASS otherwise hides it.
+console.log('\nIf a real person reports failure while this passes, check their rows survived:')
+console.log('  npx wrangler d1 execute techno-optimists-dev --remote --command \\')
+console.log('    "SELECT (SELECT COUNT(*) FROM identities) ids, (SELECT COUNT(*) FROM magic_links) links;"')
+console.log('  ids=1 (only this probe) means the database was reset and their link is gone.')
+
 console.log(`\n${failed ? 'FAILED - the first FAIL above is the break.' : 'All steps passed.'}`)
 process.exit(failed ? 1 : 0)
