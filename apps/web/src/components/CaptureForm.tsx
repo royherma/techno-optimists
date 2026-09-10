@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ChallengeType, Media } from '../../../../packages/types/index'
 import { TYPE_LABEL, typeColor } from '../lib/vocab'
 import { getMe, type Me } from '../lib/session'
+import { snack } from '../lib/snack'
 import PlacePicker from './PlacePicker'
 
 /**
@@ -123,6 +124,11 @@ export default function CaptureForm() {
       setShots((s) => s.map((x) => (x.id === shot.id ? { ...x, state: 'done', media: withSize } : x)))
     } catch {
       setShots((s) => s.map((x) => (x.id === shot.id ? { ...x, state: 'failed' } : x)))
+      // The thumbnail says "failed" in 10px type at the bottom of one tile.
+      // On a phone, mid-scroll, with the words still being typed, that is not
+      // where the reader is looking - and a Challenge posts without the photo
+      // they thought they had attached.
+      snack('A photo did not upload. Remove it or try again.', 'problem')
     }
   }
 

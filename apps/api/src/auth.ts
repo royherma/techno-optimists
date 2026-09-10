@@ -74,6 +74,34 @@ export const cookie = (token: string, secure: boolean) => {
   return parts.join('; ')
 }
 
+/**
+ * A one-shot note to the next page load, read and erased by the browser.
+ *
+ * The session cookie is HttpOnly, so a page cannot tell "signed in just now"
+ * from "signed in three weeks ago" - both are just a successful /api/auth/me.
+ * The callback redirects to a bare path (no query string: `next` is the
+ * reader's own and may already carry one), so this cookie is the only thing
+ * that survives the redirect and says what happened.
+ *
+ * Deliberately NOT HttpOnly - the point is for client JS to read it. It carries
+ * no authority: worst case a forged one shows a message that is already true
+ * for anyone who could set it.
+ */
+export const SIGNAL_COOKIE = 'to_signal'
+
+export const signalCookie = (signal: string, secure: boolean) => {
+  const parts = [
+    `${SIGNAL_COOKIE}=${signal}`,
+    'Path=/',
+    'SameSite=Lax',
+    // Long enough to survive the redirect and a slow first paint, short enough
+    // that a back-button visit an hour later does not re-announce sign-in.
+    'Max-Age=30',
+  ]
+  if (secure) parts.push('Secure')
+  return parts.join('; ')
+}
+
 export const clearCookie = (secure: boolean) => {
   const parts = [`${SESSION_COOKIE}=`, 'Path=/', 'HttpOnly', 'SameSite=Lax', 'Max-Age=0']
   if (secure) parts.push('Secure')

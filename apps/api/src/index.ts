@@ -3,6 +3,7 @@ import { z } from 'zod'
 import {
   SESSION_COOKIE, clearCookie, cookie, currentPerson, handleFromEmail, hashToken,
   linkExpiry, mintToken, nameFromEmail, normalizeEmail, readCookie, sessionExpiry,
+  signalCookie,
 } from './auth'
 import { isAdminEmail } from './admin'
 import { MAX_BYTES, checkUpload, dimensionsOf, mediaKey, mediaUrl } from './media'
@@ -14,7 +15,20 @@ import {
 
 type Env = {
   DB: D1Database
+  /**
+   * Provisioned before there was anything to write and never wired up - the
+   * schema in packages/db/schema-analytics.sql was never applied, so both
+   * to-analytics and to-analytics-dev hold no tables at all. Kept bound rather
+   * than deleted, but ANALYTICS below is what actually records traffic: a D1
+   * write per pageview serialises on a single-threaded database and burns the
+   * 100k rows/day free write quota, which is the wrong shape for telemetry.
+   */
   ANALYTICS_DB?: D1Database
+  /**
+   * Workers Analytics Engine. Optional so every test and the build-time API
+   * (wrangler.build.jsonc binds no dataset) run without it.
+   */
+  ANALYTICS?: AnalyticsEngineDataset
   CACHE?: KVNamespace
   ASSETS?: Fetcher
   MEDIA?: R2Bucket
@@ -26,6 +40,67 @@ type Env = {
 }
 
 const app = new Hono<{ Bindings: Env }>()
+
+/**
+ * The only place an unhandled throw becomes a response.
+ *
+ * Without this, Hono answers a thrown error with a bare `Internal Server Error`
+ * and nothing reaches the log with it. That is not hypothetical: prod sign-in
+ * 500'd on `no such column: is_admin` (docs/DECISIONS.md, 2026-09-10) and the
+ * response carried no hint of which query, which column, or which request -
+ * the cause had to be found by reading source. One log line here would have
+ * named it.
+ *
+ * The client gets a ray and nothing else. `err.message` is a D1 error string:
+ * it names columns and tables, so it belongs in the log, never in the body.
+ * The ray is the join key - `wrangler tail --env prod --search <ray>` pulls the
+ * full line, and a user can paste the ray into a bug report without leaking
+ * anything about the schema.
+ */
+app.onError((err, c) => {
+  const ray = c.req.header('cf-ray') ?? 'no-ray'
+  // One line, one JSON object: Workers Logs indexes the fields, so this is
+  // filterable by path or ray in the dashboard rather than grep-only.
+  console.error(JSON.stringify({
+    level: 'error',
+    ray,
+    method: c.req.method,
+    path: new URL(c.req.url).pathname,
+    message: err instanceof Error ? err.message : String(err),
+    stack: err instanceof Error ? err.stack : undefined,
+  }))
+  return c.json({ error: 'server_error', ray }, 500)
+})
+
+/**
+ * One event, fire and forget. Never awaited and never allowed to throw: a
+ * telemetry failure must not turn a working page into a 500, which is the
+ * usual way analytics takes a site down.
+ *
+ * The column layout is fixed by Analytics Engine - blobs are strings, doubles
+ * are numbers, and there is one index, which is the sampling/grouping key. Read
+ * it back with, e.g.
+ *   SELECT blob1 AS path, count() FROM to_events
+ *   WHERE timestamp > NOW() - INTERVAL '1' DAY GROUP BY path ORDER BY 2 DESC
+ */
+export const track = (
+  env: Env,
+  kind: string,
+  path: string,
+  extra: { country?: string; referrer?: string; ms?: number; status?: number } = {},
+) => {
+  try {
+    env.ANALYTICS?.writeDataPoint({
+      // blob1 path, blob2 kind, blob3 country, blob4 referrer - positional, so
+      // the order here is the schema. Append, never reorder.
+      blobs: [path, kind, extra.country ?? '', extra.referrer ?? ''],
+      doubles: [extra.ms ?? 0, extra.status ?? 0],
+      // The index is what queries group by cheaply, and its cardinality is what
+      // costs: kind is a handful of values, a path or a user id would not be.
+      indexes: [kind],
+    })
+  } catch { /* telemetry is never worth a request */ }
+}
 
 export const json = <T>(raw: unknown, fallback: T): T => {
   if (typeof raw !== 'string') return fallback
@@ -556,7 +631,16 @@ app.get('/api/auth/callback', async (c) => {
     c.env.DB.prepare("UPDATE identities SET last_login_at = datetime('now') WHERE email = ?").bind(email),
   ])
 
-  c.header('set-cookie', cookie(session, new URL(c.req.url).protocol === 'https:'))
+  const secure = new URL(c.req.url).protocol === 'https:'
+  c.header('set-cookie', cookie(session, secure))
+  // Two cookies, so `append` - c.header() replaces by default, and without it
+  // the session cookie set on the line above would be dropped and sign-in
+  // would silently do nothing.
+  //
+  // The redirect target is the reader's own `next` path, which may already
+  // carry a query string, so the "you're signed in" note travels as a cookie
+  // rather than as a param appended to it.
+  c.header('set-cookie', signalCookie('signed_in', secure), { append: true })
   return c.redirect(safeNext(new URL(c.req.url).searchParams.get('next') ?? undefined) ?? '/', 302)
 })
 
@@ -580,7 +664,11 @@ app.post('/api/auth/signout', async (c) => {
   if (token) {
     await c.env.DB.prepare('DELETE FROM sessions WHERE token_hash = ?').bind(await hashToken(token)).run()
   }
-  c.header('set-cookie', clearCookie(new URL(c.req.url).protocol === 'https:'))
+  const secure = new URL(c.req.url).protocol === 'https:'
+  c.header('set-cookie', clearCookie(secure))
+  // SessionNav reloads the page right after this returns, so the confirmation
+  // has to survive that reload - see signalCookie in auth.ts.
+  c.header('set-cookie', signalCookie('signed_out', secure), { append: true })
   return c.json({ ok: true })
 })
 
