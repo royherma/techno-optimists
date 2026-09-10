@@ -3,7 +3,7 @@ import type { Challenge } from '../../../../packages/types/index'
 import ActionGlyph from './ActionGlyph.astro'
 import ContourRings from './ContourRings.astro'
 import MediaPlate from './MediaPlate.astro'
-import { ACTION_LABEL, count, depthLabel, gridRef, rowNo, stageColor } from '../lib/vocab'
+import { ACTION_LABEL, count, depthLabel, gridRef, rowNo, stageColor, typeColor, TYPE_LABEL } from '../lib/vocab'
 import { STAGE_STAMP } from '../lib/vocab'
 
 interface Props { challenge: Challenge; rings: number; index: number; priority?: boolean }
@@ -54,23 +54,29 @@ const ACTIONS = ['have_problem', 'have_idea', 'can_help', 'will_test'] as const
     )}
   </div>
 
+  <!--
+    NO. and GRID REF. are identifiers, not content - quieted to ink-soft so
+    the CHALLENGE column, with its bolder title, reads as the column with the
+    weight. Five ruled columns of equal darkness were competing evenly; only
+    one of them is what the reader is here to skim.
+  -->
   <!-- NO. -->
-  <div class="hidden items-start justify-center border-r border-(--color-rule) px-1 py-3.5 sm:flex">
-    <span class="font-[family-name:--font-mono] text-[0.82rem] font-semibold tabular-nums">{rowNo(index)}</span>
+  <div class="hidden items-start justify-center border-r border-(--color-rule) px-1 py-4 sm:flex">
+    <span class="font-[family-name:--font-mono] text-[0.78rem] font-semibold tabular-nums text-(--color-ink-soft)">{rowNo(index)}</span>
   </div>
 
   <!-- GRID REF. Plus where it actually is, when the Challenge says. -->
-  <div class="hidden flex-col gap-0.5 border-(--color-rule) px-2.5 py-3.5 sm:flex sm:border-r">
-    <span class="font-[family-name:--font-mono] text-[0.82rem] font-medium tracking-tight">{ref}</span>
+  <div class="hidden flex-col gap-0.5 border-(--color-rule) px-2.5 py-4 sm:flex sm:border-r">
+    <span class="font-[family-name:--font-mono] text-[0.78rem] font-medium tracking-tight text-(--color-ink-soft)">{ref}</span>
     {c.location && (
-      <span class="text-[0.66rem] uppercase leading-tight tracking-[0.06em] text-(--color-ink-soft)">
+      <span class="text-[0.64rem] uppercase leading-tight tracking-[0.06em] text-(--color-ink-faint)">
         {c.location}
       </span>
     )}
   </div>
 
   <!-- CHALLENGE: the photograph, the problem stated plainly, and what you can do. -->
-  <div class="border-(--color-rule) px-2.5 py-3 sm:border-r sm:py-3.5">
+  <div class="border-(--color-rule) px-2.5 py-3 sm:border-r sm:py-4">
     <div class="flex gap-3.5">
       <!--
         A media object can go missing - an upload that half-landed, an R2 key
@@ -90,7 +96,23 @@ const ACTIONS = ['have_problem', 'have_idea', 'can_help', 'will_test'] as const
 
       <div class="min-w-0">
         <a href={`/c/${c.slug}`} class="block">
-          <h2 class="font-[family-name:--font-display] text-[1.3rem] leading-[1.15] tracking-tight sm:text-[1.4rem]">
+          <!--
+            The Challenge TYPE (problem/idea/experiment/build) used to show
+            nowhere on a feed row, only stage did. Type is what the row IS,
+            so it sits as a small tinted label above the title rather than a
+            sixth column - it uses the same `typeColor` the legend and the
+            entry page already key off.
+          -->
+          <span
+            class="text-[0.68rem] font-bold uppercase tracking-[0.08em]"
+            style={`color:${typeColor(c.type)}`}
+          >{TYPE_LABEL[c.type]}</span>
+          <!--
+            Title carries the weight now (bold, tighter leading) so a reader
+            can skim titles alone down the column; the summary drops in size
+            and colour so it reads as clearly secondary, not a second title.
+          -->
+          <h2 class="mt-0.5 font-[family-name:--font-display] text-[1.4rem] font-bold leading-[1.1] tracking-tight sm:text-[1.55rem]">
             {c.title}
           </h2>
           <!--
@@ -100,15 +122,17 @@ const ACTIONS = ['have_problem', 'have_idea', 'can_help', 'will_test'] as const
             the neighbouring cells. Clamped to two lines in the index; the
             entry page shows it whole.
           -->
-          <p class="mt-1 line-clamp-2 max-w-2xl text-[0.85rem] leading-snug break-words text-(--color-ink-soft)">{c.summary}</p>
+          <p class="mt-1.5 line-clamp-2 max-w-xl text-[0.8rem] leading-relaxed break-words text-(--color-ink-faint)">{c.summary}</p>
         </a>
 
         <!--
           The glyphs from the legend, used unlabelled beside their counts. This
           is the payoff for having a legend at all: once you know the symbols
-          the row costs one glance instead of a sentence each.
+          the row costs one glance instead of a sentence each. Quieted to
+          faint text on no border so they read as metadata beside the summary
+          rather than as buttons competing with the title.
         -->
-        <div class="mt-2.5 flex flex-wrap gap-1.5">
+        <div class="mt-2.5 flex flex-wrap gap-x-4 gap-y-1.5">
           {ACTIONS.map((k) => (
             <button
               type="button"
@@ -116,9 +140,9 @@ const ACTIONS = ['have_problem', 'have_idea', 'can_help', 'will_test'] as const
               data-challenge={c.slug}
               title={ACTION_LABEL[k]}
               aria-label={`${ACTION_LABEL[k]} - ${c.actions[k]}`}
-              class="flex items-center gap-1.5 border border-(--color-rule-soft) px-2 py-1 text-[0.75rem] transition-colors hover:border-(--color-rule) hover:bg-(--color-paper-sunk)"
+              class="flex items-center gap-1.5 text-[0.75rem] text-(--color-ink-faint) transition-colors hover:text-(--color-ink)"
             >
-              <ActionGlyph kind={k} size={15} />
+              <ActionGlyph kind={k} size={14} />
               <span class="font-semibold tabular-nums">{count(c.actions[k])}</span>
             </button>
           ))}
@@ -147,7 +171,7 @@ const ACTIONS = ['have_problem', 'have_idea', 'can_help', 'will_test'] as const
   </div>
 
   <!-- IMPACT: rings in the stage colour, centred in their own ruled cell. -->
-  <div class="hidden items-center justify-center border-(--color-rule) px-1 py-3.5 sm:flex sm:border-r">
+  <div class="hidden items-center justify-center border-(--color-rule) px-1 py-4 sm:flex sm:border-r">
     <ContourRings
       rings={rings}
       color={stageColor(c.stage)}
@@ -157,7 +181,7 @@ const ACTIONS = ['have_problem', 'have_idea', 'can_help', 'will_test'] as const
   </div>
 
   <!-- STAGE: the margin stamp, in its own cell so the colour column reads down. -->
-  <div class="hidden items-center px-2.5 sm:flex sm:justify-center sm:py-3.5">
+  <div class="hidden items-center px-2.5 sm:flex sm:justify-center sm:py-4">
     <span
       class="font-[family-name:--font-display] text-[1.05rem] font-bold uppercase tracking-[0.02em]"
       style={`color:${stageColor(c.stage)}`}

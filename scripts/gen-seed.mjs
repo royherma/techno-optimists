@@ -31,6 +31,29 @@ const people = [
   ['p_ingrid','ingrid','Tromso, Norway',['materials','insulation'],['expert','researcher']],
 ]
 
+// Coordinates for the places the seed names, so the map view has something real
+// to plot. Keyed by the exact `location` string on the row - a lookup, not a
+// geocoder: the seed is a fixed list of eleven places, and calling a geocoding
+// API at build time would add a key, a network dependency and a spend to a
+// script whose whole job is to be reproducible offline.
+//
+// City-centre precision is the right resolution here. The map is 1000px for 360
+// degrees, so one pixel is about 0.36 degrees - a more precise number would not
+// move the pin, and would imply the seed knows a street address it does not.
+const PLACES = {
+  'Chiang Mai, Thailand': [18.79, 98.98],
+  'Cross River, Nigeria': [5.87, 8.60],
+  'Palermo, Italy': [38.12, 13.36],
+  'Kochi, India': [9.93, 76.27],
+  'Krakow, Poland': [50.06, 19.94],
+  'Osaka, Japan': [34.69, 135.50],
+  'Lagos, Nigeria': [6.52, 3.37],
+  'Tromso, Norway': [69.65, 18.96],
+  'Belem, Brazil': [-1.46, -48.50],
+  'Shenzhen, China': [22.54, 114.06],
+  'Oakland, USA': [37.80, -122.27],
+}
+
 // [slug, type, stage, title, summary, location, tags, author, media, daysAgo, activityDaysAgo, actions{}, updates[]]
 const challenges = [
   ['milk-cooling-loss','problem','ideas',
@@ -141,7 +164,13 @@ out.push('')
 let u = 0
 for (const [slug, type, stage, title, summary, location, tags, author, media, days, act, actions, updates] of challenges) {
   const id = `ch_${slug.replace(/-/g, '_')}`
-  out.push(`INSERT INTO challenges (id,slug,type,stage,title,summary,body,media,location,tags,author_id,created_at,last_activity_at,seed_actions) VALUES (${q(id)},${q(slug)},${q(type)},${q(stage)},${q(title)},${q(summary)},NULL,${j(media)},${q(location)},${j(tags)},${q(author)},${q(iso(days))},${q(iso(act))},${j(actions)});`)
+  // A row with no location stays unplaced rather than being invented onto the
+  // map. `drone-compute-mesh` is deliberately one of these: it is a question
+  // about cities in general, and giving it a pin would be a lie the map tells.
+  const [lat, lng] = PLACES[location] ?? [null, null]
+  if (location && !PLACES[location]) throw new Error(`gen-seed: no coordinates for ${location}`)
+  const n = (v) => (v === null ? 'NULL' : String(v))
+  out.push(`INSERT INTO challenges (id,slug,type,stage,title,summary,body,media,location,lat,lng,tags,author_id,created_at,last_activity_at,seed_actions) VALUES (${q(id)},${q(slug)},${q(type)},${q(stage)},${q(title)},${q(summary)},NULL,${j(media)},${q(location)},${n(lat)},${n(lng)},${j(tags)},${q(author)},${q(iso(days))},${q(iso(act))},${j(actions)});`)
   // Demo scale goes in challenges.seed_actions as a json blob, NOT as fake rows.
   // Seeding 4,712 people to make one number look right would poison every
   // person-level query on the site. Real rows below are only our 10 seed people,

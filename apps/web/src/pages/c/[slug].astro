@@ -33,7 +33,7 @@ const ranked = ACTION_KINDS.map((k) => [k, c.actions[k]] as const)
 <Base title={`${c.title} - Techno Optimists`} description={c.summary}>
   <Sheet sheet={sheetNo(c.type)} live={peers.length}>
   <main class="px-5 py-6">
-    <a href="/" class="font-[family-name:--font-mono] text-[0.7rem] uppercase tracking-[0.1em] text-(--color-ink-soft) hover:text-(--color-ink)">
+    <a href="/" class="ink-transition ink-underline font-[family-name:--font-mono] text-[0.7rem] uppercase tracking-[0.1em] text-(--color-ink-soft) hover:text-(--color-ink) hover:decoration-current">
       ← Back to the index
     </a>
 
@@ -105,8 +105,11 @@ const ranked = ACTION_KINDS.map((k) => [k, c.actions[k]] as const)
     <ol class="mt-8 flex flex-wrap gap-px border border-(--color-rule) bg-(--color-rule-soft)"
         aria-label="Lifecycle stage">
       {STAGE_ORDER.map((s, i) => (
-        <li class="flex-1 basis-[6.5rem] bg-(--color-paper) px-2 py-2.5 text-center">
-          <span class="block h-1" style={i <= reached ? `background:var(--color-${s})` : ''}></span>
+        <li
+          class:list={['station ink-transition flex-1 basis-[6.5rem] bg-(--color-paper) px-2 py-2.5 text-center', i <= reached && 'station-reached']}
+          style={i <= reached ? `--stage-color:var(--color-${s})` : ''}
+        >
+          <span class="station-rule block h-1" style={i <= reached ? `background:var(--color-${s})` : ''}></span>
           <span
             class:list={['mt-2 block text-[0.68rem] font-semibold uppercase tracking-[0.05em]',
                          i > reached && 'text-(--color-ink-faint)']}
@@ -118,6 +121,24 @@ const ranked = ACTION_KINDS.map((k) => [k, c.actions[k]] as const)
         </li>
       ))}
     </ol>
+
+    <style>
+      /*
+       * A reached station washes in its own stage tint and thickens its rule on
+       * hover - the same ink-on-paper move as everywhere else, scoped to the
+       * station's own colour rather than a generic grey. An unreached station
+       * has no --stage-color and stays inert: there is nothing to affirm yet.
+       */
+      .station-rule {
+        transition: height var(--ease-ink);
+      }
+      .station-reached:hover {
+        background: color-mix(in oklch, var(--stage-color) 10%, var(--color-paper));
+      }
+      .station-reached:hover .station-rule {
+        height: 0.25rem;
+      }
+    </style>
 
     <div class="mt-8 gap-10 lg:grid lg:grid-cols-[1fr_18rem]">
       <div class="min-w-0">

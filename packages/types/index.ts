@@ -102,6 +102,17 @@ export interface Challenge {
   body?: string | null
   media: Media[]
   location: string | null
+  /**
+   * Where it actually is, when the author placed a pin. Null is the common and
+   * permanent case - most Challenges carry no coordinates, and the map shows the
+   * subset that does rather than pretending the rest are at 0,0.
+   *
+   * Not to be confused with `gridRef()` in the web app, which derives a sheet
+   * reference from the id. That is an index into a drawing, not a position on
+   * earth; only this pair is a real-world location.
+   */
+  lat: number | null
+  lng: number | null
   /** Free tags: 'water', 'cooling', 'agriculture'. */
   tags: string[]
   author: Pick<PublicPerson, 'id' | 'handle' | 'avatar_url' | 'location'>
