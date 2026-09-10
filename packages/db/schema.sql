@@ -102,6 +102,15 @@ CREATE INDEX idx_updates_challenge ON updates(challenge_id, created_at DESC);
 CREATE TABLE identities (
   person_id      TEXT PRIMARY KEY REFERENCES people(id) ON DELETE CASCADE,
   email          TEXT NOT NULL UNIQUE,
+  -- Admin flag. Lives here and not on people for the same reason email does:
+  -- people is returned to other users, and who can moderate is nobody else's
+  -- business. PublicPerson is structurally unable to carry it from here.
+  --
+  -- This column is a CACHE, not the source of truth. ADMIN_EMAILS in
+  -- apps/api/src/admin.ts decides, and every session resolve rewrites this to
+  -- match. So editing that list takes effect on the next request for accounts
+  -- that already exist - including revoking, when an address leaves the list.
+  is_admin       INTEGER NOT NULL DEFAULT 0,
   created_at     TEXT NOT NULL DEFAULT (datetime('now')),
   last_login_at  TEXT
 );

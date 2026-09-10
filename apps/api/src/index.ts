@@ -4,6 +4,7 @@ import {
   SESSION_COOKIE, clearCookie, cookie, currentPerson, handleFromEmail, hashToken,
   linkExpiry, mintToken, nameFromEmail, normalizeEmail, readCookie, sessionExpiry,
 } from './auth'
+import { isAdminEmail } from './admin'
 import { MAX_BYTES, checkUpload, dimensionsOf, mediaKey, mediaUrl } from './media'
 import { slugify } from './slug'
 import {
@@ -541,7 +542,8 @@ app.get('/api/auth/callback', async (c) => {
     await c.env.DB.batch([
       c.env.DB.prepare('INSERT INTO people (id, handle, name) VALUES (?, ?, ?)')
         .bind(id, handle, nameFromEmail(email)),
-      c.env.DB.prepare('INSERT INTO identities (person_id, email) VALUES (?, ?)').bind(id, email),
+      c.env.DB.prepare('INSERT INTO identities (person_id, email, is_admin) VALUES (?, ?, ?)')
+        .bind(id, email, isAdminEmail(email) ? 1 : 0),
     ])
     person = { id }
   }

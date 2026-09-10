@@ -34,6 +34,37 @@ base URL or CORS.
 Picked 2026-09-10 - all Cloudflare. Astro 7 + React islands on the front, Hono on Workers
 behind it, D1/R2/KV for data. Full table + why: [`docs/2026-09-10-stack.md`](docs/2026-09-10-stack.md).
 
+## Running it
+
+`make` on its own lists every target. The ones that matter:
+
+| Command | What it does |
+|---|---|
+| `make dev` | API on :8791 and the site on :4321, together |
+| `make reset` | rebuild local D1 and load the seed fixtures |
+| `make check` | typecheck + tests |
+| `make ship` | typecheck, empty local D1, deploy prod, verify |
+| `make ship-dev` | same for the dev worker, seeds and all |
+| `make verify` | probe the live site end to end |
+| `make logs` | tail prod |
+
+Every target delegates to an npm script, so `npm run ship` works the same.
+
+### Two environments
+
+| | dev | prod |
+|---|---|---|
+| Address | `techno-optimists-dev.techguyver1337.workers.dev` | `technooptimists.org` |
+| Data | throwaway, seeded | real, starts empty |
+| Sign-in | returns `dev_link` in the response | mails the link, fails closed |
+
+Binding **names** are identical in both, so no code branches on environment - only
+the IDs behind them differ.
+
+**The build prerenders from local D1.** Whatever rows are in it get baked into the
+static pages, so `make ship` empties local D1 first. Seeds are a dev fixture; they
+do not belong on the domain.
+
 ## Docs
 
 Four permanent, one job each. Anything time-boxed is `docs/YYYY-MM-DD-slug.md`, dated so
