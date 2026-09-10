@@ -26,6 +26,7 @@
     "db:seed:dev": "npm run seed:gen && wrangler d1 execute techno-optimists-dev --remote --file packages/db/seed.sql",
     "db:reset:dev": "npm run db:dev && npm run db:seed:dev",
     "tail:dev": "wrangler tail --env dev",
+    "auth:doctor": "node scripts/auth-doctor.mjs",
     "tail:prod": "wrangler tail --env prod"
   },
   "overrides": {
