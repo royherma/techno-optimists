@@ -58,9 +58,12 @@ export const LAND_PATHS: string[] = [
   'M863.9,280.6L877.8,283.3L891.7,283.3L902.8,291.7L908.3,302.8L916.7,311.1L925,319.4L925,330.6L925,338.9L916.7,347.2L908.3,355.6L900,355.6L891.7,355.6L880.6,347.2L875,344.4L869.4,338.9L852.8,338.9L836.1,336.1L819.4,341.7L819.4,336.1L813.9,319.4L816.7,308.3L838.9,300L841.7,294.4L850,288.9L863.9,280.6Z',
   // Greenland
   'M402.8,19.4L444.4,27.8L444.4,38.9L438.9,55.6L394.4,66.7L377.8,83.3L363.9,80.6L352.8,69.4L350,55.6L311.1,38.9L319.4,27.8L388.9,19.4L402.8,19.4Z',
-  // Antarctica - a closed band across the bottom edge, kept within
-  // -180..180 longitude (no antimeridian wrap) so it doesn't seam at x=0/1000.
-  'M2.8,425L83.3,430.6L166.7,433.3L250,433.3L333.3,430.6L416.7,430.6L500,433.3L583.3,433.3L666.7,430.6L750,427.8L833.3,430.6L916.7,433.3L997.2,425L997.2,500L2.8,500L2.8,425Z',
+  // Antarctica. Equirectangular stretches the pole to a full-width line, so the
+  // coast is drawn with a real silhouette and the path closes along y=ATLAS_H
+  // (the -90 parallel) instead of a straight slab: an earlier version ran a flat
+  // band from y=425 to y=500, which rendered as an empty rectangle under the
+  // map rather than a landmass.
+  'M2.8,441.7L55.6,436.1L111.1,438.9L166.7,433.3L222.2,436.1L277.8,430.6L333.3,433.3L388.9,438.9L444.4,436.1L500,430.6L555.6,433.3L611.1,441.7L666.7,438.9L722.2,433.3L777.8,436.1L833.3,430.6L888.9,436.1L944.4,433.3L997.2,438.9L997.2,500L2.8,500L2.8,441.7Z',
   // British Isles
   'M486.1,88.9L494.4,91.7L500,100L502.8,105.6L502.8,108.3L488.9,111.1L486.1,108.3L488.9,102.8L483.3,97.2L483.3,88.9L486.1,88.9Z',
   // Japan

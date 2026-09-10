@@ -5,7 +5,6 @@ import SessionNav from '../components/SessionNav.tsx'
 import PostFab from '../components/PostFab.astro'
 import WorldPlate from '../components/WorldPlate.tsx'
 import { getFeed } from '../lib/api'
-import { project } from '../lib/atlas'
 import { STAGE_STAMP, TYPE_LABEL, depthScale, sheetNo, stageColor } from '../lib/vocab'
 import { STAGES } from '../../../../packages/types/index'
 
@@ -42,19 +41,21 @@ const depth = depthScale(challenges)
       </p>
 
       <div class="mt-5 border-2 border-(--color-rule)">
-        <WorldPlate client:load>
-          {placed.map((c) => {
-            const p = project(c.lat!, c.lng!)
-            const r = 5 + depth(c) * 2.2
-            return (
-              <a href={`/c/${c.slug}`} class="map-pin">
-                <title>{`${c.title} - ${c.location ?? 'unplaced'}`}</title>
-                <circle cx={p.x} cy={p.y} r={r} fill="none" stroke={stageColor(c.stage)} stroke-width="2.2" />
-                <circle cx={p.x} cy={p.y} r="2.6" fill={stageColor(c.stage)} />
-              </a>
-            )
-          })}
-        </WorldPlate>
+        <!--
+          Pins go across as a prop, not as slotted children: the plate hydrates,
+          and SVG drawn here into its children slot is discarded on hydration.
+        -->
+        <WorldPlate
+          client:load
+          pins={placed.map((c) => ({
+            lat: c.lat!,
+            lng: c.lng!,
+            r: 5 + depth(c) * 2.2,
+            color: stageColor(c.stage),
+            href: `/c/${c.slug}`,
+            label: `${c.title} - ${c.location ?? 'unplaced'}`,
+          }))}
+        />
       </div>
 
       <!--
