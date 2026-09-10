@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { ActionKind, Challenge } from '../../../../packages/types/index'
 import { ACTION_LABEL, count } from '../lib/vocab'
+import { snack } from '../lib/snack'
 
 /**
  * The one contribution control. Which actions appear depends on the Challenge's
@@ -71,8 +72,12 @@ export default function ActionBar({ slug, type, actions }: {
       const data = await r.json()
       if (data.actions) setCounts(data.actions)
     } catch {
+      // The rollback alone is invisible: the count returns to where it was and
+      // the button un-presses, which reads as the click never having landed.
+      // Say that it failed, or the reader retries into the same silence.
       setCounts((c) => ({ ...c, [kind]: Math.max(0, c[kind] - 1) }))
       setMine((m) => m.filter((k) => k !== kind))
+      snack('That did not save. Try again.', 'problem')
     } finally {
       setBusy(null)
     }

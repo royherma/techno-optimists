@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  SESSION_COOKIE, clearCookie, cookie, handleFromEmail, hashToken, mintToken,
-  nameFromEmail, normalizeEmail, readCookie,
+  SESSION_COOKIE, SIGNAL_COOKIE, clearCookie, cookie, handleFromEmail, hashToken,
+  mintToken, nameFromEmail, normalizeEmail, readCookie, signalCookie,
 } from '../src/auth'
 import { ADMIN_EMAILS, isAdminEmail } from '../src/admin'
 
@@ -99,5 +99,30 @@ describe('cookies', () => {
   it('returns null when absent or headerless', () => {
     expect(readCookie('other=1', SESSION_COOKIE)).toBeNull()
     expect(readCookie(undefined, SESSION_COOKIE)).toBeNull()
+  })
+})
+
+describe('the signal cookie', () => {
+  it('is readable by client JS - that is the whole point', () => {
+    // HttpOnly here would make it invisible to the page and the feature dead.
+    expect(signalCookie('signed_in', true)).not.toContain('HttpOnly')
+  })
+
+  it('expires in well under a session, so a later visit does not re-announce', () => {
+    expect(signalCookie('signed_in', true)).toContain('Max-Age=30')
+  })
+
+  it('is Secure over https and not over http', () => {
+    expect(signalCookie('signed_in', true)).toContain('Secure')
+    expect(signalCookie('signed_in', false)).not.toContain('Secure')
+  })
+
+  it('does not collide with the session cookie', () => {
+    expect(SIGNAL_COOKIE).not.toBe(SESSION_COOKIE)
+  })
+
+  it('round-trips through the same reader the API uses', () => {
+    const header = signalCookie('signed_out', false).split(';')[0]
+    expect(readCookie(header, SIGNAL_COOKIE)).toBe('signed_out')
   })
 })
