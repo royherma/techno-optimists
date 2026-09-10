@@ -1,5 +1,6 @@
 import type { Context } from 'hono'
 import type { Role } from '../../../packages/types/index'
+import { isAdminEmail } from './admin'
 
 /**
  * Email magic-link auth. No passwords, no OAuth provider.
@@ -23,6 +24,7 @@ export type SessionPerson = {
   avatar_url: string | null
   location: string | null
   roles: Role[]
+  is_admin: boolean
 }
 
 const hex = (buf: ArrayBuffer) =>
@@ -97,13 +99,34 @@ export const currentPerson = async (
   const token = readCookie(c.req.header('cookie'), SESSION_COOKIE)
   if (!token) return null
   const row = await c.env.DB.prepare(
-    `SELECT p.id, p.handle, p.name, p.avatar_url, p.location, p.roles
-     FROM sessions s JOIN people p ON p.id = s.person_id
+    `SELECT p.id, p.handle, p.name, p.avatar_url, p.location, p.roles,
+            i.email, i.is_admin
+     FROM sessions s
+     JOIN people p ON p.id = s.person_id
+     LEFT JOIN identities i ON i.person_id = p.id
      WHERE s.token_hash = ? AND s.expires_at > datetime('now')`,
   ).bind(await hashToken(token)).first()
   if (!row) return null
   let roles: Role[] = []
   try { roles = JSON.parse(String(row.roles ?? '[]')) as Role[] } catch { roles = [] }
+
+  // ADMIN_EMAILS decides; is_admin caches. Reconcile here so editing that list
+  // promotes or demotes accounts that already exist, on their next request.
+  //
+  // LEFT JOIN because a seeded person has no identity row - they have no email,
+  // so they are not an admin, and that is the correct answer rather than a crash.
+  //
+  // The write only fires when the two actually disagree. currentPerson is on the
+  // read path of every route; an unconditional UPDATE would make each page load
+  // a database write for no reason.
+  const email = row.email == null ? null : normalizeEmail(String(row.email))
+  const shouldBeAdmin = email !== null && isAdminEmail(email)
+  const cachedAdmin = Number(row.is_admin ?? 0) === 1
+  if (email !== null && shouldBeAdmin !== cachedAdmin) {
+    await c.env.DB.prepare('UPDATE identities SET is_admin = ? WHERE person_id = ?')
+      .bind(shouldBeAdmin ? 1 : 0, String(row.id)).run()
+  }
+
   return {
     id: String(row.id),
     handle: String(row.handle),
@@ -111,5 +134,6 @@ export const currentPerson = async (
     avatar_url: row.avatar_url == null ? null : String(row.avatar_url),
     location: row.location == null ? null : String(row.location),
     roles,
+    is_admin: shouldBeAdmin,
   }
 }

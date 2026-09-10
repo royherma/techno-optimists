@@ -8,6 +8,9 @@ export type Me = {
   avatar_url: string | null
   location: string | null
   roles: Role[]
+  /** Moderation powers. Never rely on this for access control - it is a hint
+   *  for what to render, and the API re-checks on every write regardless. */
+  is_admin: boolean
 }
 
 /**

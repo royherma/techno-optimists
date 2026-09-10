@@ -28,7 +28,11 @@
     "db:reset:dev": "npm run db:dev && npm run db:seed:dev",
     "tail:dev": "wrangler tail --env dev",
     "auth:doctor": "node scripts/auth-doctor.mjs",
-    "tail:prod": "wrangler tail --env prod"
+    "tail:prod": "wrangler tail --env prod",
+    "verify": "node scripts/verify.mjs",
+    "verify:dev": "node scripts/verify.mjs --base https://techno-optimists-dev.techguyver1337.workers.dev",
+    "ship": "npm run typecheck && npm run db:local && npm run deploy:prod && npm run verify",
+    "ship:dev": "npm run typecheck && npm run deploy:dev && npm run verify:dev"
   },
   "overrides": {
     "vite": "^8.2.2"

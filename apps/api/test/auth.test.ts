@@ -3,6 +3,7 @@ import {
   SESSION_COOKIE, clearCookie, cookie, handleFromEmail, hashToken, mintToken,
   nameFromEmail, normalizeEmail, readCookie,
 } from '../src/auth'
+import { ADMIN_EMAILS, isAdminEmail } from '../src/admin'
 
 describe('tokens', () => {
   it('mints a 64-char hex token', () => {
@@ -48,6 +49,29 @@ describe('email handling', () => {
 
   it('title-cases a display name', () => {
     expect(nameFromEmail('sam.rivera@example.com')).toBe('Sam Rivera')
+  })
+})
+
+describe('admin emails', () => {
+  it('recognises every address in the list', () => {
+    for (const e of ADMIN_EMAILS) expect(isAdminEmail(e)).toBe(true)
+  })
+
+  it('is not admin for an address that is not listed', () => {
+    expect(isAdminEmail('stranger@example.com')).toBe(false)
+  })
+
+  it('the list is stored normalized, so real signins match', () => {
+    // isAdminEmail takes normalizeEmail() output. An entry with capitals or
+    // whitespace could never match a real login, so the list itself must be
+    // clean - this catches a typo when someone adds a row.
+    for (const e of ADMIN_EMAILS) expect(e).toBe(normalizeEmail(e))
+  })
+
+  it('matches a real signin after normalization, not before', () => {
+    const typedByUser = '  RoyHerma@Gmail.com '
+    expect(isAdminEmail(normalizeEmail(typedByUser))).toBe(true)
+    expect(isAdminEmail(typedByUser)).toBe(false)
   })
 })
 
