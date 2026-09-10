@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ActionKind, Challenge } from '../../../../packages/types/index'
 import { ACTION_LABEL, count } from '../lib/vocab'
 
@@ -18,9 +18,35 @@ export default function ActionBar({ slug, type, actions }: {
   type: Challenge['type']
   actions: Record<ActionKind, number>
 }) {
+  // A Challenge posted since the last build is served on another Challenge's
+  // prerendered page, so these props describe the shell, not what the reader is
+  // looking at. Trust the marker over the props and load the real thing.
+  const live = typeof window !== 'undefined'
+    ? (window as unknown as { __LIVE_CHALLENGE__?: string }).__LIVE_CHALLENGE__
+    : undefined
+
+  const [realSlug, setRealSlug] = useState(live ?? slug)
+  const [realType, setRealType] = useState<Challenge['type']>(type)
   const [counts, setCounts] = useState(actions)
   const [mine, setMine] = useState<ActionKind[]>([])
   const [busy, setBusy] = useState<ActionKind | null>(null)
+  const [ready, setReady] = useState(!live)
+
+  useEffect(() => {
+    if (!live) return
+    let cancelled = false
+    fetch(`/api/challenges/${live}`, { credentials: 'same-origin' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled || !d) return
+        setRealSlug(d.challenge.slug)
+        setRealType(d.challenge.type)
+        setCounts(d.challenge.actions)
+        setReady(true)
+      })
+      .catch(() => setReady(true))
+    return () => { cancelled = true }
+  }, [live])
 
   async function act(kind: ActionKind) {
     if (mine.includes(kind) || busy) return
@@ -29,11 +55,18 @@ export default function ActionBar({ slug, type, actions }: {
     setCounts((c) => ({ ...c, [kind]: c[kind] + 1 }))
     setMine((m) => [...m, kind])
     try {
-      const r = await fetch(`/api/challenges/${slug}/action`, {
+      const r = await fetch(`/api/challenges/${realSlug}/action`, {
         method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-person-id': 'p_mei' },
+        headers: { 'content-type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify({ kind }),
       })
+      // Acting is the moment signing in is worth it, so ask then - not at the
+      // door. Come back to this Challenge afterwards, not to the home page.
+      if (r.status === 401) {
+        window.location.href = `/signin?next=/c/${realSlug}`
+        return
+      }
       if (!r.ok) throw new Error(String(r.status))
       const data = await r.json()
       if (data.actions) setCounts(data.actions)
@@ -45,9 +78,12 @@ export default function ActionBar({ slug, type, actions }: {
     }
   }
 
+  // Showing the shell's actions for a moment would be showing the wrong facts.
+  if (!ready) return <div className="h-10" />
+
   return (
     <div className="flex flex-wrap gap-2">
-      {FOR_TYPE[type].map((kind) => {
+      {FOR_TYPE[realType].map((kind) => {
         const on = mine.includes(kind)
         return (
           <button

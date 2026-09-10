@@ -1,0 +1,35 @@
+---
+import Base from '../layouts/Base.astro'
+import Sheet from '../components/Sheet.astro'
+import SignInForm from '../components/SignInForm.tsx'
+import { getFeed } from '../lib/api'
+import { sheetNo } from '../lib/vocab'
+
+// ?error=expired lands here from /api/auth/callback when a link is stale or
+// already used. Both cases mean the same thing to the reader: ask for another.
+const error = Astro.url.searchParams.get('error')
+const { challenges } = await getFeed('?limit=50')
+---
+<Base title="Sign in - Techno Optimists">
+  <Sheet sheet={sheetNo('')} live={challenges.length} rows={4}>
+    <div class="border-b border-(--color-rule) px-3 py-2 font-[family-name:--font-mono] text-[0.7rem] uppercase tracking-[0.06em]">
+      <a href="/" class="text-(--color-ink-soft) hover:text-(--color-ink)">&larr; Back to the index</a>
+      <span class="ml-4 font-bold">Sign in</span>
+    </div>
+
+    <div class="mx-auto max-w-md px-5 py-12 sm:px-8">
+      <h1 class="font-[family-name:--font-display] text-[2.4rem] leading-[1.1] tracking-tight">Sign in</h1>
+      <p class="mt-2.5 mb-8 text-lg leading-relaxed text-(--color-ink-soft)">
+        We send a link. No password to remember.
+      </p>
+
+      {error && (
+        <p class="mb-6 border-l-2 border-(--color-problem) bg-(--color-paper-sunk) px-3 py-2 text-sm text-(--color-ink-soft)">
+          That link has been used or has expired. Ask for a new one.
+        </p>
+      )}
+
+      <SignInForm client:load />
+    </div>
+  </Sheet>
+</Base>

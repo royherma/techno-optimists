@@ -367,7 +367,19 @@ app.get('/media/*', async (c) => {
 /* Auth                                                                       */
 /* -------------------------------------------------------------------------- */
 
-const emailBody = z.object({ email: z.string().email().max(254) })
+const emailBody = z.object({
+  email: z.string().email().max(254),
+  /** Where to land after the link is clicked. Same-origin paths only. */
+  next: z.string().max(300).optional(),
+})
+
+/**
+ * Only ever redirect to a path on this site. An open redirect in a link we
+ * email out is a phishing primitive: the mail is genuinely from us, and the
+ * destination is not.
+ */
+const safeNext = (raw: string | undefined) =>
+  raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : null
 
 /**
  * Sends a magic link. Always answers the same way whether or not the address is
@@ -387,7 +399,8 @@ app.post('/api/auth/request', async (c) => {
       .bind(await hashToken(token), email, linkExpiry()),
   ])
 
-  const link = `${new URL(c.req.url).origin}/api/auth/callback?token=${token}`
+  const next = safeNext(parsed.data.next)
+  const link = `${new URL(c.req.url).origin}/api/auth/callback?token=${token}${next ? `&next=${encodeURIComponent(next)}` : ''}`
   const sent = await sendMagicLink(c.env, email, link)
 
   // In dev there is no mail key, so the link goes to the Worker log. Never in prod.
@@ -457,7 +470,7 @@ app.get('/api/auth/callback', async (c) => {
   ])
 
   c.header('set-cookie', cookie(session, new URL(c.req.url).protocol === 'https:'))
-  return c.redirect('/', 302)
+  return c.redirect(safeNext(new URL(c.req.url).searchParams.get('next') ?? undefined) ?? '/', 302)
 })
 
 /** First free handle: mei, mei2, mei3... Races are caught by the UNIQUE index. */
@@ -487,6 +500,51 @@ app.post('/api/auth/signout', async (c) => {
 app.get('/api/health', async (c) => {
   const r = await c.env.DB.prepare('SELECT COUNT(*) n FROM challenges').first<{ n: number }>()
   return c.json({ ok: true, challenges: r?.n ?? 0 })
+})
+
+/* -------------------------------------------------------------------------- */
+/* Challenge pages created after the last build                               */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Astro prerenders a page per Challenge at build time, which is right for the
+ * seeded corpus and wrong for anything a user posts afterwards: their new
+ * Challenge has no HTML file and the assets binding answers 404.
+ *
+ * So: try the prerendered page first, and when it is missing, serve the newest
+ * built Challenge page as a shell and let it fetch this slug from the API on
+ * load. The reader gets their Challenge immediately; the next build turns it
+ * into a static page like any other.
+ */
+app.get('/c/:slug', async (c) => {
+  if (!c.env.ASSETS) return c.notFound()
+
+  const prerendered = await c.env.ASSETS.fetch(new Request(c.req.url, { headers: c.req.raw.headers }))
+  if (prerendered.status === 200) return prerendered
+
+  const slug = c.req.param('slug')
+  const exists = await c.env.DB.prepare('SELECT 1 FROM challenges WHERE slug = ?').bind(slug).first()
+  if (!exists) return prerendered
+
+  // The shell is a real built page, so it carries the same CSS and islands.
+  const shellSlug = await c.env.DB.prepare(
+    'SELECT slug FROM challenges ORDER BY created_at ASC LIMIT 1',
+  ).first<{ slug: string }>()
+  if (!shellSlug) return prerendered
+
+  const shellUrl = new URL(c.req.url)
+  shellUrl.pathname = `/c/${shellSlug.slug}`
+  const shell = await c.env.ASSETS.fetch(new Request(shellUrl.toString(), { headers: c.req.raw.headers }))
+  if (shell.status !== 200) return prerendered
+
+  const html = (await shell.text()).replace(
+    '</body>',
+    `<script>window.__LIVE_CHALLENGE__=${JSON.stringify(slug)}</script></body>`,
+  )
+  return new Response(html, {
+    status: 200,
+    headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' },
+  })
 })
 
 app.all('/api/*', (c) => c.json({ error: 'not_found' }, 404))
