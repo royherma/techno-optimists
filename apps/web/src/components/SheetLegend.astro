@@ -1,55 +1,75 @@
 ---
+import ActionGlyph from './ActionGlyph.astro'
 import ContourRings from './ContourRings.astro'
 import { STAGES } from '../../../../packages/types/index'
-import { DEPTH_LABEL, STAGE_MEANING, STAGE_STAMP } from '../lib/vocab'
+import { DEPTH_LABEL, LEGEND_ACTIONS, LEGEND_ACTION_LABEL, STAGE_MEANING, STAGE_STAMP } from '../lib/vocab'
 
 /*
  * The legend is not decoration and not a nav. It is how a first-time reader
- * learns the two marks the sheet uses, which is why it stands beside the index
- * rather than hiding behind a help link. Reading it teaches the whole product.
+ * learns the three marks the sheet uses, which is why it stands beside the
+ * index rather than hiding behind a help link. Reading it teaches the whole
+ * product: what reach looks like, what the lifecycle is, and what you can do.
+ *
+ * Every tier is shown, not a sample. A legend that lists three of five rings
+ * leaves the reader guessing at the two it skipped, which is the one thing a
+ * legend exists to prevent.
  */
 ---
-<aside class="border border-(--color-rule) p-4 text-[0.82rem]" aria-label="Legend">
-  <h2 class="text-[0.72rem] font-semibold uppercase tracking-[0.14em]">Legend</h2>
+<aside class="border-2 border-(--color-rule) bg-(--color-paper)" aria-label="Legend">
+  <h2 class="border-b border-(--color-rule) px-3 py-1.5 font-[family-name:--font-display] text-[1.15rem] font-bold uppercase tracking-[0.02em]">
+    Legend
+  </h2>
 
-  <h3 class="mt-4 text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-(--color-ink-soft)">
-    Stage
-  </h3>
-  <ul class="mt-2 space-y-1.5">
-    {STAGES.map((s) => (
-      <li class="flex items-baseline gap-2">
-        <span class="mt-1 h-2.5 w-2.5 shrink-0 self-start" style={`background:var(--color-${s})`}></span>
-        <span>
-          <span class="font-semibold uppercase tracking-[0.04em]" style={`color:var(--color-${s})`}>
-            {STAGE_STAMP[s]}
+  <section class="border-b border-(--color-rule) px-3 py-2.5">
+    <h3 class="font-[family-name:--font-mono] text-[0.68rem] font-bold uppercase tracking-[0.06em]">
+      Impact (contour rings)
+    </h3>
+    <ul class="mt-2">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <li class="flex items-center gap-3 py-[0.15rem]">
+          <span class="flex w-11 shrink-0 justify-center">
+            <ContourRings rings={n} label="" size={22 + n * 5} />
           </span>
-          <span class="text-(--color-ink-soft)"> - {STAGE_MEANING[s]}</span>
-        </span>
-      </li>
-    ))}
-  </ul>
+          <span class="text-[0.78rem] text-(--color-ink-soft)">
+            <span class="tabular-nums text-(--color-ink)">{n}</span>
+            {n === 1 ? ' ring = ' : ' rings = '}
+            <span class="text-(--color-ink)">{DEPTH_LABEL[n - 1]}</span>
+          </span>
+        </li>
+      ))}
+    </ul>
+  </section>
 
-  <h3 class="mt-5 text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-(--color-ink-soft)">
-    Contour rings
-  </h3>
-  <p class="mt-1.5 text-(--color-ink-soft)">How much has accumulated on a Challenge.</p>
-  <ul class="mt-2.5 space-y-1.5">
-    {[1, 3, 5].map((n) => (
-      <li class="flex items-center gap-3">
-        <ContourRings rings={n} label="" size={38} />
-        <span class="text-(--color-ink-soft)">
-          <span class="tabular-nums text-(--color-ink)">{n}</span>
-          {n === 1 ? ' ring = ' : ' rings = '}{DEPTH_LABEL[n - 1]}
-        </span>
-      </li>
-    ))}
-  </ul>
+  <section class="border-b border-(--color-rule) px-3 py-2.5">
+    <h3 class="font-[family-name:--font-mono] text-[0.68rem] font-bold uppercase tracking-[0.06em]">
+      Challenge stages (7 steps)
+    </h3>
+    <ul class="mt-2 space-y-[0.2rem]">
+      {STAGES.map((s) => (
+        <li class="flex items-center gap-2">
+          <span class="h-3 w-6 shrink-0" style={`background:var(--color-${s})`}></span>
+          <span class="text-[0.78rem] leading-tight">
+            <span class="font-bold uppercase tracking-[0.02em]" style={`color:var(--color-${s})`}>
+              {STAGE_STAMP[s]}
+            </span>
+            <span class="text-(--color-ink-soft)"> &mdash; {STAGE_MEANING[s]}</span>
+          </span>
+        </li>
+      ))}
+    </ul>
+  </section>
 
-  <h3 class="mt-5 text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-(--color-ink-soft)">
-    Actions
-  </h3>
-  <p class="mt-1.5 text-(--color-ink-soft)">
-    Every response says what kind it is. There is no generic like, because
-    "I have this problem" and "I can help" are different facts.
-  </p>
+  <section class="px-3 py-2.5">
+    <h3 class="font-[family-name:--font-mono] text-[0.68rem] font-bold uppercase tracking-[0.06em]">
+      Actions
+    </h3>
+    <ul class="mt-2">
+      {LEGEND_ACTIONS.map((k) => (
+        <li class="flex items-center gap-3 py-[0.15rem]">
+          <span class="flex w-11 shrink-0 justify-center"><ActionGlyph kind={k} /></span>
+          <span class="text-[0.78rem]">{LEGEND_ACTION_LABEL[k]}</span>
+        </li>
+      ))}
+    </ul>
+  </section>
 </aside>

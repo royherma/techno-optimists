@@ -17,5 +17,10 @@
 
   "kv_namespaces": [
     { "binding": "CACHE", "id": "2a687cc473ea4b01bc133135b98c69e5" }
+  ],
+
+  // Same local bucket as the main config - the Worker binds MEDIA unconditionally.
+  "r2_buckets": [
+    { "binding": "MEDIA", "bucket_name": "techno-optimists-media" }
   ]
 }

@@ -1,0 +1,27 @@
+---
+/*
+ * The sheet's border furniture: the ruled frame, and the grid eastings and
+ * northings printed in the margins. On a real survey sheet these numbers are
+ * what let two people talk about the same place over the phone, so they are
+ * drawn in the same blue as the graticule and never compete with the ink
+ * inside the neatline.
+ *
+ * Values are decorative-but-consistent: one continuous coordinate space across
+ * the whole sheet, matching the grid references the rows carry.
+ */
+interface Props { eastings: number[]; northings: number[] }
+const { eastings, northings } = Astro.props
+---
+<!-- Eastings run along the top and bottom, northings down both sides. -->
+<div class="pointer-events-none absolute inset-x-(--sheet-margin) top-0 flex justify-between font-[family-name:--font-mono] text-[0.6rem] font-semibold text-(--color-grid-ink)" aria-hidden="true">
+  {eastings.map((e) => <span>{e}</span>)}
+</div>
+<div class="pointer-events-none absolute inset-x-(--sheet-margin) bottom-0 flex justify-between font-[family-name:--font-mono] text-[0.6rem] font-semibold text-(--color-grid-ink)" aria-hidden="true">
+  {eastings.map((e) => <span>{e}</span>)}
+</div>
+<div class="pointer-events-none absolute inset-y-(--sheet-margin) left-0 flex w-(--sheet-margin) flex-col justify-between font-[family-name:--font-mono] text-[0.6rem] font-semibold text-(--color-grid-ink)" aria-hidden="true">
+  {northings.map((n) => <span class="pl-1.5">{n}</span>)}
+</div>
+<div class="pointer-events-none absolute inset-y-(--sheet-margin) right-0 flex w-(--sheet-margin) flex-col justify-between text-right font-[family-name:--font-mono] text-[0.6rem] font-semibold text-(--color-grid-ink)" aria-hidden="true">
+  {northings.map((n) => <span class="pr-1.5">{n}</span>)}
+</div>

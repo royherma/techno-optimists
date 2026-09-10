@@ -4,6 +4,7 @@ import {
   SESSION_COOKIE, clearCookie, cookie, currentPerson, handleFromEmail, hashToken,
   linkExpiry, mintToken, nameFromEmail, normalizeEmail, readCookie, sessionExpiry,
 } from './auth'
+import { MAX_BYTES, checkUpload, mediaKey, mediaUrl } from './media'
 import {
   ACTION_KINDS, CHALLENGE_TYPES, EMPTY_ACTIONS, FEED_SORTS, HELP_KINDS,
   type ActionKind, type Challenge, type Media, type Update,
@@ -213,6 +214,59 @@ app.post('/api/challenges/:slug/action', async (c) => {
   const real: Record<string, number> = {}
   for (const a of ((counts.results ?? []) as Row[])) real[String(a.kind)] = Number(a.n)
   return c.json({ ok: true, actions: mergeActions(real, seed?.seed_actions) })
+})
+
+/* -------------------------------------------------------------------------- */
+/* Media                                                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Upload one file. The body IS the file - no multipart, no JSON envelope, so a
+ * phone on a weak connection does one request and gets one key back.
+ */
+app.put('/api/uploads', async (c) => {
+  const me = await currentPerson(c)
+  if (!me) return c.json({ error: 'sign_in_required' }, 401)
+  if (!c.env.MEDIA) return c.json({ error: 'media_unavailable' }, 503)
+
+  const declared = c.req.header('content-length')
+  const check = checkUpload(c.req.header('content-type'), declared ? Number(declared) : null)
+  if (!check.ok) return c.json({ error: check.error, max_bytes: MAX_BYTES }, check.status)
+  if (!c.req.raw.body) return c.json({ error: 'empty_body' }, 400)
+
+  const key = mediaKey(me.id, check.ext, mintToken().slice(0, 12))
+  const stored = await c.env.MEDIA.put(key, c.req.raw.body, {
+    httpMetadata: { contentType: c.req.header('content-type')!.split(';')[0].trim() },
+    customMetadata: { person_id: me.id },
+  })
+
+  // A client can lie in content-length, so enforce the cap on what actually
+  // landed and remove it if it was over.
+  if (stored && stored.size > MAX_BYTES) {
+    await c.env.MEDIA.delete(key)
+    return c.json({ error: 'too_large', max_bytes: MAX_BYTES }, 413)
+  }
+
+  return c.json({ ok: true, media: { kind: check.kind, url: mediaUrl(key), key }, bytes: stored?.size ?? null })
+})
+
+/**
+ * Serves an uploaded object. Immutable: keys carry a random component and are
+ * never reused, so a long cache is safe.
+ */
+app.get('/media/*', async (c) => {
+  if (!c.env.MEDIA) return c.notFound()
+  const key = new URL(c.req.url).pathname.replace(/^\/media\//, '')
+  if (!key) return c.notFound()
+
+  const object = await c.env.MEDIA.get(key)
+  if (!object) return c.notFound()
+
+  const headers = new Headers()
+  object.writeHttpMetadata(headers)
+  headers.set('etag', object.httpEtag)
+  headers.set('cache-control', 'public, max-age=31536000, immutable')
+  return new Response(object.body, { headers })
 })
 
 /* -------------------------------------------------------------------------- */
