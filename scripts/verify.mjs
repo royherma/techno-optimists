@@ -116,14 +116,24 @@ await check('sitemap is XML, not the 404 page', async () => {
 })
 
 await check('a server error carries a ray', async () => {
-  // The boundary in apps/api/src/index.ts answers a throw with {error, ray}
-  // instead of a bare "Internal Server Error". A 500 with no ray means the
-  // deploy predates the boundary, and the next outage is opaque again.
-  // A healthy route must NOT 500 - so this asserts the shape only when one does.
-  const r = await fetch(`${BASE}/api/health`)
-  if (r.status !== 500) return { ok: true, detail: `${r.status}, no error to shape` }
+  // /api/_throw exists to fail. Asserting the shape of a healthy response
+  // proves nothing: every route working is indistinguishable from a missing
+  // boundary, which is how the sign-in outage stayed opaque. This makes one
+  // error happen and reads what came back.
+  //
+  // In prod the route 404s on purpose - a public endpoint that reliably 500s
+  // fills logs for free - so there the check is that it is NOT reachable.
+  const isProd = !/workers\.dev/.test(BASE)
+  const r = await fetch(`${BASE}/api/_throw`)
   const d = await r.json().catch(() => ({}))
-  return { ok: Boolean(d.ray), detail: `500 ray=${d.ray ?? 'MISSING'}` }
+  if (isProd) {
+    return { ok: r.status === 404, detail: `${r.status} (must not be reachable in prod)` }
+  }
+  return {
+    ok: r.status === 500 && typeof d.ray === 'string' && d.ray.length > 0
+      && !JSON.stringify(d).includes('deliberate'),
+    detail: `${r.status} ray=${d.ray ?? 'MISSING'} leak=${JSON.stringify(d).includes('deliberate')}`,
+  }
 })
 
 const failed = results.filter((r) => !r.ok)

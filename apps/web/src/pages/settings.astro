@@ -1,0 +1,28 @@
+---
+import Base from '../layouts/Base.astro'
+import Sheet from '../components/Sheet.astro'
+import SettingsForm from '../components/SettingsForm.tsx'
+
+// noindex: this page is an address that only ever renders one reader's own
+// account, so a crawler indexing it would list a URL that shows a stranger
+// nothing. It is not a document, it is a control panel.
+---
+<Base title="Your account - Techno Optimists" noindex={true}>
+  <Sheet>
+    <div class="border-b border-(--color-rule) px-3 py-2 font-[family-name:--font-mono] text-[0.7rem] uppercase tracking-[0.06em]">
+      <a href="/" class="text-(--color-ink-soft) hover:text-(--color-ink)">← Back to the index</a>
+      <span class="ml-4 font-bold">Your account</span>
+    </div>
+
+    <div class="mx-auto max-w-2xl px-5 py-9 sm:px-8">
+      <h1 class="font-[family-name:--font-display] text-[1.75rem] leading-[1.1] tracking-tight sm:text-[2.4rem]">
+        Your account
+      </h1>
+      <p class="mt-2.5 mb-9 text-lg leading-relaxed text-(--color-ink-soft)">
+        Your handle is how everyone here knows you. Everything else is optional.
+      </p>
+
+      <SettingsForm client:load />
+    </div>
+  </Sheet>
+</Base>

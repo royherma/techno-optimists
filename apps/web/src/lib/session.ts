@@ -7,7 +7,15 @@ export type Me = {
   name: string
   avatar_url: string | null
   location: string | null
+  skills: string[]
   roles: Role[]
+  /**
+   * The reader's own address. This is the ONE response that carries it, and it
+   * goes only to the person it belongs to - see PublicPerson in
+   * packages/types/index.ts. Never pass it into a component that renders
+   * someone else's profile.
+   */
+  email: string | null
   /** Moderation powers. Never rely on this for access control - it is a hint
    *  for what to render, and the API re-checks on every write regardless. */
   is_admin: boolean

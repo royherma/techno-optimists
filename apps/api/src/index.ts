@@ -1,15 +1,15 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
 import {
-  SESSION_COOKIE, clearCookie, cookie, currentPerson, handleFromEmail, hashToken,
-  linkExpiry, mintToken, nameFromEmail, normalizeEmail, readCookie, sessionExpiry,
-  signalCookie,
+  HANDLE_MAX, HANDLE_MIN, SESSION_COOKIE, clearCookie, cookie, currentPerson,
+  handleFromEmail, handleProblem, hashToken, linkExpiry, mintToken, nameFromEmail,
+  normalizeEmail, normalizeHandle, readCookie, sessionExpiry, signalCookie,
 } from './auth'
 import { isAdminEmail } from './admin'
 import { MAX_BYTES, checkUpload, dimensionsOf, mediaKey, mediaUrl } from './media'
 import { slugify } from './slug'
 import {
-  ACTION_KINDS, CHALLENGE_TYPES, EMPTY_ACTIONS, FEED_SORTS, HELP_KINDS, STAGES,
+  ACTION_KINDS, CHALLENGE_TYPES, EMPTY_ACTIONS, FEED_SORTS, HELP_KINDS, ROLES, STAGES,
   type ActionKind, type Challenge, type Media, type Update,
 } from '../../../packages/types/index'
 
@@ -654,9 +654,144 @@ const uniqueHandle = async (db: D1Database, base: string) => {
   return `${base}${mintToken().slice(0, 6)}`
 }
 
+/**
+ * The reader's own account, and the ONLY response on the site that carries an
+ * email address. It goes to the person it belongs to and to nobody else: the
+ * lookup is by session cookie, so there is no parameter an attacker could aim
+ * at someone else's row.
+ *
+ * Everything else about a person is served by /api/people/:handle, which
+ * returns PublicPerson and structurally cannot carry an address or a real name.
+ */
 app.get('/api/auth/me', async (c) => {
   const me = await currentPerson(c)
-  return c.json({ person: me })
+  if (!me) return c.json({ person: null })
+
+  const row = await c.env.DB.prepare(
+    `SELECT p.skills, i.email
+     FROM people p LEFT JOIN identities i ON i.person_id = p.id
+     WHERE p.id = ?`,
+  ).bind(me.id).first()
+
+  return c.json({
+    person: {
+      ...me,
+      skills: json<string[]>(row?.skills, []),
+      // LEFT JOIN: a seeded person has no identity row and so no address. Null
+      // is the right answer there, not a crash and not an empty string.
+      email: row?.email == null ? null : String(row.email),
+    },
+  })
+})
+
+const profileBody = z.object({
+  handle: z.string().trim().min(1).max(40).optional(),
+  name: z.string().trim().min(1).max(80).optional(),
+  location: z.string().trim().max(120).optional(),
+  skills: z.array(z.string().trim().min(1).max(40)).max(12).optional(),
+  roles: z.array(z.enum(ROLES)).max(ROLES.length).optional(),
+})
+
+/** What the form is told when a handle is refused. One sentence per rule. */
+const HANDLE_ERROR: Record<string, string> = {
+  too_short: `A handle needs at least ${HANDLE_MIN} characters.`,
+  too_long: `A handle can be at most ${HANDLE_MAX} characters.`,
+  bad_chars: 'Letters, numbers and underscores only.',
+  all_digits: 'A handle needs at least one letter.',
+  reserved: 'That handle is reserved.',
+  taken: 'That handle is taken.',
+}
+
+/**
+ * Changes the reader's own profile. There is no id in the path on purpose:
+ * the row edited is always the session's own, so no amount of guessing reaches
+ * anyone else's account.
+ *
+ * Email is deliberately NOT editable here. The address is what the magic link
+ * proves ownership of, so changing it is a change of identity and has to go
+ * back through the mailbox - a PATCH that rewrote it would let anyone holding a
+ * borrowed session move an account to their own address and keep it.
+ */
+app.patch('/api/people/me', async (c) => {
+  const me = await currentPerson(c)
+  if (!me) return c.json({ error: 'sign_in_required' }, 401)
+
+  const parsed = profileBody.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return c.json({ error: 'bad_body', detail: parsed.error.issues }, 400)
+  const { handle, name, location, skills, roles } = parsed.data
+
+  const sets: string[] = []
+  const values: unknown[] = []
+
+  if (handle !== undefined) {
+    // Lowercase first: someone typing their own handle back with a capital
+    // means the same handle, and refusing it reads as the product being broken.
+    const wanted = normalizeHandle(handle)
+    if (wanted !== me.handle) {
+      const problem = handleProblem(wanted)
+      if (problem) return c.json({ error: 'bad_handle', reason: problem, message: HANDLE_ERROR[problem] }, 400)
+
+      const taken = await c.env.DB.prepare('SELECT 1 FROM people WHERE handle = ? AND id != ?')
+        .bind(wanted, me.id).first()
+      if (taken) return c.json({ error: 'bad_handle', reason: 'taken', message: HANDLE_ERROR.taken }, 409)
+
+      sets.push('handle = ?')
+      values.push(wanted)
+    }
+  }
+
+  if (name !== undefined) { sets.push('name = ?'); values.push(name) }
+  // An empty string is how the form says "clear this", and a location of "" in
+  // the database would render as a blank line rather than as absent.
+  if (location !== undefined) { sets.push('location = ?'); values.push(location || null) }
+  if (skills !== undefined) { sets.push('skills = ?'); values.push(JSON.stringify([...new Set(skills)])) }
+  if (roles !== undefined) { sets.push('roles = ?'); values.push(JSON.stringify([...new Set(roles)])) }
+
+  if (sets.length > 0) {
+    values.push(me.id)
+    try {
+      await c.env.DB.prepare(`UPDATE people SET ${sets.join(', ')} WHERE id = ?`).bind(...values).run()
+    } catch (err) {
+      // The UNIQUE index is the real arbiter: the SELECT above can pass and
+      // still lose a race to another signup taking the same handle a
+      // millisecond later. Answer that as the conflict it is, not as a 500.
+      const message = err instanceof Error ? err.message : String(err)
+      if (/UNIQUE|constraint/i.test(message)) {
+        return c.json({ error: 'bad_handle', reason: 'taken', message: HANDLE_ERROR.taken }, 409)
+      }
+      throw err
+    }
+  }
+
+  const fresh = await currentPerson(c)
+  return c.json({ ok: true, person: fresh })
+})
+
+/**
+ * Somebody else's profile. Returns PublicPerson: no name, no email, no admin
+ * flag - see packages/types/index.ts for why each of those is absent.
+ */
+app.get('/api/people/:handle', async (c) => {
+  const handle = normalizeHandle(c.req.param('handle'))
+  const row = await c.env.DB.prepare(
+    `SELECT p.id, p.handle, p.avatar_url, p.location, p.skills, p.roles, p.created_at,
+            (SELECT COUNT(*) FROM challenges ch WHERE ch.author_id = p.id) challenges_count
+     FROM people p WHERE p.handle = ?`,
+  ).bind(handle).first()
+  if (!row) return c.json({ error: 'not_found' }, 404)
+
+  return c.json({
+    person: {
+      id: String(row.id),
+      handle: String(row.handle),
+      avatar_url: row.avatar_url == null ? null : String(row.avatar_url),
+      location: row.location == null ? null : String(row.location),
+      skills: json<string[]>(row.skills, []),
+      roles: json<string[]>(row.roles, []),
+      challenges_count: Number(row.challenges_count ?? 0),
+      created_at: String(row.created_at),
+    },
+  })
 })
 
 app.post('/api/auth/signout', async (c) => {
@@ -724,9 +859,54 @@ app.get('/c/:slug', async (c) => {
 
 app.all('/api/*', (c) => c.json({ error: 'not_found' }, 404))
 
+/**
+ * Proves the error boundary is live on a deployment, and nothing else.
+ *
+ * The boundary is the one piece of error handling that cannot be checked by
+ * looking at a healthy response - every route working is exactly what it looks
+ * like when the boundary is missing. So there is a route whose only job is to
+ * throw. `verify.mjs` calls it and asserts the answer carries a ray.
+ *
+ * Never in prod: a public endpoint that reliably 500s is a free way to fill
+ * someone's logs. It 404s there, like any other unknown path.
+ */
+app.get('/api/_throw', (c) => {
+  if (c.env.ENVIRONMENT === 'prod') return c.json({ error: 'not_found' }, 404)
+  throw new Error('deliberate: verifying the error boundary')
+})
+
 export { app }
 export default {
-  fetch(req: Request, env: Env, ctx: ExecutionContext) {
-    return app.fetch(req, env, ctx)
+  /**
+   * One call site for traffic, rather than a track() in every route: this is
+   * the only place every request passes through, and it is the only place that
+   * knows the final status and how long the whole thing took.
+   *
+   * waitUntil, not await - the response goes back first and the write happens
+   * after. A blocked or slow dataset costs nothing on the request path.
+   */
+  async fetch(req: Request, env: Env, ctx: ExecutionContext) {
+    const started = Date.now()
+    const res = await app.fetch(req, env, ctx)
+    try {
+      const url = new URL(req.url)
+      // Assets and the API both come through here. Recording every hashed
+      // /_astro/ file would bury the pages in build artefacts, so they are
+      // dropped - the question this data answers is which pages people open.
+      if (!url.pathname.startsWith('/_astro/')) {
+        ctx.waitUntil(Promise.resolve().then(() => track(
+          env,
+          url.pathname.startsWith('/api/') ? 'api' : 'pageview',
+          url.pathname,
+          {
+            country: req.headers.get('cf-ipcountry') ?? '',
+            referrer: req.headers.get('referer') ?? '',
+            ms: Date.now() - started,
+            status: res.status,
+          },
+        )))
+      }
+    } catch { /* never let telemetry touch the response */ }
+    return res
   },
 }

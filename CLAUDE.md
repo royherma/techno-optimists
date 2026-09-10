@@ -35,6 +35,12 @@ Do not restate or re-derive it — link to it.
 `technooptimists.org` was bought 2026-09-10 and prod is live on it. The lock that
 stood here until then is lifted - Roy's call, same day.
 
+**Prelaunch: deploy without asking.** There are no real users yet, so a broken
+deploy costs a redeploy and nothing else. Iterate fast: build, deploy, verify,
+keep going. Do not stop to ask permission for `deploy:dev` or `deploy:prod`, and
+do not ask whether to check something - check it. This overrides the global
+deploy gate for this repo, and it expires the day real Challenges exist.
+
 - `npm run deploy:dev` -> `techno-optimists-dev.<subdomain>.workers.dev`, throwaway data.
 - `npm run deploy:prod` -> `technooptimists.org`, real data. The apex and `www` are
   custom domains declared in `wrangler.jsonc`, so the deploy creates their DNS records.
