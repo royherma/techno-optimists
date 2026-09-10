@@ -1,0 +1,117 @@
+---
+import Base from '../layouts/Base.astro'
+import Sheet from '../components/Sheet.astro'
+import SessionNav from '../components/SessionNav.tsx'
+import PostFab from '../components/PostFab.astro'
+import WorldPlate from '../components/WorldPlate.tsx'
+import { getFeed } from '../lib/api'
+import { project } from '../lib/atlas'
+import { STAGE_STAMP, TYPE_LABEL, depthScale, sheetNo, stageColor } from '../lib/vocab'
+import { STAGES } from '../../../../packages/types/index'
+
+const { challenges } = await getFeed('?limit=50')
+
+// Only the ones that carry a real position. The rest are not missing data and
+// not errors - most Challenges never get a pin - so they are counted openly
+// below the map rather than dropped silently or faked onto 0,0.
+const placed = challenges.filter((c) => c.lat != null && c.lng != null)
+const unplaced = challenges.length - placed.length
+const depth = depthScale(challenges)
+---
+<Base
+  title="Map - Techno Optimists"
+  description="Where the Challenges are. Every pin is a real place someone reported from."
+>
+  <Sheet sheet={sheetNo('')} live={challenges.length} rows={8}>
+    <nav
+      class="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-(--color-rule) px-3 py-2 font-[family-name:--font-mono] text-[0.7rem] uppercase tracking-[0.06em]"
+      aria-label="Sheet"
+    >
+      <a href="/" class="ink-transition ink-underline text-(--color-ink-soft) hover:text-(--color-ink)">← Index</a>
+      <span class="font-bold">Map</span>
+      <span class="ml-auto"><SessionNav client:load /></span>
+    </nav>
+
+    <div class="px-3 py-5 sm:px-5">
+      <h1 class="font-[family-name:--font-display] text-[2rem] leading-[1.1] tracking-tight sm:text-[2.4rem]">
+        Where the Challenges are
+      </h1>
+      <p class="mt-2 max-w-2xl text-(--color-ink-soft)">
+        Every pin is somewhere a person reported from. Ring colour is the stage it
+        has reached; ring size is how much has accumulated on it.
+      </p>
+
+      <div class="mt-5 border-2 border-(--color-rule)">
+        <WorldPlate client:load>
+          {placed.map((c) => {
+            const p = project(c.lat!, c.lng!)
+            const r = 5 + depth(c) * 2.2
+            return (
+              <a href={`/c/${c.slug}`} class="map-pin">
+                <title>{`${c.title} - ${c.location ?? 'unplaced'}`}</title>
+                <circle cx={p.x} cy={p.y} r={r} fill="none" stroke={stageColor(c.stage)} stroke-width="2.2" />
+                <circle cx={p.x} cy={p.y} r="2.6" fill={stageColor(c.stage)} />
+              </a>
+            )
+          })}
+        </WorldPlate>
+      </div>
+
+      <!--
+        The legend for this plate only: stage colour is the one mark the map
+        adds, so it is the one thing that needs explaining here. The full sheet
+        legend lives on the index.
+      -->
+      <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[0.72rem]">
+        {STAGES.map((s) => (
+          <span class="flex items-center gap-1.5">
+            <span class="inline-block h-2.5 w-2.5 rounded-full" style={`background:${stageColor(s)}`}></span>
+            <span class="uppercase tracking-[0.04em] text-(--color-ink-soft)">{STAGE_STAMP[s]}</span>
+          </span>
+        ))}
+      </div>
+
+      <p class="mt-4 font-[family-name:--font-mono] text-[0.7rem] uppercase tracking-[0.06em] text-(--color-ink-faint)">
+        {placed.length} placed
+        {unplaced > 0 && ` · ${unplaced} without a place`}
+      </p>
+
+      {placed.length === 0 && (
+        <p class="mt-6 text-(--color-ink-soft)">
+          No Challenge carries a place yet. Post one and drop a pin to start the map.
+        </p>
+      )}
+
+      <!-- The placed Challenges as a readable list, so the map is not the only way in. -->
+      {placed.length > 0 && (
+        <ul class="mt-8 border-t border-(--color-rule)">
+          {placed.map((c) => (
+            <li class="border-b border-(--color-rule-soft)">
+              <a href={`/c/${c.slug}`} class="ink-transition flex flex-wrap items-baseline gap-x-3 gap-y-1 px-1 py-2.5 hover:bg-(--color-paper-sunk)">
+                <span class="h-2.5 w-2.5 shrink-0 rounded-full" style={`background:${stageColor(c.stage)}`}></span>
+                <span class="font-[family-name:--font-display] text-[1.05rem] leading-tight">{c.title}</span>
+                <span class="text-[0.7rem] uppercase tracking-[0.06em] text-(--color-ink-faint)">{TYPE_LABEL[c.type]}</span>
+                <span class="ml-auto font-[family-name:--font-mono] text-[0.72rem] text-(--color-ink-soft)">{c.location}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  </Sheet>
+  <PostFab />
+</Base>
+
+<style>
+  /*
+   * Pins sit on top of each other where a region is busy, so hover has to bring
+   * one forward. `paint-order` is not enough - SVG has no z-index - so the
+   * hovered anchor is re-rendered last by the browser's own hover repaint and
+   * simply grows instead.
+   */
+  .map-pin circle { transition: r 120ms ease-out, stroke-width 120ms ease-out; }
+  .map-pin:hover circle,
+  .map-pin:focus-visible circle { stroke-width: 3.4; }
+  .map-pin:focus-visible { outline: none; }
+  .map-pin:focus-visible circle:first-of-type { stroke: var(--color-ink); }
+</style>

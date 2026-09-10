@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ChallengeType, Media } from '../../../../packages/types/index'
 import { TYPE_LABEL, typeColor } from '../lib/vocab'
 import { getMe, type Me } from '../lib/session'
+import PlacePicker from './PlacePicker'
 
 /**
  * Posting a Challenge.
@@ -69,6 +70,10 @@ export default function CaptureForm() {
   const [summary, setSummary] = useState('')
   const [body, setBody] = useState('')
   const [location, setLocation] = useState('')
+  // The pin, kept separate from the typed label: they are set independently and
+  // either one alone is a valid answer to "where".
+  const [lat, setLat] = useState<number | null>(null)
+  const [lng, setLng] = useState<number | null>(null)
   const [tags, setTags] = useState('')
   const [shots, setShots] = useState<Shot[]>([])
   const [submitting, setSubmitting] = useState(false)
@@ -140,6 +145,10 @@ export default function CaptureForm() {
           summary: summary.trim(),
           body: body.trim() || undefined,
           location: location.trim() || undefined,
+          // Sent only as a complete pair - the API rejects a lone coordinate,
+          // and a half-pair is not a position anyway.
+          lat: lat ?? undefined,
+          lng: lng ?? undefined,
           tags: tags.split(',').map((t) => t.trim()).filter(Boolean).slice(0, 6),
           media: shots.filter((s) => s.media).map((s) => s.media),
         }),
@@ -294,9 +303,21 @@ export default function CaptureForm() {
         />
       </section>
 
-      <section className="grid gap-5 sm:grid-cols-2">
-        <Field name="location" label="Where" hint="Optional." value={location} onChange={setLocation} maxLength={120} optional />
-        <Field name="tags" label="Tags" hint="Comma separated. Up to six." value={tags} onChange={setTags} maxLength={200} optional />
+      <section className="space-y-5">
+        <Legend n="04" label="Where it is" />
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field
+            name="location"
+            label="Place name"
+            hint="How you would say it out loud. 'Chiang Mai, Thailand'."
+            value={location}
+            onChange={setLocation}
+            maxLength={120}
+            optional
+          />
+          <Field name="tags" label="Tags" hint="Comma separated. Up to six." value={tags} onChange={setTags} maxLength={200} optional />
+        </div>
+        <PlacePicker lat={lat} lng={lng} onChange={(la, ln) => { setLat(la); setLng(ln) }} />
       </section>
 
       <div className="space-y-3 border-t border-(--color-rule-soft) pt-6">

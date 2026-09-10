@@ -8,6 +8,7 @@ import { TYPE_LABEL, depthScale, sheetNo } from '../lib/vocab'
 import { CHALLENGE_TYPES } from '../../../../packages/types/index'
 import SessionNav from '../components/SessionNav.tsx'
 import FeedTopUp from '../components/FeedTopUp.tsx'
+import PostFab from '../components/PostFab.astro'
 
 const type = Astro.url.searchParams.get('type') ?? ''
 const valid = (CHALLENGE_TYPES as readonly string[]).includes(type)
@@ -46,6 +47,7 @@ const depth = depthScale(challenges)
           aria-label="Filter by type"
         >
           <span class="font-bold">Index</span>
+          <a href="/map" class="ink-transition ink-underline text-(--color-ink-soft) hover:text-(--color-ink)">Map</a>
           <span class="ml-auto"><SessionNav client:load /></span>
           <a
             href="/"
@@ -87,4 +89,5 @@ const depth = depthScale(challenges)
       </div>
     </div>
   </Sheet>
+  <PostFab />
 </Base>
