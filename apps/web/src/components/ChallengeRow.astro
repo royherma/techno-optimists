@@ -2,6 +2,7 @@
 import type { Challenge } from '../../../../packages/types/index'
 import ActionGlyph from './ActionGlyph.astro'
 import ContourRings from './ContourRings.astro'
+import MediaPlate from './MediaPlate.astro'
 import { ACTION_LABEL, count, depthLabel, gridRef, rowNo, stageColor } from '../lib/vocab'
 import { STAGE_STAMP } from '../lib/vocab'
 
@@ -49,22 +50,8 @@ const ACTIONS = ['have_problem', 'have_idea', 'can_help', 'will_test'] as const
         already the right shape and colour, so dropping the broken <img> leaves
         a plate that reads as intentional rather than as a failure.
       -->
-      <a href={`/c/${c.slug}`} class="hidden shrink-0 sm:block">
-        <div
-          class="aspect-[4/3] w-28 overflow-hidden border border-(--color-rule)"
-          style={`background:${hero?.tint ?? 'var(--color-paper-sunk)'}`}
-        >
-          {hero && (
-            <img
-              src={hero.url}
-              alt={hero.alt ?? ''}
-              loading={priority ? 'eager' : 'lazy'}
-              decoding="async"
-              class="h-full w-full object-cover"
-              onerror="this.remove()"
-            />
-          )}
-        </div>
+      <a href={`/c/${c.slug}`} class="hidden w-28 shrink-0 sm:block">
+        <MediaPlate media={hero} fit="cover" eager={priority} min={0.75} max={1.6} class="w-full" />
       </a>
 
       <div class="min-w-0">

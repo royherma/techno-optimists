@@ -8,7 +8,10 @@ const j = (v) => q(JSON.stringify(v))
 // Local SVG, drawn per Challenge by scripts/gen-seed-art.mjs. Hotlinked stock
 // photos kept contradicting the caption (a barbecue illustrating "fishermen lose
 // their catch"), which is worse than an abstract image. `id` is now the slug.
-const img = (slug, tint, alt) => ({ kind: 'image', url: `/seed/${slug}.svg`, tint, alt })
+// Dimensions match the canvas gen-seed-art.mjs draws on. They ship with the
+// media object because every surface sizes itself from the real shape now,
+// and a seed row with no size would be the only one guessing.
+const img = (slug, tint, alt) => ({ kind: 'image', url: `/seed/${slug}.svg`, w: 1200, h: 900, tint, alt })
 
 const people = [
   ['p_niran','niran','Niran Suwannakot','Chiang Mai, Thailand',['dairy farming','field testing'],['scout','tester']],

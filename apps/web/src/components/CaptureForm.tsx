@@ -30,6 +30,36 @@ type Shot = {
   preview: string
   state: 'uploading' | 'done' | 'failed'
   media?: Media
+  /** The file's own shape, so the thumbnail is never a crop of a guess. */
+  w?: number
+  h?: number
+}
+
+/**
+ * Reads a picked file's intrinsic size in the browser.
+ *
+ * Videos go through a <video> element and stills through Image(), because a
+ * still decoder returns nothing for a movie and vice versa. Either can fail -
+ * an HEIC that Safari renders and Chrome does not, a codec the browser lacks -
+ * so this resolves null rather than rejecting, and the caller uploads anyway.
+ */
+async function measure(shot: Shot): Promise<{ w: number; h: number } | null> {
+  const video = shot.file.type.startsWith('video/')
+  return new Promise((resolve) => {
+    const done = (v: { w: number; h: number } | null) => resolve(v?.w && v?.h ? v : null)
+    if (video) {
+      const el = document.createElement('video')
+      el.preload = 'metadata'
+      el.onloadedmetadata = () => done({ w: el.videoWidth, h: el.videoHeight })
+      el.onerror = () => done(null)
+      el.src = shot.preview
+      return
+    }
+    const img = new Image()
+    img.onload = () => done({ w: img.naturalWidth, h: img.naturalHeight })
+    img.onerror = () => done(null)
+    img.src = shot.preview
+  })
 }
 
 export default function CaptureForm() {
@@ -68,6 +98,12 @@ export default function CaptureForm() {
 
   async function upload(shot: Shot) {
     try {
+      // Measure before sending so the preview can take the file's real shape
+      // straight away. The Worker re-reads the header and its answer wins; this
+      // one only has to be good enough to lay out the thumbnail.
+      const size = await measure(shot)
+      if (size) setShots((s) => s.map((x) => (x.id === shot.id ? { ...x, ...size } : x)))
+
       const r = await fetch('/api/uploads', {
         method: 'PUT',
         headers: { 'content-type': shot.file.type || 'application/octet-stream' },
@@ -76,7 +112,10 @@ export default function CaptureForm() {
       })
       if (!r.ok) throw new Error(String(r.status))
       const { media } = await r.json()
-      setShots((s) => s.map((x) => (x.id === shot.id ? { ...x, state: 'done', media } : x)))
+      // The Worker reads the file header, so its size is the authority. This
+      // only fills in what it could not parse - a video, or an HEIC it declined.
+      const withSize: Media = { ...media, w: media.w ?? size?.w, h: media.h ?? size?.h }
+      setShots((s) => s.map((x) => (x.id === shot.id ? { ...x, state: 'done', media: withSize } : x)))
     } catch {
       setShots((s) => s.map((x) => (x.id === shot.id ? { ...x, state: 'failed' } : x)))
     }
@@ -134,8 +173,18 @@ export default function CaptureForm() {
         <Legend n="01" label="What you saw" />
         <div className="flex flex-wrap gap-3">
           {shots.map((shot) => (
-            <figure key={shot.id} className="relative h-28 w-28 overflow-hidden border border-(--color-rule-soft)">
-              <img src={shot.preview} alt="" className="h-full w-full object-cover" />
+            {/*
+              The thumbnail keeps the photo's own shape, bounded so a panorama
+              cannot run off the row and a tall portrait cannot tower over it.
+              Contain, not cover: this is the last look before posting, so it
+              has to show what will actually be sent.
+            */}
+            <figure
+              key={shot.id}
+              className="relative h-28 overflow-hidden border border-(--color-rule-soft) bg-(--color-paper-sunk)"
+              style={{ aspectRatio: shot.w && shot.h ? Math.min(2.2, Math.max(0.55, shot.w / shot.h)) : 1 }}
+            >
+              <img src={shot.preview} alt="" className="h-full w-full object-contain" />
               {shot.state !== 'done' && (
                 <figcaption
                   className={`absolute inset-x-0 bottom-0 py-1 text-center font-[family-name:--font-mono] text-[10px] ${

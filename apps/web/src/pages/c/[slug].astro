@@ -4,6 +4,7 @@ import ActionBar from '../../components/ActionBar'
 import LiveChallenge from '../../components/LiveChallenge.tsx'
 import Sheet from '../../components/Sheet.astro'
 import ContourRings from '../../components/ContourRings.astro'
+import MediaPlate from '../../components/MediaPlate.astro'
 import StageStamp from '../../components/StageStamp.astro'
 import { getChallenge, getFeed } from '../../lib/api'
 import {
@@ -70,20 +71,37 @@ const ranked = ACTION_KINDS.map((k) => [k, c.actions[k]] as const)
       Always in the DOM, hidden when there is no image: a Challenge posted since
       the last build fills this in on load, and it needs something to fill.
     -->
-    <figure class="m-0" hidden={!hero}>
-      <img data-field="hero" src={hero?.url ?? ''} alt={hero?.alt ?? ''} loading="eager"
-           class="mt-6 aspect-[16/9] max-h-[26rem] w-full border border-(--color-rule) object-cover"
-           style={hero?.tint ? `background:${hero.tint}` : undefined} />
+    <!--
+      The picture is the subject of an entry, so it is shown whole rather than
+      cropped to a house ratio: a portrait photo keeps its top and bottom, a
+      panorama keeps both ends. The plate is centred and capped in height so a
+      9:16 shot cannot push the text a full screen down.
+    -->
+    <figure class="m-0 mt-6" hidden={!hero}>
+      <MediaPlate
+        media={hero}
+        fit="contain"
+        eager
+        min={0.62}
+        max={2.6}
+        class="mx-auto max-h-[26rem] w-full"
+      />
     </figure>
 
     <!--
       Lifecycle as ordered stations rather than a status field: you read left to
       right and see the handoffs, which is what makes the sequence legible.
     -->
-    <ol class="mt-8 grid grid-cols-[repeat(7,minmax(0,1fr))] gap-px border border-(--color-rule) bg-(--color-rule-soft)"
+    <!--
+      Seven equal columns need about 55rem to set their labels; below that the
+      words truncated to "SPOT UNDE IDEAS BUILI" and the row pushed the page
+      wider than the screen. Wrapping instead of dividing means each station
+      takes the width its own word needs, at any viewport.
+    -->
+    <ol class="mt-8 flex flex-wrap gap-px border border-(--color-rule) bg-(--color-rule-soft)"
         aria-label="Lifecycle stage">
       {STAGE_ORDER.map((s, i) => (
-        <li class="bg-(--color-paper) px-2 py-2.5 text-center">
+        <li class="flex-1 basis-[6.5rem] bg-(--color-paper) px-2 py-2.5 text-center">
           <span class="block h-1" style={i <= reached ? `background:var(--color-${s})` : ''}></span>
           <span
             class:list={['mt-2 block text-[0.68rem] font-semibold uppercase tracking-[0.05em]',
