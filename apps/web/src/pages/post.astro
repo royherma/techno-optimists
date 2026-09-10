@@ -1,0 +1,30 @@
+---
+import Base from '../layouts/Base.astro'
+import Sheet from '../components/Sheet.astro'
+import CaptureForm from '../components/CaptureForm.tsx'
+import { getFeed } from '../lib/api'
+import { sheetNo } from '../lib/vocab'
+
+// The title block prints the live count, so it has to be a real count.
+const { challenges } = await getFeed('?limit=50')
+---
+<Base title="Post a Challenge - Techno Optimists">
+  <Sheet sheet={sheetNo('')} live={challenges.length} rows={6}>
+    <div class="border-b border-(--color-rule) px-3 py-2 font-[family-name:--font-mono] text-[0.7rem] uppercase tracking-[0.06em]">
+      <a href="/" class="text-(--color-ink-soft) hover:text-(--color-ink)">&larr; Back to the index</a>
+      <span class="ml-4 font-bold">New entry</span>
+    </div>
+
+    <div class="mx-auto max-w-2xl px-5 py-9 sm:px-8">
+      <h1 class="font-[family-name:--font-display] text-[2.4rem] leading-[1.1] tracking-tight">
+        Post a Challenge
+      </h1>
+      <p class="mt-2.5 mb-9 text-lg leading-relaxed text-(--color-ink-soft)">
+        A problem with no solution is a complete contribution. Documenting it well
+        is the work.
+      </p>
+
+      <CaptureForm client:load />
+    </div>
+  </Sheet>
+</Base>

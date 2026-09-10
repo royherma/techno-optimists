@@ -19,7 +19,7 @@ export default function SessionNav() {
   if (!mounted || me === undefined) return <span className="inline-block h-6" />
 
   return (
-    <span className="flex items-center gap-3 font-mono text-[0.7rem] tracking-[0.06em] uppercase">
+    <span className="flex items-center gap-3 font-[family-name:--font-mono] text-[0.7rem] tracking-[0.06em] uppercase">
       <a href="/post" className="border border-(--color-rule) px-3 py-1.5 hover:bg-(--color-paper-sunk)">
         + Post
       </a>

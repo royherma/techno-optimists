@@ -40,3 +40,4 @@ tmp/
 outputs/
 .shots/
 .claude/deploy-lock.json
+*-tmp.mjs
