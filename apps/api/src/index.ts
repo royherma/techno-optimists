@@ -5,8 +5,9 @@ import {
   linkExpiry, mintToken, nameFromEmail, normalizeEmail, readCookie, sessionExpiry,
 } from './auth'
 import { MAX_BYTES, checkUpload, mediaKey, mediaUrl } from './media'
+import { slugify } from './slug'
 import {
-  ACTION_KINDS, CHALLENGE_TYPES, EMPTY_ACTIONS, FEED_SORTS, HELP_KINDS,
+  ACTION_KINDS, CHALLENGE_TYPES, EMPTY_ACTIONS, FEED_SORTS, HELP_KINDS, STAGES,
   type ActionKind, type Challenge, type Media, type Update,
 } from '../../../packages/types/index'
 
@@ -127,6 +128,99 @@ app.get('/api/challenges', async (c) => {
     challenges: page.map((r) => toChallenge(r, byChallenge.get(String(r.id)) ?? [])),
     next_cursor: rows.length > limit ? String(offset + limit) : null,
   })
+})
+
+const mediaItem = z.object({
+  kind: z.enum(['image', 'video']),
+  url: z.string().max(500),
+  tint: z.string().max(20).optional(),
+  alt: z.string().max(300).optional(),
+})
+
+const createBody = z.object({
+  type: z.enum(CHALLENGE_TYPES),
+  title: z.string().trim().min(8).max(140),
+  summary: z.string().trim().min(10).max(280),
+  body: z.string().max(20_000).optional(),
+  media: z.array(mediaItem).max(8).default([]),
+  location: z.string().max(120).optional(),
+  tags: z.array(z.string().trim().toLowerCase().min(2).max(30)).max(6).default([]),
+})
+
+/**
+ * Creates a Challenge. The stage is always 'spot' - a Challenge enters the
+ * world by being noticed, and moves on only through updates. The type is what
+ * the author says it is and is kept for life.
+ */
+app.post('/api/challenges', async (c) => {
+  const me = await currentPerson(c)
+  if (!me) return c.json({ error: 'sign_in_required' }, 401)
+
+  const parsed = createBody.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return c.json({ error: 'bad_body', detail: parsed.error.issues }, 400)
+  const { type, title, summary, body, media, location, tags } = parsed.data
+
+  const id = `c_${mintToken().slice(0, 16)}`
+  const slug = await uniqueSlug(c.env.DB, slugify(title))
+
+  await c.env.DB.prepare(
+    `INSERT INTO challenges (id, slug, type, stage, title, summary, body, media, location, tags, author_id)
+     VALUES (?, ?, ?, 'spot', ?, ?, ?, ?, ?, ?, ?)`,
+  ).bind(
+    id, slug, type, title, summary, body ?? null,
+    JSON.stringify(media), location ?? null, JSON.stringify([...new Set(tags)]), me.id,
+  ).run()
+
+  const row = await c.env.DB.prepare(`${SELECT_CHALLENGE} WHERE c.id = ?`).bind(id).first()
+  return c.json({ ok: true, challenge: toChallenge(row as Row, []) }, 201)
+})
+
+/** Slugs are permanent, so a clash gets a numeric suffix rather than a rewrite. */
+const uniqueSlug = async (db: D1Database, base: string) => {
+  for (let n = 1; n <= 50; n++) {
+    const candidate = n === 1 ? base : `${base}-${n}`
+    const taken = await db.prepare('SELECT 1 FROM challenges WHERE slug = ?').bind(candidate).first()
+    if (!taken) return candidate
+  }
+  return `${base}-${mintToken().slice(0, 6)}`
+}
+
+const updateBody = z.object({
+  body: z.string().trim().min(1).max(20_000),
+  stage: z.enum(STAGES).optional(),
+  media: z.array(mediaItem).max(8).default([]),
+})
+
+/**
+ * Appends to the progress log. An update carrying a stage moves the Challenge -
+ * that is the only way the lifecycle advances, so progress is always evidenced
+ * by someone saying what happened.
+ */
+app.post('/api/challenges/:slug/updates', async (c) => {
+  const me = await currentPerson(c)
+  if (!me) return c.json({ error: 'sign_in_required' }, 401)
+
+  const parsed = updateBody.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return c.json({ error: 'bad_body', detail: parsed.error.issues }, 400)
+  const { body, stage, media } = parsed.data
+
+  const challenge = await c.env.DB.prepare('SELECT id FROM challenges WHERE slug = ?')
+    .bind(c.req.param('slug')).first()
+  if (!challenge) return c.json({ error: 'not_found' }, 404)
+
+  const id = `u_${mintToken().slice(0, 16)}`
+  const writes = [
+    c.env.DB.prepare(
+      'INSERT INTO updates (id, challenge_id, author_id, stage, body, media) VALUES (?, ?, ?, ?, ?, ?)',
+    ).bind(id, challenge.id, me.id, stage ?? null, body, JSON.stringify(media)),
+    c.env.DB.prepare("UPDATE challenges SET last_activity_at = datetime('now') WHERE id = ?").bind(challenge.id),
+  ]
+  if (stage) {
+    writes.push(c.env.DB.prepare('UPDATE challenges SET stage = ? WHERE id = ?').bind(stage, challenge.id))
+  }
+  await c.env.DB.batch(writes)
+
+  return c.json({ ok: true, id, stage: stage ?? null }, 201)
 })
 
 app.get('/api/challenges/:slug', async (c) => {

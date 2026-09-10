@@ -1,11 +1,12 @@
 ---
 import type { Challenge } from '../../../../packages/types/index'
+import ActionGlyph from './ActionGlyph.astro'
 import ContourRings from './ContourRings.astro'
-import StageStamp from './StageStamp.astro'
-import { ACTION_LABEL, count, depthLabel, gridRef } from '../lib/vocab'
+import { ACTION_LABEL, count, depthLabel, gridRef, rowNo, stageColor } from '../lib/vocab'
+import { STAGE_STAMP } from '../lib/vocab'
 
-interface Props { challenge: Challenge; rings: number; priority?: boolean }
-const { challenge: c, rings, priority = false } = Astro.props
+interface Props { challenge: Challenge; rings: number; index: number; priority?: boolean }
+const { challenge: c, rings, index, priority = false } = Astro.props
 const hero = c.media[0]
 const ref = gridRef(c.id)
 
@@ -17,67 +18,95 @@ const ref = gridRef(c.id)
  */
 const ACTIONS = ['have_problem', 'have_idea', 'can_help', 'will_test'] as const
 ---
-<article class="grid grid-cols-[auto_1fr] gap-x-4 border-b border-(--color-rule) py-5 sm:grid-cols-[7.5rem_13rem_1fr_8.25rem] sm:gap-x-5">
-  <!-- Index column: where this sits on the sheet, and how deep it runs. -->
-  <div class="col-start-1 row-start-1 flex flex-col gap-1.5 sm:row-span-2">
-    <span class="font-[family-name:--font-mono] text-[0.78rem] font-medium tracking-tight">{ref}</span>
+<!--
+  A ruled table row, not a card. The columns are the ones the legend names -
+  NO. / GRID REF. / CHALLENGE / IMPACT / STAGE - so the header strip at the top
+  of the index keeps applying all the way down, which is what makes a table a
+  table rather than a stack of boxes with lines between them.
+-->
+<article class="grid grid-cols-[2.6rem_1fr_4.5rem] border-b border-(--color-rule) sm:grid-cols-[3rem_9.5rem_1fr_6rem_8rem]">
+  <!-- NO. -->
+  <div class="flex items-start justify-center border-r border-(--color-rule) px-1 py-3.5">
+    <span class="font-[family-name:--font-mono] text-[0.82rem] font-semibold tabular-nums">{rowNo(index)}</span>
+  </div>
+
+  <!-- GRID REF. Plus where it actually is, when the Challenge says. -->
+  <div class="col-span-2 flex flex-col gap-0.5 border-(--color-rule) px-2.5 py-3.5 sm:col-span-1 sm:border-r">
+    <span class="font-[family-name:--font-mono] text-[0.82rem] font-medium tracking-tight">{ref}</span>
     {c.location && (
-      <span class="text-[0.7rem] uppercase tracking-[0.08em] text-(--color-ink-soft)">{c.location}</span>
+      <span class="text-[0.66rem] uppercase leading-tight tracking-[0.06em] text-(--color-ink-soft)">
+        {c.location}
+      </span>
     )}
-    <div class="mt-1 hidden text-(--color-ink) sm:block">
-      <ContourRings rings={rings} label={`Investigation depth: ${depthLabel(rings)}`} />
-    </div>
   </div>
 
-  <!-- The photograph. Whatever someone uploaded, in a plain keyline box. -->
-  <a href={`/c/${c.slug}`} class="col-start-2 row-start-1 block sm:col-start-2">
-    <div
-      class="aspect-[4/3] w-full overflow-hidden border border-(--color-rule)"
-      style={`background:${hero?.tint ?? 'var(--color-paper-sunk)'}`}
-    >
-      {hero && (
-        <img
-          src={hero.url}
-          alt={hero.alt ?? ''}
-          loading={priority ? 'eager' : 'lazy'}
-          decoding="async"
-          class="h-full w-full object-cover"
-        />
-      )}
-    </div>
-  </a>
-
-  <!-- The problem, stated plainly. The one thing a reader must not miss. -->
-  <div class="col-span-2 row-start-2 mt-3 sm:col-span-1 sm:col-start-3 sm:row-start-1 sm:mt-0">
-    <a href={`/c/${c.slug}`} class="block">
-      <h2 class="font-[family-name:--font-display] text-[1.45rem] leading-[1.2] tracking-tight sm:text-[1.6rem]">
-        {c.title}
-      </h2>
-      <p class="mt-1.5 max-w-2xl text-[0.94rem] leading-snug text-(--color-ink-soft)">{c.summary}</p>
-    </a>
-
-    <div class="mt-3 flex flex-wrap gap-2">
-      {ACTIONS.map((k) => (
-        <button
-          type="button"
-          data-action={k}
-          data-challenge={c.slug}
-          class="border border-(--color-rule-soft) px-2.5 py-1.5 text-[0.8rem] transition-colors hover:border-(--color-rule) hover:bg-(--color-paper-sunk)"
+  <!-- CHALLENGE: the photograph, the problem stated plainly, and what you can do. -->
+  <div class="col-span-3 border-(--color-rule) px-2.5 py-3.5 sm:col-span-1 sm:border-r">
+    <div class="flex gap-3.5">
+      <a href={`/c/${c.slug}`} class="hidden shrink-0 sm:block">
+        <div
+          class="aspect-[4/3] w-28 overflow-hidden border border-(--color-rule)"
+          style={`background:${hero?.tint ?? 'var(--color-paper-sunk)'}`}
         >
-          {ACTION_LABEL[k]}
-          {c.actions[k] > 0 && (
-            <span class="ml-1.5 font-semibold tabular-nums">{count(c.actions[k])}</span>
+          {hero && (
+            <img
+              src={hero.url}
+              alt={hero.alt ?? ''}
+              loading={priority ? 'eager' : 'lazy'}
+              decoding="async"
+              class="h-full w-full object-cover"
+            />
           )}
-        </button>
-      ))}
+        </div>
+      </a>
+
+      <div class="min-w-0">
+        <a href={`/c/${c.slug}`} class="block">
+          <h2 class="font-[family-name:--font-display] text-[1.3rem] leading-[1.15] tracking-tight sm:text-[1.4rem]">
+            {c.title}
+          </h2>
+          <p class="mt-1 max-w-2xl text-[0.85rem] leading-snug text-(--color-ink-soft)">{c.summary}</p>
+        </a>
+
+        <!--
+          The glyphs from the legend, used unlabelled beside their counts. This
+          is the payoff for having a legend at all: once you know the symbols
+          the row costs one glance instead of a sentence each.
+        -->
+        <div class="mt-2.5 flex flex-wrap gap-1.5">
+          {ACTIONS.map((k) => (
+            <button
+              type="button"
+              data-action={k}
+              data-challenge={c.slug}
+              title={ACTION_LABEL[k]}
+              aria-label={`${ACTION_LABEL[k]} - ${c.actions[k]}`}
+              class="flex items-center gap-1.5 border border-(--color-rule-soft) px-2 py-1 text-[0.75rem] transition-colors hover:border-(--color-rule) hover:bg-(--color-paper-sunk)"
+            >
+              <ActionGlyph kind={k} size={15} />
+              <span class="font-semibold tabular-nums">{count(c.actions[k])}</span>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Margin stamp. On narrow screens it rides above the title instead. -->
-  <div class="col-start-2 row-start-1 self-start justify-self-end sm:col-start-4 sm:justify-self-start">
-    <StageStamp stage={c.stage} class="text-[0.95rem] sm:text-[1.05rem]" />
-    <div class="mt-1.5 text-(--color-ink) sm:hidden">
-      <ContourRings rings={rings} label={`Investigation depth: ${depthLabel(rings)}`} size={30} />
-    </div>
+  <!-- IMPACT: rings in the stage colour, centred in their own ruled cell. -->
+  <div class="col-start-3 row-start-1 flex items-center justify-center border-(--color-rule) px-1 py-3.5 sm:col-start-4 sm:row-start-auto sm:border-r">
+    <ContourRings
+      rings={rings}
+      color={stageColor(c.stage)}
+      label={`Impact: ${depthLabel(rings)}`}
+      size={44}
+    />
+  </div>
+
+  <!-- STAGE: the margin stamp, in its own cell so the colour column reads down. -->
+  <div class="col-span-3 flex items-center px-2.5 pb-3.5 sm:col-span-1 sm:col-start-5 sm:justify-center sm:py-3.5">
+    <span
+      class="font-[family-name:--font-display] text-[1.05rem] font-bold uppercase tracking-[0.02em]"
+      style={`color:${stageColor(c.stage)}`}
+    >{STAGE_STAMP[c.stage]}</span>
   </div>
 </article>

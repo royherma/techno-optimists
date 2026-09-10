@@ -12,6 +12,16 @@
 @theme static {
   --color-paper:       oklch(100% 0 0);
   --color-paper-sunk:  oklch(97% 0 0);
+
+  /*
+   * The drawing table the sheet lies on, and the blue of the graticule. Both
+   * are deliberately weak: they are the only marks on the page that mean
+   * nothing, and anything that means nothing must never outweigh anything that
+   * does.
+   */
+  --color-table:       oklch(98.6% 0.004 240);
+  --color-grid-line:   oklch(88% 0.045 245);
+  --color-grid-ink:    oklch(58% 0.16 250);
   --color-ink:         oklch(15% 0 0);
   --color-ink-soft:    oklch(45% 0 0);
   --color-ink-faint:   oklch(62% 0 0);
@@ -23,13 +33,13 @@
    * sheet, so these must stay maximally distinguishable from each other -
    * changing one to "look nicer" breaks the legend's promise.
    */
-  --color-spot:        oklch(55% 0.22 258);
-  --color-understand:  oklch(56% 0.21 27);
-  --color-ideas:       oklch(52% 0.17 148);
-  --color-build:       oklch(64% 0.19 48);
-  --color-test:        oklch(50% 0.24 300);
-  --color-learn:       oklch(62% 0.13 205);
-  --color-improve:     oklch(60% 0.26 350);
+  --color-spot:        oklch(53% 0.26 264);
+  --color-understand:  oklch(55% 0.24 29);
+  --color-ideas:       oklch(52% 0.19 145);
+  --color-build:       oklch(66% 0.20 55);
+  --color-test:        oklch(45% 0.28 296);
+  --color-learn:       oklch(62% 0.13 215);
+  --color-improve:     oklch(62% 0.28 340);
 
   /* Challenge type. How it entered the world, distinct from where it sits now. */
   --color-problem:     oklch(56% 0.21 27);
@@ -45,10 +55,22 @@
 @layer base {
   html { -webkit-text-size-adjust: 100%; }
   body {
-    background: var(--color-paper);
     color: var(--color-ink);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+  }
+
+  /*
+   * Graph paper, drawn with gradients rather than an image so it costs no
+   * request and stays crisp at any zoom. 1mm minor squares, no major grid -
+   * a heavier grid starts competing with the sheet's own rules.
+   */
+  body {
+    background-color: var(--color-table);
+    background-image:
+      linear-gradient(to right, var(--color-grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--color-grid-line) 1px, transparent 1px);
+    background-size: 14px 14px;
   }
   ::selection { background: oklch(88% 0.06 258); }
   :focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }
