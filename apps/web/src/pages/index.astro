@@ -4,7 +4,7 @@ import ChallengeRow from '../components/ChallengeRow.astro'
 import Sheet from '../components/Sheet.astro'
 import SheetLegend from '../components/SheetLegend.astro'
 import { getFeed } from '../lib/api'
-import { TYPE_LABEL, depthScale, sheetNo } from '../lib/vocab'
+import { TYPE_LABEL, depthScale } from '../lib/vocab'
 import { CHALLENGE_TYPES } from '../../../../packages/types/index'
 import SessionNav from '../components/SessionNav.tsx'
 import FeedTopUp from '../components/FeedTopUp.tsx'
@@ -19,7 +19,7 @@ const { challenges } = await getFeed(`?limit=24${valid ? `&type=${type}` : ''}`)
 const depth = depthScale(challenges)
 ---
 <Base title="Techno Optimists - find real problems, help solve them">
-  <Sheet sheet={sheetNo(valid ? type : '')} live={challenges.length} rows={challenges.length}>
+  <Sheet>
     <!--
       The rule between the index and the legend is drawn by the legend column
       stretching to full height, not by a border on its sticky inner box. A

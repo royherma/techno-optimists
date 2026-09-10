@@ -2,16 +2,13 @@
 import Base from '../layouts/Base.astro'
 import Sheet from '../components/Sheet.astro'
 import SignInForm from '../components/SignInForm.tsx'
-import { getFeed } from '../lib/api'
-import { sheetNo } from '../lib/vocab'
 
 // The ?error= copy lives in SignInForm, not here. This page is prerendered, so
 // Astro.url.searchParams is empty at build time and anything gated on it is
 // dropped from the HTML - the reader saw nothing at all.
-const { challenges } = await getFeed('?limit=50')
 ---
 <Base title="Sign in - Techno Optimists">
-  <Sheet sheet={sheetNo('')} live={challenges.length} rows={4}>
+  <Sheet>
     <div class="border-b border-(--color-rule) px-3 py-2 font-[family-name:--font-mono] text-[0.7rem] uppercase tracking-[0.06em]">
       <a href="/" class="text-(--color-ink-soft) hover:text-(--color-ink)">← Back to the index</a>
       <span class="ml-4 font-bold">Sign in</span>

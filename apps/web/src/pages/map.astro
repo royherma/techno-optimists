@@ -5,7 +5,7 @@ import SessionNav from '../components/SessionNav.tsx'
 import PostFab from '../components/PostFab.astro'
 import WorldPlate from '../components/WorldPlate.tsx'
 import { getFeed } from '../lib/api'
-import { STAGE_STAMP, TYPE_LABEL, depthScale, sheetNo, stageColor } from '../lib/vocab'
+import { STAGE_STAMP, TYPE_LABEL, depthScale, stageColor } from '../lib/vocab'
 import { STAGES } from '../../../../packages/types/index'
 
 const { challenges } = await getFeed('?limit=50')
@@ -21,7 +21,7 @@ const depth = depthScale(challenges)
   title="Map - Techno Optimists"
   description="Where the Challenges are. Every pin is a real place someone reported from."
 >
-  <Sheet sheet={sheetNo('')} live={challenges.length} rows={8}>
+  <Sheet>
     <nav
       class="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-(--color-rule) px-3 py-2 font-[family-name:--font-mono] text-[0.7rem] uppercase tracking-[0.06em]"
       aria-label="Sheet"
