@@ -136,6 +136,22 @@ await check('a server error carries a ray', async () => {
   }
 })
 
+await check('a profile carries no address', async () => {
+  // The one privacy guarantee with a public URL behind it. Unit tests assert
+  // the shape against a stub; this asserts it against whatever is actually
+  // deployed, which is the only version that can leak.
+  //
+  // Any handle will do - a 404 proves the route is wired and answering, and a
+  // 200 gets its body searched. Both are a pass as long as no address appears.
+  const r = await fetch(`${BASE}/api/people/roy`)
+  const text = await r.text()
+  const leaked = /[\w.+-]+@[\w-]+\.[\w.]+/.test(text)
+  return {
+    ok: !leaked && [200, 404].includes(r.status),
+    detail: leaked ? `LEAKED an address in ${r.status}` : `${r.status}, no address in ${text.length} bytes`,
+  }
+})
+
 const failed = results.filter((r) => !r.ok)
 console.log(`\n${results.length - failed.length}/${results.length} passed\n`)
 if (failed.length) {

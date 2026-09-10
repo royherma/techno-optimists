@@ -254,3 +254,78 @@ describe('magic link is never returned to the caller in prod', () => {
     expect(body.dev_link).toMatch(/\/api\/auth\/callback\?token=[0-9a-f]{64}/)
   })
 })
+
+/**
+ * The rule the whole identity split exists to enforce: an address reaches the
+ * person it belongs to and nobody else. These assert the boundary from the
+ * outside, on the actual response body, because that is the only place the
+ * guarantee is real - a type can be satisfied by a route that spreads a row.
+ */
+describe('an email never reaches anyone but its owner', () => {
+  const personRow = {
+    id: 'p_1', handle: 'mei', name: 'Mei Chen', avatar_url: null, location: 'Taipei',
+    skills: '["welding"]', roles: '["builder"]', created_at: '2026-01-01 00:00:00',
+    email: 'mei@example.com', is_admin: 0, challenges_count: 3,
+  }
+  const withPerson = () => ({ DB: stubDb([], personRow) as unknown as D1Database })
+
+  it('does not put an address on a public profile', async () => {
+    const r = await app.request('/api/people/mei', {}, withPerson())
+    const text = await r.text()
+    expect(r.status).toBe(200)
+    expect(text).not.toContain('mei@example.com')
+    expect(text).not.toContain('@example.com')
+  })
+
+  it('does not put a real name on a public profile either', async () => {
+    // Same argument as the address: `name` is derived from the email local
+    // part at signup, so it is real-identity data nobody chose to publish.
+    const text = await (await app.request('/api/people/mei', {}, withPerson())).text()
+    expect(text).not.toContain('Mei Chen')
+  })
+
+  it('does not leak the admin flag to a stranger', async () => {
+    const text = await (await app.request('/api/people/mei', {}, withPerson())).text()
+    expect(text).not.toContain('is_admin')
+  })
+
+  it('returns the public fields it is supposed to', async () => {
+    const body = await (await app.request('/api/people/mei', {}, withPerson())).json() as {
+      person: { handle: string; skills: string[]; challenges_count: number }
+    }
+    expect(body.person.handle).toBe('mei')
+    expect(body.person.skills).toEqual(['welding'])
+    expect(body.person.challenges_count).toBe(3)
+  })
+
+  it('404s an unknown handle rather than answering with an empty person', async () => {
+    const r = await app.request('/api/people/nobody', {}, env())
+    expect(r.status).toBe(404)
+  })
+
+  it('gives an anonymous caller no person at all from /api/auth/me', async () => {
+    const body = await (await app.request('/api/auth/me', {}, env())).json() as { person: null }
+    expect(body.person).toBeNull()
+  })
+})
+
+describe('changing your own profile', () => {
+  it('requires a session - there is no id in the path to aim at someone else', async () => {
+    const r = await app.request('/api/people/me', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ handle: 'newname' }),
+    }, env())
+    expect(r.status).toBe(401)
+  })
+
+  it('rejects a body that is not an object', async () => {
+    const r = await app.request('/api/people/me', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: 'not json',
+    }, env())
+    // No session, so 401 comes first - the point is it does not 500.
+    expect([400, 401]).toContain(r.status)
+  })
+})

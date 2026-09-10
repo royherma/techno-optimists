@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
-  SESSION_COOKIE, SIGNAL_COOKIE, clearCookie, cookie, handleFromEmail, hashToken,
-  mintToken, nameFromEmail, normalizeEmail, readCookie, signalCookie,
+  HANDLE_MAX, HANDLE_MIN, SESSION_COOKIE, SIGNAL_COOKIE, clearCookie, cookie,
+  handleFromEmail, handleProblem, hashToken, mintToken, nameFromEmail,
+  normalizeEmail, normalizeHandle, readCookie, signalCookie,
 } from '../src/auth'
 import { ADMIN_EMAILS, isAdminEmail } from '../src/admin'
 
@@ -124,5 +125,55 @@ describe('the signal cookie', () => {
   it('round-trips through the same reader the API uses', () => {
     const header = signalCookie('signed_out', false).split(';')[0]
     expect(readCookie(header, SIGNAL_COOKIE)).toBe('signed_out')
+  })
+})
+
+describe('choosing a handle', () => {
+  it('accepts an ordinary one', () => {
+    expect(handleProblem('roy')).toBeNull()
+    expect(handleProblem('mei_2')).toBeNull()
+    expect(handleProblem('a1b2c3')).toBeNull()
+  })
+
+  it('names which rule was broken, so the form can say it', () => {
+    expect(handleProblem('ab')).toBe('too_short')
+    expect(handleProblem('x'.repeat(HANDLE_MAX + 1))).toBe('too_long')
+    expect(handleProblem('roy herma')).toBe('bad_chars')
+    expect(handleProblem('roy.herma')).toBe('bad_chars')
+    expect(handleProblem('1234')).toBe('all_digits')
+    expect(handleProblem('admin')).toBe('reserved')
+  })
+
+  it('accepts exactly the boundary lengths', () => {
+    expect(handleProblem('a'.repeat(HANDLE_MIN))).toBeNull()
+    expect(handleProblem('a'.repeat(HANDLE_MAX))).toBeNull()
+  })
+
+  it('rejects uppercase, because @Roy and @roy must not be two accounts', () => {
+    // The route lowercases before calling this - a reader typing their own
+    // handle back with a capital means the same handle. But an unnormalized
+    // string reaching here is a bug, and it fails rather than creating a twin.
+    expect(handleProblem('Roy')).toBe('bad_chars')
+  })
+
+  it('refuses handles that would impersonate the site or a route', () => {
+    for (const h of ['admin', 'support', 'official', 'settings', 'signin', 'api']) {
+      expect(handleProblem(h)).toBe('reserved')
+    }
+  })
+
+  it('normalizes the way the route does before validating', () => {
+    expect(normalizeHandle('  Roy  ')).toBe('roy')
+    expect(handleProblem(normalizeHandle('  Roy  '))).toBeNull()
+  })
+
+  it('accepts every handle the signup derivation can produce, once long enough', () => {
+    // handleFromEmail feeds straight into people.handle at signup. If it could
+    // emit something this function rejects, an account would exist that its
+    // owner could never save their own profile from.
+    for (const email of ['sam.rivera+news@example.com', 'a_b@x.io', 'MEI@example.com']) {
+      const derived = handleFromEmail(email)
+      if (derived.length >= HANDLE_MIN) expect(handleProblem(derived)).toBeNull()
+    }
   })
 })
