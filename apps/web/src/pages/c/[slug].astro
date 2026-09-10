@@ -46,7 +46,12 @@ const ranked = ACTION_KINDS.map((k) => [k, c.actions[k]] as const)
           {c.location && <span>{c.location}</span>}
           <span>Active {ago(c.last_activity_at)}</span>
         </div>
-        <h1 data-field="title" class="mt-2.5 max-w-3xl font-[family-name:--font-display] text-[2.4rem] leading-[1.1] tracking-tight">
+        <!--
+          2.4rem on a 390px screen set this title over six lines and filled the
+          whole first viewport before the summary. The display face still leads
+          the page; it just starts at a size the phone has room for.
+        -->
+        <h1 data-field="title" class="mt-2.5 max-w-3xl font-[family-name:--font-display] text-[1.75rem] leading-[1.12] tracking-tight sm:text-[2.1rem] lg:text-[2.4rem]">
           {c.title}
         </h1>
         <p data-field="summary" class="mt-2.5 max-w-2xl text-lg leading-relaxed text-(--color-ink-soft)">{c.summary}</p>
