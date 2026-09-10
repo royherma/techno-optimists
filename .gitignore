@@ -1,0 +1,41 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# build
+dist/
+build/
+.output/
+.astro/
+.vite/
+.turbo/
+.next/
+
+# cloudflare
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+
+# env / secrets
+.env
+.env.*
+!.env.example
+*.local.sh
+*.pem
+*.key
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# os / editor
+.DS_Store
+.idea/
+*.swp
+
+# scratch
+tmp/
+outputs/
+.shots/
