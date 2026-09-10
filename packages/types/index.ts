@@ -37,7 +37,14 @@ export type Role = (typeof ROLES)[number]
 
 export interface Person {
   id: string
+  /** The public identity. Everything anyone else sees says @handle. */
   handle: string
+  /**
+   * Legal-ish name, PRIVATE. Derived from the email local part at signup, so
+   * it is real-identity data nobody chose to publish. It is returned only by
+   * /api/auth/me, to the person it belongs to - never on an author, an update
+   * or a helper. `PublicPerson` is the shape every other route returns.
+   */
   name: string
   avatar_url: string | null
   location: string | null
@@ -48,6 +55,13 @@ export interface Person {
   solutions_count: number
   created_at: string
 }
+
+/**
+ * A person as everyone else sees them. No `name`: the handle IS the public
+ * identity. Every route except /api/auth/me returns this shape, so a full name
+ * cannot reach a response by someone forgetting to omit it.
+ */
+export type PublicPerson = Omit<Person, 'name'>
 
 export interface Media {
   kind: 'image' | 'video'
@@ -90,7 +104,7 @@ export interface Challenge {
   location: string | null
   /** Free tags: 'water', 'cooling', 'agriculture'. */
   tags: string[]
-  author: Pick<Person, 'id' | 'handle' | 'name' | 'avatar_url' | 'location'>
+  author: Pick<PublicPerson, 'id' | 'handle' | 'avatar_url' | 'location'>
   /** Per-kind counts, always present, zero-filled. */
   actions: Record<ActionKind, number>
   /** The viewer's own actions. Empty until auth exists. */
@@ -104,7 +118,7 @@ export interface Challenge {
 export interface Update {
   id: string
   challenge_id: string
-  author: Pick<Person, 'id' | 'handle' | 'name' | 'avatar_url'>
+  author: Pick<PublicPerson, 'id' | 'handle' | 'avatar_url'>
   /** Moves the Challenge to this stage, if set. */
   stage: Stage | null
   body: string
