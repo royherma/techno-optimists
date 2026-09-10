@@ -1,12 +1,14 @@
 ---
 import Base from '../../layouts/Base.astro'
 import ActionBar from '../../components/ActionBar'
+import LiveChallenge from '../../components/LiveChallenge.tsx'
+import Sheet from '../../components/Sheet.astro'
 import ContourRings from '../../components/ContourRings.astro'
 import StageStamp from '../../components/StageStamp.astro'
 import { getChallenge, getFeed } from '../../lib/api'
 import {
   ACTION_DOING, ACTION_SHORT, STAGE_MEANING, STAGE_ORDER, STAGE_STAMP,
-  TYPE_LABEL, ago, count, depthLabel, depthScale, gridRef,
+  TYPE_LABEL, ago, count, depthLabel, depthScale, gridRef, sheetNo, stageColor,
 } from '../../lib/vocab'
 import { ACTION_KINDS } from '../../../../../packages/types/index'
 
@@ -28,8 +30,9 @@ const ranked = ACTION_KINDS.map((k) => [k, c.actions[k]] as const)
   .filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1])
 ---
 <Base title={`${c.title} - Techno Optimists`} description={c.summary}>
-  <main class="mx-auto max-w-[76rem] px-5 py-8">
-    <a href="/" class="text-[0.8rem] uppercase tracking-[0.1em] text-(--color-ink-soft) hover:text-(--color-ink)">
+  <Sheet sheet={sheetNo(c.type)} live={peers.length}>
+  <main class="px-5 py-6">
+    <a href="/" class="font-[family-name:--font-mono] text-[0.7rem] uppercase tracking-[0.1em] text-(--color-ink-soft) hover:text-(--color-ink)">
       &larr; Back to the index
     </a>
 
@@ -42,19 +45,19 @@ const ranked = ACTION_KINDS.map((k) => [k, c.actions[k]] as const)
           {c.location && <span>{c.location}</span>}
           <span>Active {ago(c.last_activity_at)}</span>
         </div>
-        <h1 class="mt-2.5 max-w-3xl font-[family-name:--font-display] text-[2.4rem] leading-[1.1] tracking-tight">
+        <h1 data-field="title" class="mt-2.5 max-w-3xl font-[family-name:--font-display] text-[2.4rem] leading-[1.1] tracking-tight">
           {c.title}
         </h1>
-        <p class="mt-2.5 max-w-2xl text-lg leading-relaxed text-(--color-ink-soft)">{c.summary}</p>
+        <p data-field="summary" class="mt-2.5 max-w-2xl text-lg leading-relaxed text-(--color-ink-soft)">{c.summary}</p>
         <p class="mt-3 text-sm text-(--color-ink-soft)">
-          Spotted by <span class="font-medium text-(--color-ink)">{c.author.name}</span>
+          Spotted by <span data-field="author" class="font-medium text-(--color-ink)">{c.author.name}</span>
           {c.author.location && <span class="text-(--color-ink-faint)"> · {c.author.location}</span>}
         </p>
       </div>
 
       <div class="flex items-center gap-4">
         <div class="text-(--color-ink)">
-          <ContourRings rings={rings} label={`Investigation depth: ${depthLabel(rings)}`} size={54} />
+          <ContourRings rings={rings} color={stageColor(c.stage)} label={`Impact: ${depthLabel(rings)}`} size={54} />
         </div>
         <div>
           <StageStamp stage={c.stage} class="text-[1.3rem]" />
@@ -63,11 +66,15 @@ const ranked = ACTION_KINDS.map((k) => [k, c.actions[k]] as const)
       </div>
     </div>
 
-    {hero && (
-      <img src={hero.url} alt={hero.alt ?? ''} loading="eager"
-           class="mt-6 aspect-[16/9] w-full border border-(--color-rule) object-cover"
-           style={`background:${hero.tint}`} />
-    )}
+    <!--
+      Always in the DOM, hidden when there is no image: a Challenge posted since
+      the last build fills this in on load, and it needs something to fill.
+    -->
+    <figure class="m-0" hidden={!hero}>
+      <img data-field="hero" src={hero?.url ?? ''} alt={hero?.alt ?? ''} loading="eager"
+           class="mt-6 aspect-[16/9] max-h-[26rem] w-full border border-(--color-rule) object-cover"
+           style={hero?.tint ? `background:${hero.tint}` : undefined} />
+    </figure>
 
     <!--
       Lifecycle as ordered stations rather than a status field: you read left to
@@ -94,7 +101,9 @@ const ranked = ACTION_KINDS.map((k) => [k, c.actions[k]] as const)
       <div class="min-w-0">
         <section class="border-y border-(--color-rule) py-5">
           <h2 class="mb-3 text-[0.72rem] font-semibold uppercase tracking-[0.14em]">How can you help?</h2>
-          <ActionBar client:load slug={c.slug} type={c.type} actions={c.actions} />
+          <div data-action-bar data-slug={c.slug}>
+            <ActionBar client:load slug={c.slug} type={c.type} actions={c.actions} />
+          </div>
           <div class="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm text-(--color-ink-faint)">
             {ranked.map(([k, n]) => (
               <span><strong class="tabular-nums text-(--color-ink-soft)">{count(n)}</strong> {ACTION_SHORT[k]}</span>
@@ -147,4 +156,6 @@ const ranked = ACTION_KINDS.map((k) => [k, c.actions[k]] as const)
       )}
     </div>
   </main>
+  </Sheet>
+  <LiveChallenge client:load />
 </Base>
