@@ -436,6 +436,33 @@ app.post('/api/auth/request', async (c) => {
   return c.json({ ok: true, sent, ...(showLink ? { dev_link: link } : {}) })
 })
 
+/**
+ * The sign-in mail as HTML. Table-free, inline styles only: Gmail strips
+ * <style> blocks, so anything in a stylesheet is decoration the reader may
+ * never see. The raw URL follows the button because a link that renders as a
+ * button in one client renders as nothing in another.
+ */
+const signInEmailHtml = (link: string) => {
+  // The link goes into an href and into text; both need escaping or a & in
+  // the query string ends the attribute.
+  const safe = link.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+  return `<!doctype html>
+<html>
+  <body style="margin:0;padding:24px;background:#faf9f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#1a1a1a">
+    <div style="max-width:480px;margin:0 auto">
+      <p style="margin:0 0 4px;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:#6b6b6b">Techno Optimists</p>
+      <h1 style="margin:0 0 16px;font-size:24px;font-weight:600;line-height:1.2">Your sign-in link</h1>
+      <p style="margin:0 0 24px;font-size:16px;line-height:1.5">Click to sign in. The link works once and expires in 15 minutes.</p>
+      <p style="margin:0 0 24px">
+        <a href="${safe}" style="display:inline-block;padding:12px 20px;background:#1a1a1a;color:#faf9f7;text-decoration:none;font-size:15px">Sign in</a>
+      </p>
+      <p style="margin:0 0 8px;font-size:13px;color:#6b6b6b">Or paste this into your browser:</p>
+      <p style="margin:0;font-size:13px;word-break:break-all"><a href="${safe}" style="color:#1a1a1a">${safe}</a></p>
+    </div>
+  </body>
+</html>`
+}
+
 /** Returns true if the mail actually went out. */
 const sendMagicLink = async (env: Env, email: string, link: string): Promise<boolean> => {
   if (!env.RESEND_API_KEY) return false
@@ -449,6 +476,9 @@ const sendMagicLink = async (env: Env, email: string, link: string): Promise<boo
       from: env.MAIL_FROM ?? 'Techno Optimists <onboarding@resend.dev>',
       to: email,
       subject: 'Your sign-in link',
+      // Both parts: `html` gives a real clickable link, `text` is the fallback
+      // for clients that refuse HTML. Resend sends whichever the client takes.
+      html: signInEmailHtml(link),
       text: `Sign in to Techno Optimists:\n\n${link}\n\nThis link works once and expires in 15 minutes.`,
     }),
   })
