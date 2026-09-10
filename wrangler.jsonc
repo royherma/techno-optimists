@@ -26,8 +26,57 @@
 
   "kv_namespaces": [
     { "binding": "CACHE", "id": "2a687cc473ea4b01bc133135b98c69e5" }
-  ]
+  ],
 
   // Deliberately absent until they earn their place (all cost money or are
   // pre-validation): r2_buckets, images, media, ai, vectorize, queues.
+
+  // Two deployable environments. Binding NAMES are identical in both, so no
+  // code branches on environment - only the IDs behind them differ. Deploy with
+  // `npm run deploy:dev` / `npm run deploy:prod`; a bare `wrangler deploy` with
+  // no --env is intentionally not a script, so prod is never the accident.
+  //
+  //   dev   techno-optimists-dev.<subdomain>.workers.dev   throwaway data
+  //   prod  techno-optimists.<subdomain>.workers.dev       real data
+  "env": {
+    "dev": {
+      "name": "techno-optimists-dev",
+      "workers_dev": true,
+      "observability": { "enabled": true },
+      "vars": { "ENVIRONMENT": "dev" },
+      "assets": {
+        "directory": "apps/web/dist",
+        "binding": "ASSETS",
+        "not_found_handling": "404-page",
+        "html_handling": "drop-trailing-slash"
+      },
+      "d1_databases": [
+        { "binding": "DB", "database_name": "techno-optimists-dev", "database_id": "916bfcc8-69fb-4ded-b2a1-7faed95de1c3" },
+        { "binding": "ANALYTICS_DB", "database_name": "to-analytics-dev", "database_id": "ae32f5ef-b351-44d0-b447-6dca09b635ef" }
+      ],
+      "kv_namespaces": [
+        { "binding": "CACHE", "id": "33b2cb019ab648c78507f7a2a5a4b226" }
+      ]
+    },
+
+    "prod": {
+      "name": "techno-optimists",
+      "workers_dev": true,
+      "observability": { "enabled": true },
+      "vars": { "ENVIRONMENT": "prod" },
+      "assets": {
+        "directory": "apps/web/dist",
+        "binding": "ASSETS",
+        "not_found_handling": "404-page",
+        "html_handling": "drop-trailing-slash"
+      },
+      "d1_databases": [
+        { "binding": "DB", "database_name": "techno-optimists", "database_id": "195e34f1-f441-49ce-9d47-21eb7ad78209" },
+        { "binding": "ANALYTICS_DB", "database_name": "to-analytics", "database_id": "547efc7a-46d0-4648-b2ad-9839de409a3d" }
+      ],
+      "kv_namespaces": [
+        { "binding": "CACHE", "id": "2a687cc473ea4b01bc133135b98c69e5" }
+      ]
+    }
+  }
 }
