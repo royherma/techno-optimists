@@ -405,7 +405,14 @@ app.post('/api/auth/request', async (c) => {
 
   // In dev there is no mail key, so the link goes to the Worker log. Never in prod.
   if (!sent) console.log(`[auth] magic link for ${email}: ${link}`)
-  return c.json({ ok: true, sent, ...(sent ? {} : { dev_link: link }) })
+
+  // The link is a bearer token for the account. Returning it in the response
+  // body is a convenience for local dev ONLY - anywhere it is reachable by a
+  // stranger, POSTing someone else's address would hand over their login. Prod
+  // fails closed: if the mail key is missing there, sign-in breaks loudly
+  // rather than quietly becoming an open door.
+  const showLink = !sent && c.env.ENVIRONMENT !== 'prod'
+  return c.json({ ok: true, sent, ...(showLink ? { dev_link: link } : {}) })
 })
 
 /** Returns true if the mail actually went out. */

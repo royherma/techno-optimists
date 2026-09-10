@@ -26,3 +26,5 @@ One row per decision. Newest at the bottom.
 | 2026-09-10 | Email is stored in `identities`, never on `people` | A `SELECT p.*` on the person table can then never leak an address into an API response |
 | 2026-09-10 | Sign-in links carry `?next=`, and acting while signed out returns to the Challenge | Asking for a sign-in at the moment of contribution only works if the reader lands back where they were |
 | 2026-09-10 | Capture and sign-in render inside the same `Sheet` as the index | They are pages of one document. A bare card on the graph paper reads as a different site |
+| 2026-09-10 | `dev_link` is returned only when `ENVIRONMENT !== 'prod'`; prod fails closed | The magic link is a bearer token. Returned unconditionally, POSTing a stranger's address hands over their account. A missing mail key in prod must break sign-in loudly, never open a door |
+| 2026-09-10 | Deploying dev is two steps: `db:reset:dev` then `deploy:dev`, whenever the schema moved | `schema.sql` shipped `identities`/`magic_links`/`sessions` after the last dev reset, so live sign-in 500'd on `no such table: magic_links` while every local test passed |
