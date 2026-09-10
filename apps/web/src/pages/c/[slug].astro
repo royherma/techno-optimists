@@ -72,7 +72,7 @@ const ranked = ACTION_KINDS.map((k) => [k, c.actions[k]] as const)
             <li class="rounded-lg border border-(--color-rule) px-3.5 py-2.5">
               <div class="flex items-baseline justify-between gap-2">
                 <p class="text-sm font-medium">{p.name}</p>
-                <p class="shrink-0 text-xs text-(--color-signal)">
+                <p class="shrink-0 text-xs text-(--color-ink-soft)">
                   {p.kinds.map((k) => ACTION_DOING[k]).join(' · ')}
                 </p>
               </div>

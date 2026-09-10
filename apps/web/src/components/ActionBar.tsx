@@ -57,8 +57,8 @@ export default function ActionBar({ slug, type, actions }: {
             aria-pressed={on}
             className={`rounded-full border px-4 py-2 text-sm transition-colors ${
               on
-                ? 'border-(--color-signal) bg-(--color-signal-soft) text-(--color-signal)'
-                : 'border-(--color-rule) hover:border-(--color-ink-faint)'
+                ? 'border-(--color-ink) bg-(--color-paper-sunk) text-(--color-ink)'
+                : 'border-(--color-rule-soft) text-(--color-ink-soft) hover:border-(--color-rule) hover:text-(--color-ink)'
             }`}
           >
             {ACTION_LABEL[kind]}
