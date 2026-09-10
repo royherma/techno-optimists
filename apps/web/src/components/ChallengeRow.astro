@@ -43,6 +43,12 @@ const ACTIONS = ['have_problem', 'have_idea', 'can_help', 'will_test'] as const
   <!-- CHALLENGE: the photograph, the problem stated plainly, and what you can do. -->
   <div class="col-span-3 border-(--color-rule) px-2.5 py-3.5 sm:col-span-1 sm:border-r">
     <div class="flex gap-3.5">
+      <!--
+        A media object can go missing - an upload that half-landed, an R2 key
+        deleted behind the row that still references it. The tinted box is
+        already the right shape and colour, so dropping the broken <img> leaves
+        a plate that reads as intentional rather than as a failure.
+      -->
       <a href={`/c/${c.slug}`} class="hidden shrink-0 sm:block">
         <div
           class="aspect-[4/3] w-28 overflow-hidden border border-(--color-rule)"
@@ -55,6 +61,7 @@ const ACTIONS = ['have_problem', 'have_idea', 'can_help', 'will_test'] as const
               loading={priority ? 'eager' : 'lazy'}
               decoding="async"
               class="h-full w-full object-cover"
+              onerror="this.remove()"
             />
           )}
         </div>

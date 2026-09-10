@@ -6,6 +6,8 @@ import SheetLegend from '../components/SheetLegend.astro'
 import { getFeed } from '../lib/api'
 import { TYPE_LABEL, depthScale, sheetNo } from '../lib/vocab'
 import { CHALLENGE_TYPES } from '../../../../packages/types/index'
+import SessionNav from '../components/SessionNav.tsx'
+import FeedTopUp from '../components/FeedTopUp.tsx'
 
 const type = Astro.url.searchParams.get('type') ?? ''
 const valid = (CHALLENGE_TYPES as readonly string[]).includes(type)
@@ -17,14 +19,22 @@ const depth = depthScale(challenges)
 ---
 <Base title="Techno Optimists - find real problems, help solve them">
   <Sheet sheet={sheetNo(valid ? type : '')} live={challenges.length} rows={challenges.length}>
-    <div class="lg:grid lg:grid-cols-[1fr_19.5rem]">
+    <!--
+      The rule between the index and the legend is drawn by the legend column
+      stretching to full height, not by a border on its sticky inner box. A
+      border on the sticky element stops where the legend stops, which leaves
+      the bottom of a long sheet unruled - the one thing a ruled table must
+      never do.
+    -->
+    <div class="lg:grid lg:grid-cols-[1fr_19.5rem] lg:items-stretch">
       <!-- The index proper. -->
-      <div class="min-w-0 border-(--color-rule) lg:border-r">
+      <div class="min-w-0">
         <nav
           class="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-(--color-rule) px-3 py-2 font-[family-name:--font-mono] text-[0.7rem] uppercase tracking-[0.06em]"
           aria-label="Filter by type"
         >
           <span class="font-bold">Index</span>
+          <span class="ml-auto"><SessionNav client:load /></span>
           <a
             href="/"
             aria-current={valid ? undefined : 'page'}
@@ -38,6 +48,7 @@ const depth = depthScale(challenges)
             >{TYPE_LABEL[t]}</a>
           ))}
         </nav>
+        <FeedTopUp client:load known={challenges.map((c) => c.slug)} />
 
         <!--
           Column headers, ruled to match the rows beneath them. These are the
@@ -63,7 +74,7 @@ const depth = depthScale(challenges)
         )}
       </div>
 
-      <div class="p-3">
+      <div class="border-t border-(--color-rule) p-3 lg:border-l lg:border-t-0">
         <div class="lg:sticky lg:top-3"><SheetLegend /></div>
       </div>
     </div>
