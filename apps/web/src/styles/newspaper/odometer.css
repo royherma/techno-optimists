@@ -19,25 +19,32 @@
   vertical-align: middle;
 }
 .np-odometer-digit {
-  /* The window. Height is one cell; the strip inside is ten. */
+  /*
+   * The window. Height is one cell; the strip inside is ten.
+   *
+   * `inline-block` is load-bearing, not tidiness: `overflow` and `height` are
+   * both ignored on a non-replaced inline box, so as a plain inline span this
+   * clipped nothing and all ten digits painted down the page - a ~150px tall
+   * colophon on every screen.
+   */
+  display: inline-block;
   position: relative;
   overflow: hidden;
-  width: 0.72em;
-  height: 1.15em;
-  border: 1px solid var(--np-rule, currentColor);
-  border-radius: 2px;
-  background: color-mix(in oklch, currentColor 7%, transparent);
+  width: 0.66em;
+  height: 1.05em;
+  border-radius: 1px;
+  background: color-mix(in oklch, currentColor 8%, transparent);
   font-variant-numeric: tabular-nums;
-  line-height: 1.15em;
+  line-height: 1.05em;
 }
 .np-odometer-strip {
   display: block;
   /* --digit is set per wheel; each step is exactly one cell height. */
-  transform: translateY(calc(var(--digit, 0) * -1.15em));
+  transform: translateY(calc(var(--digit, 0) * -1.05em));
 }
 .np-odometer-strip span {
   display: block;
-  height: 1.15em;
+  height: 1.05em;
   text-align: center;
 }
 /*

@@ -84,12 +84,20 @@
   color: var(--color-ink-faint);
 }
 
-/* The hit counter sits in the mark row, between the strapline and the year. */
+/*
+ * The hit counter sits in the mark row, between the strapline and the year.
+ * The row is uppercase at 0.2em tracking; the wheels are digits, so the label
+ * keeps the row's voice while the tracking is pulled back off the numbers.
+ */
 .footer-counter {
   display: inline-flex;
   align-items: center;
   gap: 7px;
+  letter-spacing: 0.14em;
   color: var(--color-ink-faint);
+}
+.footer-counter .np-odometer {
+  letter-spacing: normal;
 }
 
 /*
