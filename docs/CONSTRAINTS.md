@@ -119,6 +119,19 @@ array in source, which is why this trap is new: an edit could not be forgotten, 
 deploy, before the first sign-in: `wrangler secret put ADMIN_EMAILS --env <env>`.
 `wrangler secret list --env <env>` is the check. Locally it goes in `.dev.vars`.
 
+**The two routers disagree about Origin, and only `community` checks it.**
+`apps/api/src/community.ts:32-40` rejects any non-GET whose `Origin` header does not
+match the request URL (403 `bad_origin`) and any without a JSON content-type (415).
+`grep -n 'Origin\|bad_origin' apps/api/src/index.ts` returns nothing, so the eight
+mutating routes there - `POST /api/challenges`, `/challenges/import`, `/:slug/updates`,
+`/:slug/action`, `PUT /api/uploads`, `/auth/request`, `PATCH /api/people/me`,
+`POST /auth/signout` - rest on `SameSite=Lax` alone (`apps/api/src/auth.ts:116`). Lax
+does block a cross-site POST, so this is defense in depth and an inconsistency, not a
+hole. Deliberately deferred past the launch announcement - Roy's call, 2026-09-11 - and
+left here so the asymmetry is not mistaken for a decision. Porting the check is six
+lines; porting the content-type gate with it is what risks 415ing a caller that works
+today, so weigh those separately.
+
 **Email is stored in `identities`, never on `people`; `people.name` is returned by
 `/api/auth/me` alone.** `SELECT p.*` then cannot leak an address, and `name` is derived
 from the email local part at signup - a real name nobody chose to publish.
