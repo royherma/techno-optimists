@@ -47,14 +47,14 @@ export default function FeedTopUp({ known }: { known: string[] }) {
           <span className="min-w-0">
             <span className="flex items-baseline gap-2">
               <span
-                className="font-[family-name:--font-mono] text-[0.62rem] tracking-[0.1em] uppercase"
+                className="font-[family-name:var(--font-mono)] text-[0.62rem] tracking-[0.1em] uppercase"
                 style={{ color: typeColor(c.type) }}
               >
                 {TYPE_LABEL[c.type]}
               </span>
-              <span className="font-[family-name:--font-mono] text-[0.62rem] text-(--color-ink-faint)">{ago(c.created_at)}</span>
+              <span className="font-[family-name:var(--font-mono)] text-[0.62rem] text-(--color-ink-faint)">{ago(c.created_at)}</span>
             </span>
-            <span className="mt-0.5 block truncate font-[family-name:--font-display] text-[1.05rem] leading-snug">
+            <span className="mt-0.5 block truncate font-[family-name:var(--font-display)] text-[1.05rem] leading-snug">
               {c.title}
             </span>
             <span className="mt-0.5 block truncate text-xs text-(--color-ink-faint)">{c.summary}</span>

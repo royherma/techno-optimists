@@ -61,7 +61,7 @@ export default function SignInForm() {
   if (state === 'sent') {
     return (
       <div className="space-y-3">
-        <p className="font-[family-name:--font-display] text-2xl text-(--color-ink)">Check your mail</p>
+        <p className="font-[family-name:var(--font-display)] text-2xl text-(--color-ink)">Check your mail</p>
         <p className="text-sm text-(--color-ink-soft)">
           A sign-in link is on its way to <span className="text-(--color-ink)">{email}</span>.
           It works once and expires in 15 minutes.
@@ -69,7 +69,7 @@ export default function SignInForm() {
         {devLink && (
           <a
             href={devLink}
-            className="mt-2 inline-block border-b border-(--color-grid-ink) font-[family-name:--font-mono] text-xs text-(--color-grid-ink)"
+            className="mt-2 inline-block border-b border-(--color-grid-ink) font-[family-name:var(--font-mono)] text-xs text-(--color-grid-ink)"
           >
             Local link - no mail key set
           </a>
@@ -87,7 +87,7 @@ export default function SignInForm() {
       )}
 
       <label className="block">
-        <span className="font-[family-name:--font-mono] text-[11px] tracking-[0.14em] text-(--color-ink-faint) uppercase">
+        <span className="font-[family-name:var(--font-mono)] text-[11px] tracking-[0.14em] text-(--color-ink-faint) uppercase">
           Email
         </span>
         <input

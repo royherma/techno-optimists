@@ -131,7 +131,7 @@ export default function SettingsForm() {
         <Legend n="01" label="Who you are here" />
 
         <label className="block">
-          <span className="font-[family-name:--font-mono] text-[11px] tracking-[0.14em] text-(--color-ink-faint) uppercase">
+          <span className="font-[family-name:var(--font-mono)] text-[11px] tracking-[0.14em] text-(--color-ink-faint) uppercase">
             Handle
           </span>
           <span className="mt-2 flex items-baseline gap-1 border-b border-(--color-rule-soft) focus-within:border-(--color-rule)">
@@ -219,7 +219,7 @@ export default function SettingsForm() {
         <Legend n="04" label="Sign-in" />
         <p className="text-sm text-(--color-ink-soft)">
           You sign in with{' '}
-          <span className="font-[family-name:--font-mono] text-(--color-ink)">{me.email ?? 'a magic link'}</span>.
+          <span className="font-[family-name:var(--font-mono)] text-(--color-ink)">{me.email ?? 'a magic link'}</span>.
         </p>
         <p className="text-xs text-(--color-ink-faint)">
           Only you can see this address. It is never shown on your Challenges or to anyone else.
@@ -244,8 +244,8 @@ export default function SettingsForm() {
 
 const Legend = ({ n, label }: { n: string; label: string }) => (
   <div className="form-section-heading">
-    <span className="font-[family-name:--font-mono] text-[11px] text-(--color-ink-faint)">{n}</span>
-    <span className="font-[family-name:--font-mono] text-[11px] tracking-[0.14em] text-(--color-ink-soft) uppercase">{label}</span>
+    <span className="font-[family-name:var(--font-mono)] text-[11px] text-(--color-ink-faint)">{n}</span>
+    <span className="font-[family-name:var(--font-mono)] text-[11px] tracking-[0.14em] text-(--color-ink-soft) uppercase">{label}</span>
   </div>
 )
 
@@ -261,7 +261,7 @@ function Field({ name, label, hint, value, onChange, maxLength, optional }: {
   const hintId = `${name}-hint`
   return (
     <label className="block">
-      <span className="font-[family-name:--font-mono] text-[11px] tracking-[0.14em] text-(--color-ink-faint) uppercase">
+      <span className="font-[family-name:var(--font-mono)] text-[11px] tracking-[0.14em] text-(--color-ink-faint) uppercase">
         {label}{optional && <span className="normal-case tracking-normal"> - optional</span>}
       </span>
       <input

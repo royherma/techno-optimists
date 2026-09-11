@@ -68,7 +68,7 @@ export default function PlacePicker({
             Clear the pin
           </button>
         )}
-        <span className="font-[family-name:--font-mono] text-[0.7rem] tabular-nums text-(--color-ink-faint)">
+        <span className="font-[family-name:var(--font-mono)] text-[0.7rem] tabular-nums text-(--color-ink-faint)">
           {placed ? `${lat.toFixed(3)}, ${lng.toFixed(3)}` : 'No pin yet'}
         </span>
       </div>

@@ -26,7 +26,7 @@ const depth = depthScale(challenges)
     <PageToolbar label="Map" />
 
     <div class="map-page">
-      <h1 class="font-[family-name:--font-display] text-[2rem] leading-[1.1] tracking-tight sm:text-[2.4rem]">
+      <h1 class="font-[family-name:var(--font-display)] text-[2rem] leading-[1.1] tracking-tight sm:text-[2.4rem]">
         Where the Challenges are
       </h1>
       <p class="mt-2 max-w-2xl text-(--color-ink-soft)">
@@ -66,7 +66,7 @@ const depth = depthScale(challenges)
         ))}
       </div>
 
-      <p class="mt-4 font-[family-name:--font-mono] text-[0.7rem] uppercase tracking-[0.06em] text-(--color-ink-faint)">
+      <p class="mt-4 font-[family-name:var(--font-mono)] text-[0.7rem] uppercase tracking-[0.06em] text-(--color-ink-faint)">
         {placed.length} placed
         {unplaced > 0 && ` · ${unplaced} without a place`}
       </p>
@@ -84,9 +84,9 @@ const depth = depthScale(challenges)
             <li class="border-b border-(--color-rule-soft)">
               <a href={`/c/${c.slug}`} class="ink-transition flex flex-wrap items-baseline gap-x-3 gap-y-1 px-1 py-2.5 hover:bg-(--color-paper-sunk)">
                 <span class="h-2.5 w-2.5 shrink-0 rounded-full" style={`background:${stageColor(c.stage)}`}></span>
-                <span class="font-[family-name:--font-display] text-[1.05rem] leading-tight">{c.title}</span>
+                <span class="font-[family-name:var(--font-display)] text-[1.05rem] leading-tight">{c.title}</span>
                 <span class="text-[0.7rem] uppercase tracking-[0.06em] text-(--color-ink-faint)">{TYPE_LABEL[c.type]}</span>
-                <span class="ml-auto font-[family-name:--font-mono] text-[0.72rem] text-(--color-ink-soft)">{c.location}</span>
+                <span class="ml-auto font-[family-name:var(--font-mono)] text-[0.72rem] text-(--color-ink-soft)">{c.location}</span>
               </a>
             </li>
           ))}
