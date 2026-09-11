@@ -113,7 +113,14 @@ export default function Discussion({ slug, me, sessionReady }: { slug: string; m
     try {
       const url = new URL(linkUrl)
       if (!['https:', 'http:'].includes(url.protocol)) throw new Error()
-      insert(`[${(linkLabel.trim() || url.hostname).replace(/[\[\]\\]/g, '')}](${url.href.replace(/\(/g, '%28').replace(/\)/g, '%29')})`)
+      const start = input.current?.selectionStart ?? draft.body.length
+      const end = input.current?.selectionEnd ?? start
+      const label = (linkLabel.trim() || draft.body.slice(start, end) || url.hostname).replace(/[\[\]\\]/g, '')
+      const markdown = `[${label}](${url.href.replace(/\(/g, '%28').replace(/\)/g, '%29')})`
+      const prefix = draft.body.slice(0, start), suffix = draft.body.slice(end)
+      change({ body: prefix + (prefix && !/\s$/.test(prefix) ? ' ' : '') + markdown + (suffix && !/^\s/.test(suffix) ? ' ' : '') + suffix })
+      setPreview(false)
+      requestAnimationFrame(() => input.current?.focus())
       setLinkOpen(false); setLinkUrl(''); setLinkLabel(''); setUploadError('')
     } catch { setUploadError('Enter a complete link starting with https:// or http://.'); }
   }
