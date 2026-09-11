@@ -3,10 +3,16 @@
   margin: 0 auto;
   padding: 26px 28px 28px;
 }
+/*
+  The title is the hero. On a shared screen the name has to read before
+  anything else does, so the satellite blocks give up their fixed widths and
+  the title column takes the slack. They shrink to their content instead of
+  reserving 380px of the row for four lines of 10px type.
+*/
 .masthead {
   display: grid;
-  grid-template-columns: 110px minmax(0, 1fr) 120px 260px;
-  align-items: start;
+  grid-template-columns: 110px minmax(0, 1fr) auto auto;
+  align-items: center;
   gap: 28px;
   margin-bottom: 28px;
   min-height: 126px;
@@ -33,9 +39,9 @@
 .brand-title > a {
   display: block;
   font-family: var(--font-display);
-  font-size: clamp(36px, 4.55vw, 86px);
-  line-height: 1.04;
-  letter-spacing: -0.035em;
+  font-size: clamp(40px, 6.2vw, 116px);
+  line-height: 1.02;
+  letter-spacing: -0.038em;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -441,6 +447,6 @@
 }
 .page-toolbar{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 28px;border-bottom:1px solid var(--color-rule)}.page-toolbar nav{display:flex;align-items:center;gap:16px;font-size:12px;color:var(--color-ink-soft)}.page-toolbar nav a{display:flex;align-items:center;gap:10px;color:var(--color-accent)}.page-toolbar nav>span:last-child{color:var(--color-ink)}
 @media(max-width:600px){.page-toolbar{padding:12px 16px;gap:8px;flex-wrap:wrap}.page-toolbar nav{font-size:11px;gap:9px}.page-toolbar .session-nav{margin-left:auto}.page-toolbar .session-nav a,.page-toolbar .session-nav button{font-size:10px;padding:0 10px}}
-@media(min-width:1024px) and (max-width:1700px){.brand-title>a{font-family:Georgia,serif;font-weight:700;font-size:clamp(36px,4.25vw,72px)}}
-@media(min-width:1024px) and (max-height:950px){.masthead{height:108px;min-height:0;margin-bottom:16px}.brand-title>a{font-size:clamp(34px,4vw,68px)}.brand-mark span{font-size:9px;line-height:1.5}.brand-mark img{width:32px;height:32px}.brand-future img{width:90px;height:90px}}
-@media(min-width:1024px) and (max-height:780px){.masthead{height:88px}.brand-title>a{font-size:clamp(30px,3.6vw,58px)}.brand-title p{margin-top:8px;font-size:9px}.brand-mark span{display:none}}
+@media(min-width:1024px) and (max-width:1700px){.brand-title>a{font-family:Georgia,serif;font-weight:700;font-size:clamp(40px,5.9vw,100px)}}
+@media(min-width:1024px) and (max-height:950px){.masthead{height:124px;min-height:0;margin-bottom:16px}.brand-title>a{font-size:clamp(40px,5.6vw,96px)}.brand-mark span{font-size:9px;line-height:1.5}.brand-mark img{width:32px;height:32px}.brand-future img{width:90px;height:90px}}
+@media(min-width:1024px) and (max-height:780px){.masthead{height:104px}.brand-title>a{font-size:clamp(34px,4.9vw,78px)}.brand-title p{margin-top:8px;font-size:9px}.brand-mark span{display:none}}
