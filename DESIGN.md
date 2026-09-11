@@ -66,3 +66,12 @@ a separate progress log. Keep author/admin stage changes in the progress form.
 The sidebar's “I have an idea” focuses the composer; publishing an idea records
 the corresponding participation signal. Admin text and emoji editing stays
 inside a collapsed disclosure. Preserve drafts through sign-in in the same tab.
+
+
+Discussion responses support uploaded images and videos, safe clickable links,
+and optional Markdown formatting with a preview. Keep attachment controls visible
+in the default composer; formatting expands on request. Use the same renderer for
+previews and published responses. Uploaded attachments survive a reload with the
+draft; failed uploads must be retried or explicitly omitted before publishing.
+Show the four-file and 100 MB per-file limits before selection. External images
+remain text rather than loading tracking resources inside the discussion.

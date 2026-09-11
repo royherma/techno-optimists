@@ -82,6 +82,12 @@ throwaway databases.
 
 ## Worker
 
+**Uploaded media must run through the Worker.** Keep `/media/*` in
+`assets.run_worker_first` in every environment, alongside `/api/*` and `/c/*`.
+The static asset handler otherwise returns a 404 for uploaded R2 files even
+though the upload succeeded. Check a real uploaded image in a browser after
+changing this routing, including opening it in a new tab.
+
 **Sign-in rate limiting counts rows in `magic_links`. Not the Workers binding, not KV.**
 5/hour per address, 20/hour per IP. The native binding cannot express an hour: `period`
 is an enum of exactly `[10, 60]` seconds (`node_modules/wrangler/config-schema.json`), so
