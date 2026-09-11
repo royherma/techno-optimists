@@ -79,7 +79,8 @@ front, Hono on Workers behind it, D1/R2/KV for data. Full table and the reasonin
 
 This repo is edited by Claude Code and Codex sessions, sometimes two at once.
 
-- **[AGENTS.md](AGENTS.md)** is the entry point. It points at `CLAUDE.md`.
+- **[AGENTS.md](AGENTS.md)** is the entry point. It points at [CLAUDE.md](CLAUDE.md#agent-coordination),
+  the canonical rulebook for every agent.
 - **[CLAUDE.md](CLAUDE.md)** is the canonical rulebook — vocabulary, copy rules,
   coordination, how not to lose work. Read it in full before editing.
 - Shared rules live in `CLAUDE.md` only. Do not copy them into tool-specific
