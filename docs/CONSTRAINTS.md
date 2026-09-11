@@ -9,6 +9,30 @@ design reversals - are in `docs/2026-09-11-decisions-archive.md` and are not rul
 
 A row leaves this file when the code stops making it true, and moves to the archive.
 
+## Generated art
+
+**Challenge illustrations generate on the local $0 model. A paid image API needs
+Roy saying so in the same breath.** `local-imagegen` (sibling folder) serves
+`x/flux2-klein:4b` on pinned Ollama 0.32.5 at `localhost:4750` and costs nothing -
+it runs on this machine. The first version of `scripts/gen-challenge-art.mjs`
+reached for OpenRouter at $0.03362925 a call and built an elaborate 2x2-grid-and-slice
+scheme to cut nine cards to ~$0.10, while the free generator sat one folder over.
+That was real optimisation aimed at the wrong number: it made a paid call cheaper
+instead of removing it. The script now defaults to local and requires an explicit
+`--paid` to spend money, because a rule that lives only in a doc is one a future
+session reads past. Two things invert on the local path and the script encodes both:
+there is no per-call charge, so a grid amortises nothing and each card is drawn
+singly; and the cost that remains is time, so it draws the card's own 4:3 (688x512,
+~50s measured over 9) rather than a square that `object-cover` would crop.
+
+**`/api/gen` returns saved file paths, not base64.** The response is
+`{saved:[{path,...}], errors, requested}` and the server writes the PNG into
+`local-imagegen/outputs/` itself. A probe that assumed an `image` string got
+`top-level keys: saved, errors, requested` and no picture while the file sat on disk.
+Read `saved[0].path`. Generation legitimately takes 40-90s at any resolution - a slow
+response is not a hung one, and killing it mid-run leaves `shutting down mlx runner`
+in `logs/serve.log`.
+
 ## Database
 
 **Never apply `schema.sql` to an existing production database.** It drops tables.
