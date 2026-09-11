@@ -4,6 +4,15 @@ Public repo, Apache-2.0. Own git repo inside `techguyver-side-projects` — **no
 monorepo member. Outside contributors read [CONTRIBUTING.md](CONTRIBUTING.md); this file
 is the rules for whoever edits, and applies to them too.
 
+## Shared instructions
+
+This is the canonical project rulebook for Claude Code, Codex, and delegated
+agents. `AGENTS.md` is only an entry point that directs agents here. Edit shared
+rules here once; do not copy them into tool-specific files or delegation prompts.
+When delegating, provide the checkout, task, owned paths, and validation commands,
+and require the agent to read this file before working. Do not assume the other
+agent system shares your conversation, memory, or permissions.
+
 ## Read first
 
 `docs/2026-09-10-concept.md` is the source of truth for what this product is.
@@ -84,29 +93,18 @@ doc go stale the moment a commit lands; they describe intent, never state.
 
 ## Never lose work
 
-Two people edit this repo at once. An untracked file is one parallel `git checkout`
-away from gone with no recovery - only a commit survives, via the reflog.
-
-- Commit the moment a change compiles, not when it feels done: `git add -A &&
-  git commit -m "wip: <what>"`. `wip:` is a normal state here, not an apology.
-- Push after committing. The push is the only off-machine backup.
-- `git status` before every build, deploy, checkout or branch switch. Files you did
-  not touch showing as modified means the other session is live - commit first,
-  investigate second.
-- Never `git stash`, `reset --hard`, `checkout -- .` or `clean -fd` on a dirty tree.
-  A wip commit is the stash.
-- Untracked `??` files are someone's work in progress, never junk. Commit them or
-  gitignore them - do not delete. Safe to ignore without asking: `*.swp`,
-  `.DS_Store`, build output, `*-tmp.mjs` probes.
-- Committing someone else's in-flight files is correct when they compile. Say plainly
-  in the message that it is a safety commit, not a claim the feature is finished.
-
-Full protocol: `~/.claude/reference/rules/never-lose-work.md`.
+Follow the source-file and worktree rules under "Agent coordination" below.
+Commit changes as soon as they validate; `wip:` is a normal state here. Stage
+explicit paths so unrelated in-flight edits are not accidentally included.
+Push after committing for an off-machine backup. A safety commit of another
+session's work must be labeled as such and must not claim the feature is finished.
+Untracked files are work in progress: preserve them. Safe ignores include `*.swp`,
+`.DS_Store`, build output, and `*-tmp.mjs` probes.
 
 ## Docs
 
-Four permanent files, one job each. Everything else is dated or throwaway. If a new
-document does not fit a slot below, it does not belong in the repo - which is the
+Four permanent reference files, one job each; `AGENTS.md` is an entry-point adapter.
+Everything else is dated or throwaway. If a new document does not fit a slot below, it does not belong in the repo - which is the
 point: no dangling markdown.
 
 | File | Job |
@@ -136,13 +134,50 @@ point: no dangling markdown.
 
 ## Agent coordination
 
-Read [AGENTS.md](AGENTS.md) for the simultaneous-work protocol. `npm run agents:status`
-shows the shared operation lock. Root npm build, database and deployment commands
-acquire it automatically; `ship` keeps it through verification. Use those entry
-points in every agent. Python 3 is required for the macOS/Linux OS lock.
+These rules apply equally to Claude Code, Codex, and their delegated agents.
+Python 3 is required for the shared macOS/Linux operation lock.
 
-The lock serializes processes; it does not protect source files. Editing a path another
-session is in, and `git checkout`/`restore`/`stash`/`clean` on someone else's dirty
-tree, are how work actually gets destroyed here - see "The lock does not protect source
-files" in AGENTS.md, plus "Never lose work" above. Worktrees go in `.worktrees/`, never
-`/tmp`, which macOS reaps.
+### Simultaneous work
+
+- Run `npm run agents:status` and `git status --short` when starting and before shipping.
+- Use separate Git worktrees for independent edits. Agree on file ownership when sharing a checkout; an operation lock does not protect source edits.
+- Use the root npm scripts or Make targets for builds, database mutations and deployment. They acquire one shared lock across this repository's local worktrees, covering the full `ship` pipeline through verification. Dev and prod share a lock because builds use the same port and mutable local inputs.
+- A busy operation exits with code 75 and prints its owner, task, checkout and start time. Continue independent editing or retry after it finishes. Never bypass with direct Wrangler, workspace builds, or manual database commands.
+- Name your session with `AGENT_NAME=my-task npm run ship:dev` so others can identify it.
+- Locks release when the holding processes close their descriptors. Do not delete lock files or kill another agent's process to take over. Investigate the owner and its child processes if an operation appears stuck.
+- Prefer `npm run ship` / `npm run ship:dev` to hold the lock across preparation, deployment and verification. Separate invocations release the lock between steps.
+- This coordinates cooperating agents on this machine sharing a Git common directory. Separate clones, other machines, direct CLI calls and CI are outside its protection. Those must use one designated deployment owner until a shared remote deployment queue exists.
+
+### The lock does not protect source files
+
+`coordinate.py` is an flock around build, database and deploy commands. It serializes
+processes. It does not watch the filesystem, so every way one agent destroys another's
+work is outside it: an editor write, `git checkout`, `rm`, a `>` redirect. Holding the
+lock is not permission to touch a file someone else is in.
+
+- Before editing, building, deploying, or switching branches, run `git status --short`. A path dirty that you did not touch belongs to
+  the other session - commit it (`wip:`, say it is a safety commit) or leave it alone.
+  Never revert it to "clean up" first.
+- Re-read a file immediately before editing it if more than a couple of minutes passed.
+  An mtime that moved since you read it means someone is in that file right now; your
+  old copy would overwrite their lines with no diff to show what went missing.
+- Never `git checkout <path>`, `git restore`, `reset --hard` or `clean` to undo your own
+  edits. They take the other session's uncommitted lines with them and the reflog holds
+  nothing that was never committed. A `wip:` commit is the only reversible undo here.
+- Never delete or truncate a file you have not read this session, and never `>` over one.
+- `git stash` is banned even when your own diff looks trivial. A stash is invisible to
+  the other agent, survives no checkout it was not made in, and the one in this repo had
+  to be read line by line to prove it held nothing but regenerated timestamps.
+
+### Worktrees live in .worktrees/
+
+`git worktree list` is the first thing to run when a second agent appears - it says
+whether you share a checkout or not.
+
+- Create them at `.worktrees/<task>` inside this repo. Never in
+  `/private/tmp` or `/tmp`: macOS reaps those, and a reaped worktree takes every
+  uncommitted line in it with no reflog entry, because the objects were never written.
+- A `.git` **file** (not directory) marks a registered worktree. Never `rm -rf` one -
+  `git worktree remove` so the registration goes with it.
+- Commit and push before leaving a worktree. The push is the only copy that survives the
+  directory.
