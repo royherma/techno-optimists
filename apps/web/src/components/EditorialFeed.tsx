@@ -17,9 +17,9 @@ export default function EditorialFeed({ initial }: { initial: Challenge[] }) {
         let cursor: string | null = null
         const all: Challenge[] = []
         do {
-          const r = await fetch('/api/challenges?limit=50' + (cursor ? '&cursor=' + encodeURIComponent(cursor) : ''), { signal: controller.signal })
+          const r: Response = await fetch('/api/challenges?limit=50' + (cursor ? '&cursor=' + encodeURIComponent(cursor) : ''), { signal: controller.signal })
           if (!r.ok) throw new Error('feed')
-          const data = await r.json(); all.push(...data.challenges); cursor = data.next_cursor
+          const data: { challenges: Challenge[]; next_cursor: string | null } = await r.json(); all.push(...data.challenges); cursor = data.next_cursor
         } while (cursor)
         setItems(all); setError(false)
       } catch { if (!controller.signal.aborted) setError(true) }
