@@ -90,7 +90,7 @@
 .newspaper .update-byline {
   display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 9px;
   font:11px/1.5 system-ui,sans-serif; color:var(--np-muted);
-  break-after:avoid;
+  break-after:auto;
 }
 .newspaper .update-byline a { color:var(--np-ink); text-decoration:none; }
 .newspaper .update-byline a:hover { text-decoration:underline; text-underline-offset:3px; }
@@ -104,3 +104,5 @@
 .newspaper .np-panel .response-body { margin-top:6px; font-size:15px; line-height:1.5; }
 .newspaper .np-panel .response-body p { margin:6px 0; }
 .newspaper .np-panel .discussion-list .text-control { padding:4px 0; min-height:28px; font-size:11px; color:var(--np-ink); }
+
+.newspaper .np-panel-discussion .np-panel-write { margin-bottom:6px; }
