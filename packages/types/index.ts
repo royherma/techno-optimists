@@ -140,6 +140,12 @@ export interface Challenge {
   /** The viewer's own actions. Empty until auth exists. */
   my_actions?: ActionKind[]
   updates_count: number
+  /**
+   * Distinct viewers, deduplicated per day - a reload does not add one. Counts
+   * only reads the server saw, so it starts at 0 on a Challenge nobody opened
+   * and never carries a seeded demo number the way `actions` does.
+   */
+  views_count: number
   created_at: string
   last_activity_at: string
 }
