@@ -105,4 +105,16 @@
 .newspaper .np-panel .response-body p { margin:6px 0; }
 .newspaper .np-panel .discussion-list .text-control { padding:4px 0; min-height:28px; font-size:11px; color:var(--np-ink); }
 
+.np-source-tabs { display:flex; gap:16px; flex-shrink:0; margin-bottom:8px; font:12px/1.4 system-ui,sans-serif; }
+.np-source-tabs button { padding:2px 0 4px; border-bottom:2px solid transparent; }
+.np-source-tabs button[aria-pressed="true"] { border-color:var(--np-ink); font-weight:600; }
+.np-place-map { display:block; break-inside:avoid; margin-bottom:8px; }
+.np-place-map svg { width:100%; max-height:100px; }
+.np-challenge-kicker { flex-wrap:wrap; }
 .newspaper .np-panel-discussion .np-panel-write { margin-bottom:6px; }
+
+.np-place-content { display:flex; flex-direction:column; flex:1; min-height:0; gap:5px; font:13px/1.3 Georgia,serif; }
+.np-place-content p { margin:0; flex-shrink:0; }
+.np-place-content .np-place-map { flex:1; min-height:28px; margin:0; }
+.np-place-content .np-place-map svg { display:block; width:100%; height:100%; max-height:120px; }
+.np-place-content p:last-child a { font:11px/1.3 system-ui,sans-serif; text-decoration:underline; text-underline-offset:3px; }

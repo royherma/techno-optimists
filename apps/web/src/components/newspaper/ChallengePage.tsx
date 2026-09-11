@@ -5,6 +5,8 @@ import { getMe, type Me } from '../../lib/session'
 import { STAGE_MEANING, STAGE_STAMP } from '../../lib/vocab'
 import { formatDate } from '../../lib/dates'
 import PagedContent from './PagedContent'
+import StageBadge from './StageBadge'
+import SourcePlace from './SourcePlace'
 import PanelDialog from './PanelDialog'
 import ViewsCount from './ViewsCount'
 import ActionBar from '../ActionBar'
@@ -61,10 +63,8 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
   }, [data?.challenge.slug])
   if (!data) return <div className="np-empty"><h1>{error || 'Opening the Challenge…'}</h1>{error && <button onClick={() => void refresh().catch(e => setError(e.message))}>Try again</button>}</div>
   const c = data.challenge, image = c.media[Math.min(media, c.media.length - 1)]
-  let source: URL | null = null
-  try { const url = new URL(c.source?.url || ''); if (['http:', 'https:'].includes(url.protocol)) source = url } catch { /* A source may be an interview. */ }
-  return <div className="np-challenge np-challenge-sheet">
-    <div className="np-challenge-kicker"><a href="/">← All Challenges</a><span className={`type-${c.type}`}>{c.type} <span> / {c.location || 'Around the world'}</span></span><span className="np-relative">Impact not specified</span>{me?.is_admin && <button onClick={() => setEditing(true)}>Edit Challenge</button>}</div>
+  return <div className="np-challenge np-challenge-sheet" data-stage={c.stage}>
+    <div className="np-challenge-kicker"><a href="/">← All Challenges</a><span className={`type-${c.type}`}>{c.type} <span> / {c.location || 'Around the world'}</span></span><StageBadge stage={c.stage} /><span className="np-relative">Impact not specified</span>{me?.is_admin && <button onClick={() => setEditing(true)}>Edit Challenge</button>}</div>
     {error && <p className="np-error" role="alert">{error} <button onClick={() => void refresh().catch(e => setError(e.message))}>Retry</button></p>}
     <div className="np-panel-grid">
       <section className="np-panel np-panel-story" aria-label="Challenge story">
@@ -78,7 +78,7 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
       <Panel name="discussion" title="Discussion"><Discussion panel slug={c.slug} me={me} sessionReady={sessionReady} /></Panel>
       <Panel name="progress" title="Progress"><p className="np-current-stage"><span className={`np-stage-color stage-${c.stage}`} /> <strong>{STAGE_STAMP[c.stage]}</strong> · {STAGE_MEANING[c.stage]}</p><Progress panel challenge={c} updates={data.updates} me={me} refresh={refresh} /></Panel>
       <Panel name="people" title="People"><PeopleLive slug={c.slug} initial={data.people} /></Panel>
-      <Panel name="source" title="Source & place"><p>{source ? <a href={source.href} target="_blank" rel="noopener noreferrer">{c.source?.name || source.hostname} ↗</a> : c.source?.name || c.source?.url || 'Shared directly here.'}</p><p>{c.location || 'No location provided.'}</p>{c.source?.note && <p>{c.source.note}</p>}<p>Added {formatDate(c.imported_at || c.created_at)}. Latest activity {formatDate(c.last_activity_at)}.</p></Panel>
+      <SourcePlace challenge={c} />
     </div>
     {me?.is_admin && <PanelDialog title="Edit Challenge" open={editing} onClose={() => setEditing(false)}><Editorial challenge={c} refresh={refresh} /></PanelDialog>}
   </div>
