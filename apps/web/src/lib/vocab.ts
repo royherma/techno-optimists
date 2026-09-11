@@ -1,3 +1,4 @@
+import { IMPACT_TIERS } from '../../../../packages/types/index'
 import type { ActionKind, ChallengeType, Stage } from '../../../../packages/types/index'
 
 /** User-facing labels. The product's words - see CLAUDE.md vocabulary. */
@@ -77,9 +78,19 @@ export const typeColor = (t: ChallengeType) =>
 
 export const stageColor = (s: Stage) => `var(--color-${s})`
 
-/** Impact tiers from the original product legend. These describe scope/importance,
- * never participation. No impact value is stored on a Challenge yet. */
-export const IMPACT_LABELS = ['local', 'neighbourhood', 'town', 'region', 'critical'] as const
+/**
+ * Impact tiers, in ring order. These describe scope, never participation.
+ * The ladder is a population one - see IMPACT_TIERS in packages/types, which is
+ * the single definition; this re-export exists so web surfaces keep importing
+ * their vocabulary from one place.
+ */
+export const IMPACT_LABELS = IMPACT_TIERS
+
+/** Sentence-case tier name for a stored ring count, or null when unspecified. */
+export const impactLabel = (impact: number | null | undefined) =>
+  impact == null || impact < 1 || impact > IMPACT_TIERS.length
+    ? null
+    : IMPACT_TIERS[impact - 1]
 
 /**
  * A stable grid reference for a Challenge. The sheet promises every Challenge

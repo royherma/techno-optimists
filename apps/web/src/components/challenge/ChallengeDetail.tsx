@@ -3,7 +3,8 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from 're
 import type { Challenge, Update, Stage } from '../../../../../packages/types/index'
 import type { DetailPerson } from '../../lib/api'
 import { getMe, type Me } from '../../lib/session'
-import { TYPE_LABEL, STAGE_ORDER, STAGE_STAMP, STAGE_MEANING, ago, count, gridRef } from '../../lib/vocab'
+import { TYPE_LABEL, STAGE_ORDER, STAGE_STAMP, STAGE_MEANING, ago, count, gridRef, impactLabel } from '../../lib/vocab'
+import { Rings } from '../newspaper/Legend'
 import ActionBar from '../ActionBar'
 import PeopleLive from '../PeopleLive'
 import Discussion from './Discussion'
@@ -78,7 +79,9 @@ export default function ChallengeDetail({ initial }: { initial?: Detail }) {
       <h1>{c.emoji && <span className="challenge-emoji" aria-hidden="true">{c.emoji} </span>}{c.title}</h1>
       <p className="detail-summary">{c.summary}</p>
       <div className="detail-byline"><a className="author-avatar" href={`/people?handle=${encodeURIComponent(c.author.handle)}`} aria-label={`View @${c.author.handle} contributions`}>{c.author.handle.slice(0, 1).toUpperCase()}</a><span>{c.source ? 'Shared' : 'Spotted'} by <a href={`/people?handle=${encodeURIComponent(c.author.handle)}`}><strong>@{c.author.handle}</strong></a><span> · Active {ago(c.imported_at && c.imported_at > c.last_activity_at ? c.imported_at : c.last_activity_at)}</span>{c.views_count > 0 && <span title="Distinct viewers, counted once per person per day"> · {count(c.views_count)} viewed</span>}</span></div>
-      <div className="detail-impact"><span>Impact</span><small>Not specified</small></div>
+      <div className="detail-impact"><span>Impact</span>{impactLabel(c.impact)
+        ? <><Rings count={c.impact!} size={40} /><small>{impactLabel(c.impact)}</small></>
+        : <small>Not specified</small>}</div>
       <details className="challenge-history"><summary><img src="/icons/chart-line.svg" width="18" height="18" alt="" />Dates and source</summary><dl>
         <div><dt>Added here</dt><dd><time dateTime={dateISO(c.imported_at ?? c.created_at)}>{formatDateTime(c.imported_at ?? c.created_at)}</time></dd></div>
         {c.imported_at && <div><dt>Original record</dt><dd><time dateTime={dateISO(c.created_at)}>{formatDate(c.created_at)}</time></dd></div>}

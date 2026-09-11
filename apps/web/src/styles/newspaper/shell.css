@@ -162,6 +162,11 @@ body:has(.newspaper) { background: #f7f4eb; }
 
 .np-rings-scale>div { flex:1; min-width:0; }
 .np-rings-scale span { text-transform:capitalize; text-align:center; font-size:9px; max-width:58px; overflow-wrap:anywhere; }
+/* The tier this Challenge sits at, marked the same way the stage list marks the
+ * current stage: a ground, not a colour change, so the rings stay the only mark
+ * carrying meaning. Absent on the feed, where the legend describes no one row. */
+.np-rings-scale>div.is-current { background-color:var(--np-selected); }
+.np-rings-scale>div.is-current span { font-weight:600; }
 .np-stage-color { border-radius:50%; }
 
 /*

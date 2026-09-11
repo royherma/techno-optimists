@@ -185,6 +185,13 @@ CREATE TABLE sessions (
 
 CREATE INDEX idx_sessions_person ON sessions(person_id, created_at DESC);
 
+-- Reach as a ring count 1..5, indexing IMPACT_TIERS in packages/types. Nullable
+-- because unspecified is a real and common state: a Challenge is complete
+-- without one, and every surface leaves it unmarked rather than guessing a tier.
+-- Added to existing databases by scripts/migrate-community.mjs, which ALTERs
+-- only when the column is missing.
+ALTER TABLE challenges ADD COLUMN impact INTEGER;
+
 -- Additive, repeatable migration. Never use schema.sql against existing data.
 CREATE TABLE IF NOT EXISTS challenge_comments (
   id TEXT PRIMARY KEY,
