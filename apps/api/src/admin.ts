@@ -18,6 +18,7 @@
 /** Compared against the normalized (lowercased, trimmed) email. */
 export const ADMIN_EMAILS: readonly string[] = [
   'royherma@gmail.com',
+  'techguyver1337@gmail.com',
 ]
 
 /**
