@@ -1,19 +1,11 @@
 ---
-/*
- * Impact as concentric contour rings, read the way a contour map is read: more
- * rings means more has accumulated here, and tighter rings mean it climbs fast.
- *
- * Rings take the stage colour. The two channels are not redundant because they
- * answer different questions - the ring COUNT says how far this reaches, the
- * COLOUR says what is being done about it - and pairing them in one mark is
- * what makes a row readable at a glance instead of in two glances.
- */
+/* Impact scope expands outward. Used by the legend until explicit impact data exists. */
 interface Props { rings: number; label: string; size?: number; color?: string }
 const { rings, label, size = 46, color } = Astro.props
 const n = Math.min(5, Math.max(1, rings))
 const c = size / 2
 // Evenly spaced radii, largest ring just inside the box.
-const radii = Array.from({ length: n }, (_, i) => (c - 2) * ((i + 1) / n))
+const radii = Array.from({ length: n }, (_, i) => (c - 2) * ((i + 1) / 5))
 ---
 <svg
   width={size} height={size} viewBox={`0 0 ${size} ${size}`}

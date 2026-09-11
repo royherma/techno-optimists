@@ -5,4 +5,4 @@ import FrontPage from '../components/newspaper/FrontPage'
 import { getFeed } from '../lib/api'
 const { challenges } = await getFeed('?limit=50')
 ---
-<Base title="The edition - Techno Optimists"><NewspaperShell challenges={challenges}><FrontPage initial={challenges} client:load /></NewspaperShell></Base>
+<Base title="Explore Challenges - Techno Optimists"><NewspaperShell challenges={challenges}><FrontPage initial={challenges} client:load /></NewspaperShell></Base>

@@ -8,7 +8,7 @@ import '../styles/activity.css'
  * The one contribution control. Which actions appear depends on the Challenge's
  * type - offering "I have this problem" on someone's Build is noise.
  */
-const ACTION_ICON: Record<ActionKind, string> = { have_problem: 'plus', want_this: 'plus', have_idea: 'lightbulb', can_help: 'users', will_test: 'flask', building_this: 'rocket', follow: 'chart-line' }
+const ACTION_ICON: Record<ActionKind, string> = { have_problem: 'plus', want_this: 'plus', have_idea: 'lightbulb', can_help: 'users', will_test: 'play', building_this: 'rocket', follow: 'star' }
 
 const FOR_TYPE: Record<Challenge['type'], ActionKind[]> = {
   problem: ['have_problem', 'have_idea', 'can_help', 'will_test', 'follow'],

@@ -4,7 +4,6 @@ import Sheet from '../../components/Sheet.astro'
 import PageToolbar from '../../components/PageToolbar.astro'
 import ChallengeDetail from '../../components/challenge/ChallengeDetail'
 import { getChallenge, getFeed } from '../../lib/api'
-import { depthScale } from '../../lib/vocab'
 import '../../styles/detail.css'
 import '../../styles/discussion.css'
 export async function getStaticPaths() {
@@ -14,12 +13,10 @@ export async function getStaticPaths() {
 const { slug } = Astro.params
 const initial = slug === '_shell' ? undefined : await getChallenge(slug!)
 const c = initial?.challenge
-const { challenges: peers } = await getFeed('?limit=50')
-const rings = c ? depthScale(peers.some(p => p.id === c.id) ? peers : [...peers,c])(c) : 1
 ---
 <Base title={c ? `${c.title} - Techno Optimists` : 'Challenge - Techno Optimists'} description={c?.summary} noindex={!c}>
   <Sheet>
     <PageToolbar label="Challenge" />
-    <main class="challenge-detail"><ChallengeDetail client:load initial={initial} rings={rings} /></main>
+    <main class="challenge-detail"><ChallengeDetail client:load initial={initial} /></main>
   </Sheet>
 </Base>

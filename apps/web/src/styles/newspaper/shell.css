@@ -156,3 +156,7 @@ body:has(.newspaper) { background: #f7f4eb; }
 .np-orb { mix-blend-mode:multiply; border-radius:50%; }
 @media(max-height:1100px) { .np-latest { display:none; } }
 @media(max-height:1100px) { .np-legend-quote { display:none; } }
+
+.np-rings-scale>div { flex:1; min-width:0; }
+.np-rings-scale span { text-transform:capitalize; text-align:center; font-size:9px; max-width:58px; overflow-wrap:anywhere; }
+.np-stage-color { border-radius:50%; }
