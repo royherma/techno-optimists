@@ -1,0 +1,77 @@
+import { useCallback, useEffect, useState, type CSSProperties } from 'react'
+import type { Challenge, Update, Stage } from '../../../../../packages/types/index'
+import type { DetailPerson } from '../../lib/api'
+import { getMe, type Me } from '../../lib/session'
+import { TYPE_LABEL, STAGE_ORDER, STAGE_STAMP, STAGE_MEANING, ago, depthLabel, gridRef } from '../../lib/vocab'
+import ActionBar from '../ActionBar'
+import PeopleLive from '../PeopleLive'
+import Discussion from './Discussion'
+import Progress from './Progress'
+import Editorial from './Editorial'
+
+type Detail = { challenge: Challenge; updates: Update[]; people: DetailPerson[] }
+const PROMPT: Record<Stage, string> = {
+  spot: 'What have you noticed? Help describe the Challenge.',
+  understand: 'What causes this? Share what you know or ask a useful question.',
+  ideas: 'What could work? Suggest an approach worth trying.',
+  build: 'What would help move the work forward?',
+  test: 'What should we test, and how will we know it worked?',
+  learn: 'What can we learn from this, and what could someone else try?',
+  improve: 'How could this work better or help more people?',
+}
+
+export default function ChallengeDetail({ initial, rings }: { initial: Detail; rings: number }) {
+  const [data, setData] = useState(initial)
+  const [me, setMe] = useState<Me | null>(null)
+  const [sessionReady, setSessionReady] = useState(false)
+  const [error, setError] = useState('')
+  const [actual, setActual] = useState(initial.challenge.slug)
+  const refresh = useCallback(async () => {
+    const slug = window.location.pathname.split('/').filter(Boolean)[1] ?? initial.challenge.slug
+    setActual(slug)
+    const r = await fetch(`/api/challenges/${encodeURIComponent(slug)}`, { cache: 'no-store' })
+    if (!r.ok) throw new Error('The latest Challenge could not load.')
+    const next = await r.json() as Detail
+    setData(next); setError('')
+    document.title = `${next.challenge.title} - Techno Optimists`
+  }, [initial.challenge.slug])
+  useEffect(() => {
+    void refresh().catch(() => setError('The latest Challenge could not load. Please retry.'))
+    void getMe().then((person) => { setMe(person); setSessionReady(true) })
+  }, [refresh])
+
+  const c = data.challenge
+  const n = Math.min(5, Math.max(1, rings))
+  if (actual !== c.slug) return <div><p role="status">{error || 'Loading Challenge…'}</p>{error && <button onClick={() => void refresh().catch(() => setError('The latest Challenge could not load. Please retry.'))}>Try again</button>}</div>
+  const reached = STAGE_ORDER.indexOf(c.stage)
+  return <div>
+    {error && <p role="alert" className="form-error">{error} <button onClick={() => void refresh().catch(() => setError('The latest Challenge could not load. Please retry.'))}>Retry</button></p>}
+    <header className="detail-header">
+      <div className="detail-meta"><span>{gridRef(c.id)}</span><span className="type-pill">Started as a {TYPE_LABEL[c.type].toLowerCase()}</span>{c.location && <span>{c.location}</span>}</div>
+      <h1>{c.emoji && <span className="challenge-emoji" aria-hidden="true">{c.emoji} </span>}{c.title}</h1>
+      <p className="detail-summary">{c.summary}</p>
+      <div className="detail-byline"><span className="author-avatar" aria-hidden="true">{c.author.handle.slice(0, 1).toUpperCase()}</span><span>{c.source ? 'Shared' : 'Spotted'} by <strong>@{c.author.handle}</strong><span> · Active {ago(c.last_activity_at)}</span></span></div>
+      <div className="detail-impact"><svg width="52" height="52" viewBox="0 0 52 52" role="img" aria-label={`Impact: ${depthLabel(n)}`} style={{ color: `var(--color-${c.stage})` }}>{Array.from({ length: n }, (_, i) => <circle key={i} cx="26" cy="26" r={24 * (i + 1) / n} fill="none" stroke="currentColor" strokeWidth="1.5" />)}</svg><span>{depthLabel(n).split(' - ')[0]} impact</span></div>
+      <nav className="detail-jump" aria-label="On this Challenge"><a href="#discussion">Join the discussion</a><a href="#progress">Progress log</a></nav>
+    </header>
+    <div className="stage-overview"><p><strong>Current stage: {STAGE_STAMP[c.stage]}</strong><span>{PROMPT[c.stage]}</span></p>
+      <details className="stage-disclosure"><summary>View all stages</summary><ol className="challenge-lifecycle" aria-label="Lifecycle stages">
+        {STAGE_ORDER.map((s, i) => <li key={s} className={`lifecycle-step ${i === reached ? 'is-current is-reached' : ''}`} aria-current={i === reached ? 'step' : undefined} style={{ '--stage-color': `var(--color-${s})` } as CSSProperties}><span className="stage-dot" aria-hidden="true" /><span className="stage-name">{STAGE_STAMP[s]}</span><span className="stage-description">{STAGE_MEANING[s]}</span></li>)}
+      </ol></details>
+    </div>
+    <div className="detail-grid">
+      <div className="detail-story">
+        {c.media.length > 0 && <div className="detail-media">{c.media.map((m) => m.kind === 'video' ? <video key={m.url} src={m.url} controls playsInline preload="metadata" /> : <img key={m.url} src={m.url} alt={m.alt ?? ''} width={m.w} height={m.h} />)}</div>}
+        {c.body && <section className="detail-section challenge-context"><h2>The Challenge</h2>{c.body.split(/\n\s*\n/).map((p, i) => <p key={i}>{p}</p>)}</section>}
+        {c.source && <div className="challenge-source"><span>Source: </span>{c.source.url && /^https?:\/\//i.test(c.source.url) ? <a href={c.source.url} target="_blank" rel="noopener noreferrer">{c.source.name ?? new URL(c.source.url).hostname}</a> : <span>{c.source.name ?? c.source.url}</span>}{c.source.note && <details><summary>About this source</summary><p>{c.source.note}</p></details>}</div>}
+        <Discussion key={c.slug} slug={c.slug} me={me} sessionReady={sessionReady} />
+        <Progress key={`progress-${c.slug}`} challenge={c} updates={data.updates} me={me} refresh={refresh} />
+      </div>
+      <aside className="detail-sidebar">
+        <section id="contribute" className="detail-panel contribution-panel"><h2>How can you help?</h2><p>Mark what fits, or <a href="#discussion">write a response</a>.</p><div data-action-bar data-slug={c.slug}><ActionBar key={c.slug} slug={c.slug} type={c.type} actions={c.actions} /></div></section>
+        <PeopleLive key={`people-${c.slug}`} slug={c.slug} initial={data.people} />
+        {me?.is_admin && <Editorial key={`edit-${c.slug}`} challenge={c} refresh={refresh} />}
+      </aside>
+    </div>
+  </div>
+}

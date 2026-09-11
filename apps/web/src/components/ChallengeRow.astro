@@ -32,7 +32,7 @@ const ACTIONS = ['have_problem', 'have_idea', 'can_help', 'will_test'] as const
   stage stranded at the bottom. So the phone gets flow layout and the table
   starts at sm, where the widths exist.
 -->
-<article data-feed-row data-type={c.type} data-search={`${c.title} ${c.summary} ${c.location ?? ''} ${c.tags.join(' ')}`.toLowerCase()} class="challenge-row border-b border-(--color-rule) sm:grid sm:grid-cols-[3rem_9.5rem_1fr_6rem_8rem]">
+<article data-feed-row data-slug={c.slug} data-type={c.type} data-search={`${c.title} ${c.summary} ${c.location ?? ''} ${c.tags.join(' ')}`.toLowerCase()} class="challenge-row border-b border-(--color-rule) sm:grid sm:grid-cols-[3rem_9.5rem_1fr_6rem_8rem]">
   <!--
     NO. and GRID REF. share one line on a phone - they are both identifiers of
     the same row, and stacking them into separate ruled cells spent two blocks
@@ -113,7 +113,7 @@ const ACTIONS = ['have_problem', 'have_idea', 'can_help', 'will_test'] as const
             and colour so it reads as clearly secondary, not a second title.
           -->
           <h2 class="mt-0.5 font-[family-name:var(--font-display)] text-[1.4rem] font-bold leading-[1.1] tracking-tight sm:text-[1.55rem]">
-            {c.title}
+            <span data-feed-emoji aria-hidden="true">{c.emoji ? `${c.emoji} ` : ''}</span><span data-feed-title>{c.title}</span>
           </h2>
           <!--
             A summary runs to 280 characters. Ordinary prose wraps, but one

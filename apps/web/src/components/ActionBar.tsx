@@ -39,6 +39,12 @@ export default function ActionBar({ slug, type, actions }: {
   const inFlight = useRef(false)
 
   useEffect(() => {
+    const refresh = () => setRetry((n) => n + 1)
+    window.addEventListener('challenge-comment', refresh)
+    return () => window.removeEventListener('challenge-comment', refresh)
+  }, [])
+
+  useEffect(() => {
     let cancelled = false
     setError(false)
     Promise.all([
@@ -61,6 +67,10 @@ export default function ActionBar({ slug, type, actions }: {
   }, [live, slug, retry])
 
   async function act(kind: ActionKind) {
+    if (kind === 'have_idea') {
+      window.dispatchEvent(new Event('compose-idea'))
+      return
+    }
     if (!ready || inFlight.current) return
     inFlight.current = true
     const active = !mine.includes(kind)
@@ -122,8 +132,8 @@ export default function ActionBar({ slug, type, actions }: {
             onClick={() => act(kind)}
             disabled={busy !== null}
             type="button"
-            title={on ? `Undo: ${ACTION_LABEL[kind]}` : ACTION_LABEL[kind]}
-            aria-pressed={on}
+            title={kind === 'have_idea' ? 'Write your idea' : on ? `Undo: ${ACTION_LABEL[kind]}` : ACTION_LABEL[kind]}
+            aria-pressed={kind === 'have_idea' ? undefined : on}
             className={`feedback-control ink-transition rounded-full border px-4 py-2 text-sm ${
               on
                 ? 'border-(--color-ink) bg-(--color-ink) text-(--color-paper)'

@@ -6,6 +6,7 @@ import {
   normalizeEmail, normalizeHandle, readCookie, sessionExpiry, signalCookie,
 } from './auth'
 import { isAdminEmail } from './admin'
+import { community } from './community'
 import { MAX_BYTES, checkUpload, dimensionsOf, mediaKey, mediaUrl } from './media'
 import { slugify } from './slug'
 import {
@@ -149,6 +150,7 @@ const toChallenge = (r: Row, actionRows: Row[]): Challenge => {
     lat: r.lat == null ? null : Number(r.lat),
     lng: r.lng == null ? null : Number(r.lng),
     tags: json<string[]>(r.tags, []),
+    emoji: r.emoji == null ? null : String(r.emoji),
     // Three nullable columns collapse to one nullable object: a row with no
     // provenance returns `source: null` rather than an object of three nulls,
     // so `c.source &&` is the only check a surface needs. A row that has any
@@ -504,6 +506,8 @@ app.post('/api/challenges/:slug/updates', async (c) => {
 
   return c.json({ ok: true, id, stage: stage ?? null }, 201)
 })
+
+app.route('/api/challenges', community)
 
 app.get('/api/challenges/:slug', async (c) => {
   const slug = c.req.param('slug')

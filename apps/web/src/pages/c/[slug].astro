@@ -2,16 +2,11 @@
 import Base from '../../layouts/Base.astro'
 import Sheet from '../../components/Sheet.astro'
 import PageToolbar from '../../components/PageToolbar.astro'
-import ActionBar from '../../components/ActionBar'
-import LiveChallenge from '../../components/LiveChallenge'
-import MediaPlate from '../../components/MediaPlate.astro'
-import ChallengeHeader from '../../components/challenge/ChallengeHeader.astro'
-import Lifecycle from '../../components/challenge/Lifecycle.astro'
-import ProgressLog from '../../components/challenge/ProgressLog.astro'
-import PeopleLive from '../../components/PeopleLive'
+import ChallengeDetail from '../../components/challenge/ChallengeDetail'
 import { getChallenge, getFeed } from '../../lib/api'
 import { depthScale } from '../../lib/vocab'
 import '../../styles/detail.css'
+import '../../styles/discussion.css'
 export async function getStaticPaths() {
   const { challenges } = await getFeed('?limit=50')
   return challenges.map(c => ({ params: { slug: c.slug } }))
@@ -20,27 +15,10 @@ const { slug } = Astro.params
 const { challenge: c, updates, people } = await getChallenge(slug!)
 const { challenges: peers } = await getFeed('?limit=50')
 const rings = depthScale(peers.some(p => p.id === c.id) ? peers : [...peers,c])(c)
-const hero = c.media[0]
 ---
 <Base title={`${c.title} - Techno Optimists`} description={c.summary}>
   <Sheet>
     <PageToolbar label="Challenge" />
-    <main class="challenge-detail">
-      <ChallengeHeader challenge={c} rings={rings} />
-      <Lifecycle stage={c.stage} />
-      <div class="detail-grid">
-        <div class="detail-story">
-          <figure class="detail-media" hidden={!hero}><MediaPlate media={hero} fit="contain" eager min={0.62} max={2.6} class="mx-auto max-h-[30rem] w-auto max-w-full" /></figure>
-          <section class="detail-section challenge-context" hidden={!c.body}><h2>The Challenge</h2><p data-field="body">{c.body}</p></section>
-          <ProgressLog updates={updates} stage={c.stage} />
-        </div>
-        <aside class="detail-sidebar">
-          <section id="contribute" class="detail-panel contribution-panel"><h2>How can you help?</h2><p>You don’t need all the answers. Start with what you know.</p><div data-action-bar data-slug={c.slug}><ActionBar client:load slug={c.slug} type={c.type} actions={c.actions} /></div></section>
-          <PeopleLive client:load slug={c.slug} initial={people} />
-          <p class="detail-philosophy">A more human future<br />is a design choice.</p>
-        </aside>
-      </div>
-    </main>
+    <main class="challenge-detail"><ChallengeDetail client:load initial={{ challenge: c, updates, people }} rings={rings} /></main>
   </Sheet>
-  <LiveChallenge client:load />
 </Base>
