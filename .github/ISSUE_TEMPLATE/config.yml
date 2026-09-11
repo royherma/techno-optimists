@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/royherma/techno-optimists/security/advisories/new
+    about: Private vulnerability reporting. Never open a public issue for a security problem.
+  - name: Read the product concept first
+    url: https://github.com/royherma/techno-optimists/blob/main/PRODUCT.md
+    about: Most product questions are already answered here and in docs/2026-09-10-concept.md.
