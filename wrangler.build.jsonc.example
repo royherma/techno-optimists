@@ -11,12 +11,12 @@
   // state (.wrangler/state is shared by database_name), different port.
 
   "d1_databases": [
-    { "binding": "DB", "database_name": "techno-optimists", "database_id": "195e34f1-f441-49ce-9d47-21eb7ad78209" },
-    { "binding": "ANALYTICS_DB", "database_name": "to-analytics", "database_id": "547efc7a-46d0-4648-b2ad-9839de409a3d" }
+    { "binding": "DB", "database_name": "techno-optimists", "database_id": "<your-d1-id-techno-optimists>" },
+    { "binding": "ANALYTICS_DB", "database_name": "to-analytics", "database_id": "<your-d1-id-to-analytics>" }
   ],
 
   "kv_namespaces": [
-    { "binding": "CACHE", "id": "2a687cc473ea4b01bc133135b98c69e5" }
+    { "binding": "CACHE", "id": "<your-kv-id-cache>" }
   ],
 
   // Same local bucket as the main config - the Worker binds MEDIA unconditionally.
