@@ -8,7 +8,7 @@ import { snack } from '../lib/snack'
  *
  * Handle first, because it is the one field that is public and the one thing
  * people had no way to change until this page existed - a signup handle is
- * derived from an email local part, so `roy.herma@gmail.com` became `royherma`
+ * derived from an email local part, so `sam.rivera@example.com` became `samrivera`
  * without anyone choosing it.
  *
  * Email is shown and never editable. It is what the magic link proves ownership

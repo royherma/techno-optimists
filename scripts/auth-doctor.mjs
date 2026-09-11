@@ -13,11 +13,19 @@
  * whose link a human is about to click.
  */
 
-const BASE = process.env.TO_BASE ?? 'https://techno-optimists-dev.techguyver1337.workers.dev'
 const arg = (flag) => {
   const i = process.argv.indexOf(flag)
   return i === -1 ? null : process.argv[i + 1]
 }
+
+// No hardcoded default: the dev worker's address contains a Cloudflare subdomain
+// specific to one account, and this repo is public. Set TO_BASE or pass --base.
+const BASE = (arg('--base') ?? process.env.TO_BASE ?? '').replace(/\/$/, '')
+if (!BASE) {
+  console.error('No target. Set TO_BASE or pass --base https://your-worker.workers.dev')
+  process.exit(2)
+}
+
 const EMAIL = arg('--email') ?? 'claude-e2e-probe@example.com'
 
 /**
