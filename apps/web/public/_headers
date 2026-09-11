@@ -1,0 +1,30 @@
+# Security headers for everything the ASSET worker serves.
+#
+# Why this file exists at all: `run_worker_first` in wrangler.jsonc is
+# ["/api/*"], so a page request is answered by the asset worker and never
+# reaches the Worker script - which means the header middleware in
+# apps/api/src/index.ts (secured()) runs on /api/*, /media/* and /c/:slug and
+# on nothing else. The headers were live on the API and absent on every page
+# until this file was added, which verify.mjs caught.
+#
+# Setting run_worker_first: true instead would route pages through Hono, but
+# Hono has no catch-all for non-API paths - /, /map and /_astro/* would 404 -
+# and it would give up edge caching on every static file. So the asset worker
+# keeps serving assets, and states its own headers here.
+#
+# Deliberately NOT restated here: script-src and style-src. Astro emits a
+# per-page <meta> CSP carrying a sha256 for every inline script and style it
+# generated (astro.config.mjs -> security.csp). When two policies apply, each
+# directive is intersected, so a script-src here would override those hashes
+# and break island hydration - the failure that looks most like hardening.
+#
+# frame-ancestors is the one that can ONLY live here: browsers ignore it
+# inside a <meta> CSP, so without this line the pages are frameable no matter
+# what the meta tag says.
+
+/*
+  Content-Security-Policy: frame-ancestors 'none'
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
