@@ -31,6 +31,8 @@ export default function WorldPlate({
   children,
   onPick,
   className = '',
+  onPreview,
+  selectedIndex,
 }: {
   /*
    * Pins arrive as data, never as slotted children. This component hydrates
@@ -40,6 +42,8 @@ export default function WorldPlate({
    * contains every pin. Props serialize, so they cross the boundary intact.
    */
   pins?: Pin[]
+  onPreview?: (index: number) => void
+  selectedIndex?: number
   children?: React.ReactNode
   /** When set the plate is a control: clicking it reports a position. */
   onPick?: (lat: number, lng: number) => void
@@ -99,7 +103,14 @@ export default function WorldPlate({
             <circle cx={x} cy={y} r="2.6" fill={p.color} />
           </>
         )
-        return p.href ? (
+        return onPreview ? (
+          <g key={i} role="button" tabIndex={0} aria-label={p.label} aria-pressed={selectedIndex === i} className="map-pin"
+            onMouseEnter={() => onPreview(i)} onFocus={() => onPreview(i)} onClick={() => onPreview(i)}
+            onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPreview(i) } }}>
+            <circle cx={x} cy={y} r={Math.max(p.r + 6, 16)} fill="transparent" className="pin-hit" />
+            {mark}
+          </g>
+        ) : p.href ? (
           <a key={i} href={p.href} aria-label={p.label} className="map-pin" data-feed-pin data-type={p.type} data-search={p.search}>
             {p.label && <title>{p.label}</title>}
             <circle cx={x} cy={y} r={Math.max(p.r + 6, 16)} fill="transparent" className="pin-hit" />
