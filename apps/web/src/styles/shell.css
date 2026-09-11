@@ -26,9 +26,7 @@
 .brand-mark span,
 .brand-manifesto,
 .brand-future p,
-.brand-title p,
-.toolbar-purpose,
-.side-footer {
+.brand-title p {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.25em;
@@ -135,20 +133,6 @@
 .side-links a[aria-current="page"] .ui-icon {
   filter: invert(36%) sepia(53%) saturate(872%) hue-rotate(169deg);
 }
-.side-footer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  margin-top: auto;
-  padding-top: 55px;
-  padding-bottom: 20px;
-  gap: 12px;
-  letter-spacing: 0.13em;
-}
-.side-footer .ui-icon {
-  opacity: 0.6;
-}
 .ui-icon {
   flex-shrink: 0;
   display: inline-block;
@@ -184,6 +168,21 @@
   padding: 0 22px;
   border-radius: 999px;
   border: 1px solid var(--color-rule-soft);
+}
+/*
+  The handle is a destination, not an action: it goes to /settings, where
+  signing out now lives. A pill border made it read as the twin of the button
+  beside it, so it drops to plain text and earns an underline on hover.
+*/
+.session-nav .handle-link {
+  border-color: transparent;
+  padding: 0 8px;
+}
+.session-nav .handle-link:hover {
+  background: none;
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 .session-nav .post-link {
   background: var(--color-ink);
@@ -288,9 +287,6 @@
     font-size: 9px;
     letter-spacing: 0.13em;
   }
-  .side-footer {
-    font-size: 8px;
-  }
 }
 @media (max-width: 760px) {
   .site-shell {
@@ -356,9 +352,6 @@
     width: 23px;
     height: 23px;
   }
-  .side-footer {
-    display: none;
-  }
   .post-fab {
     bottom: 86px !important;
   }
@@ -423,9 +416,6 @@
   .side-links a img {
     width: 32px;
     height: 32px;
-  }
-  .side-footer {
-    font-size: 11px;
   }
   .session-nav {
     font-size: 13px;
