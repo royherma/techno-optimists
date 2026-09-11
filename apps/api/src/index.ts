@@ -1157,7 +1157,7 @@ app.get('/api/health', async (c) => {
  * load. The reader gets their Challenge immediately; the next build turns it
  * into a static page like any other.
  */
-app.get('/c/:slug', async (c) => {
+app.on('GET', ['/c/:slug', '/v2/c/:slug'], async (c) => {
   if (!c.env.ASSETS) return c.notFound()
   if (c.req.param('slug') === '_shell') return c.notFound()
 
@@ -1166,12 +1166,17 @@ app.get('/c/:slug', async (c) => {
 
   const slug = c.req.param('slug')
   const exists = await c.env.DB.prepare('SELECT 1 FROM challenges WHERE slug = ?').bind(slug).first()
-  if (!exists) return prerendered
+  if (!exists) {
+    if (!c.req.path.startsWith('/v2/')) return prerendered
+    const missingUrl = new URL(c.req.url); missingUrl.pathname = '/v2/404'
+    const missing = await c.env.ASSETS.fetch(new Request(missingUrl, { headers: c.req.raw.headers }))
+    return new Response(missing.body, { status: 404, headers: missing.headers })
+  }
 
   // Always built, even for an empty corpus. Never borrow another Challenge's
   // content or inject a script that the page's CSP would reject.
   const shellUrl = new URL(c.req.url)
-  shellUrl.pathname = '/c/_shell'
+  shellUrl.pathname = c.req.path.startsWith('/v2/') ? '/v2/c/_shell' : '/c/_shell'
   const shell = await c.env.ASSETS.fetch(new Request(shellUrl.toString(), { headers: c.req.raw.headers }))
   if (shell.status !== 200) return prerendered
 
@@ -1199,6 +1204,16 @@ app.get('/c/:slug', async (c) => {
 app.get('/api/_throw', (c) => {
   if (c.env.ENVIRONMENT === 'prod') return c.json({ error: 'not_found' }, 404)
   throw new Error('deliberate: verifying the error boundary')
+})
+
+// Keep the selected edition on unknown URLs, with a genuine 404 status.
+app.get('/v2/*', async (c) => {
+  if (!c.env.ASSETS) return c.notFound()
+  const response = await c.env.ASSETS.fetch(c.req.raw)
+  if (response.status !== 404) return response
+  const url = new URL(c.req.url); url.pathname = '/v2/404'
+  const missing = await c.env.ASSETS.fetch(new Request(url, { headers: c.req.raw.headers }))
+  return new Response(missing.body, { status: 404, headers: missing.headers })
 })
 
 app.all('/api/*', (c) => c.json({ error: 'not_found' }, 404))

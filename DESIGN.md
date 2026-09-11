@@ -78,4 +78,4 @@ remain text rather than loading tracking resources inside the discussion.
 
 ## Editorial V2 alternative
 
-The switchable `/v2` front page follows the [2026-09-11 editorial brief](docs/2026-09-11-editorial-v2.md) and its two saved references. It uses a warm newspaper surface and explicit pagination: five, three, or one Challenge per screen according to available space. The existing `/` design remains available through Classic view. This alternative supersedes the scrolling feed rule only on `/v2`; shared detail and account routes retain their existing behavior.
+Every `/v2` screen follows the [editorial brief](docs/2026-09-11-editorial-v2.md) and its saved newspaper references. The masthead, ruled columns, full right-hand legend and page controls belong to reusable newspaper components. The front page uses six, three or one story per edition; details use sections, long reading uses page turns, and contribution uses explicit steps. V2 remains selected across navigation and sign-in until Classic is chosen. Classic remains available on the same screen. Preserve the complete legend on laptops and offer it as its own view on phones.

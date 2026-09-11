@@ -11,7 +11,8 @@ type Attachment = { url: string; name: string }
 type Draft = { attachments?: Attachment[]; body: string; kind: CommentKind; parent_id: string | null; request_id: string }
 const emptyDraft = (): Draft => ({ body: '', kind: 'comment', parent_id: null, request_id: uuid() })
 
-export default function Discussion({ slug, me, sessionReady }: { slug: string; me: Me | null; sessionReady: boolean }) {
+export default function Discussion({ slug, me, sessionReady, paged = false }: { slug: string; me: Me | null; sessionReady: boolean; paged?: boolean }) {
+  const [view, setView] = useState<'read' | 'write'>('read')
   const [comments, setComments] = useState<ChallengeComment[]>([])
   const [cursor, setCursor] = useState<string | null>(null)
   const [draft, setDraft] = useState<Draft>({ body: '', kind: 'comment', parent_id: null, request_id: '' })
@@ -57,10 +58,10 @@ export default function Discussion({ slug, me, sessionReady }: { slug: string; m
     setReady(true)
     void load()
     const focusIdea = () => {
+      setView('write')
       setPreview(false)
       setDraft((d) => ({ ...d, kind: 'idea', parent_id: null, request_id: uuid() }))
-      input.current?.focus()
-      input.current?.scrollIntoView({ block: 'center', behavior: 'instant' })
+      requestAnimationFrame(() => { input.current?.focus(); if (!paged) input.current?.scrollIntoView({ block: 'center', behavior: 'instant' }) })
     }
     window.addEventListener('compose-idea', focusIdea)
     return () => window.removeEventListener('compose-idea', focusIdea)
@@ -147,10 +148,11 @@ export default function Discussion({ slug, me, sessionReady }: { slug: string; m
   }
 
   const parent = comments.find((c) => c.id === draft.parent_id)
-  return <section id="discussion" className="detail-section discussion">
+  return <section id="discussion" className={`detail-section discussion ${paged ? "np-discussion" : ""}`}>
     <h2>Discussion</h2>
     <p className="section-intro">Share an idea, ask a question, or add what you know.</p>
-    <form className="discussion-composer" onSubmit={submit} onDragOver={(e) => { if (e.dataTransfer.types.includes('Files')) e.preventDefault() }} onDrop={(e) => {
+    {paged && <div className="np-discussion-switch"><button type="button" aria-pressed={view === 'read'} onClick={() => setView('read')}>Responses</button><button type="button" aria-pressed={view === 'write'} onClick={() => setView('write')}>Write a response</button></div>}
+    <form hidden={paged && view !== 'write'} className="discussion-composer" onSubmit={submit} onDragOver={(e) => { if (e.dataTransfer.types.includes('Files')) e.preventDefault() }} onDrop={(e) => {
       if (e.dataTransfer.files.length) { e.preventDefault(); void addFiles(Array.from(e.dataTransfer.files)) }
     }}>
       <label htmlFor="response-body">{draft.parent_id ? `Reply${parent ? ` to @${parent.author.handle}` : ''}` : 'Your response'}</label>
@@ -199,6 +201,7 @@ export default function Discussion({ slug, me, sessionReady }: { slug: string; m
       {status && <p role="status" className="composer-note">{status}</p>}
     </form>
     {error && <p className="form-error" role="alert">{error} <button className="text-control" type="button" disabled={loading} onClick={() => void load()}>Reload discussion</button></p>}
+    <div hidden={paged && view !== 'read'}>
     {cursor && <button className="text-control" disabled={loading} onClick={() => void load(cursor)}>Load earlier responses</button>}
     {loading && <p role="status" className="quiet-empty">Loading responses…</p>}
     {!loading && !error && !comments.length && <p className="quiet-empty">Start the conversation. A useful question is a contribution too.</p>}
@@ -210,8 +213,9 @@ export default function Discussion({ slug, me, sessionReady }: { slug: string; m
           <time dateTime={dateISO(comment.created_at)} title={formatDateTime(comment.created_at)}>{ago(comment.created_at)}</time></div>
         {comment.parent_id && <p className="reply-context">Replying to {repliedTo ? <a href={`#response-${repliedTo.id}`}>@{repliedTo.author.handle}</a> : 'an earlier response'}</p>}
         <ResponseContent body={comment.body} />
-        <button className="text-control" disabled={busy} onClick={() => { setPreview(false); change({ parent_id: comment.id }); input.current?.focus(); input.current?.scrollIntoView({ block: 'center', behavior: 'instant' }) }}>Reply</button>
+        <button className="text-control" disabled={busy} onClick={() => { setView('write'); setPreview(false); change({ parent_id: comment.id }); requestAnimationFrame(() => { input.current?.focus(); if (!paged) input.current?.scrollIntoView({ block: 'center', behavior: 'instant' }) }) }}>Reply</button>
       </li>
     })}</ol>
+    </div>
   </section>
 }

@@ -1,0 +1,41 @@
+---
+import Base from '../../layouts/Base.astro'
+import NewspaperShell from '../../components/newspaper/NewspaperShell.astro'
+import ChallengePage from '../../components/newspaper/ChallengePage'
+import MapPage from '../../components/newspaper/MapPage'
+import AccountPage from '../../components/newspaper/AccountPage'
+import SignInPage from '../../components/newspaper/SignInPage'
+import SubmissionPage from '../../components/newspaper/SubmissionPage'
+import CommunityPage from '../../components/newspaper/CommunityPage'
+import ReaderPage from '../../components/newspaper/ReaderPage'
+import privacy from '../../content/privacy.html?raw'
+import terms from '../../content/terms.html?raw'
+import contribute from '../../content/contribute.html?raw'
+import { getFeed, getChallenge } from '../../lib/api'
+import { depthScale } from '../../lib/vocab'
+import '../../styles/discussion.css'
+import '../../styles/account.css'
+import '../../styles/activity.css'
+export async function getStaticPaths() {
+  const { challenges } = await getFeed('?limit=50')
+  return ['map','settings','signin','post','people','privacy','terms','contribute','404','c/_shell', ...challenges.map(c => 'c/' + c.slug)].map(path => ({ params: { path } }))
+}
+const path = Astro.params.path!
+const { challenges } = await getFeed('?limit=50')
+const detail = path.startsWith('c/') && path !== 'c/_shell' ? await getChallenge(path.slice(2)) : undefined
+const titles: Record<string, string> = { map:'World map', settings:'Your account', signin:'Sign in', post:'Share a Challenge', people:'Community', privacy:'Privacy', terms:'Terms', contribute:'Contribute', '404':'Page not found' }
+const title = detail?.challenge.title || titles[path] || 'Challenge'
+const articles: Record<string,string> = { privacy, terms, contribute }
+---
+<Base title={`${title} - Techno Optimists`} description={detail?.challenge.summary} noindex={['settings','signin','people','404','c/_shell'].includes(path)}>
+  <NewspaperShell section={titles[path] || 'Challenge'} challenges={challenges}>
+    {path.startsWith('c/') && <ChallengePage client:load initial={detail} rings={detail ? depthScale(challenges)(detail.challenge) : 1} />}
+    {path === 'map' && <MapPage client:load initial={challenges} />}
+    {path === 'settings' && <AccountPage client:load />}
+    {path === 'signin' && <SignInPage client:load />}
+    {path === 'post' && <SubmissionPage client:load />}
+    {path === 'people' && <CommunityPage client:load challenges={challenges} />}
+    {articles[path] && <ReaderPage client:load html={articles[path]} title={title} />}
+    {path === '404' && <div class="np-empty"><h1>A different path, perhaps?</h1><p>This page may have moved, or the link may be mistyped.</p><a href="/v2">Back to the edition →</a></div>}
+  </NewspaperShell>
+</Base>
