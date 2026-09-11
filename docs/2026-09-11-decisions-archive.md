@@ -1,4 +1,11 @@
-# Decisions
+# Decisions archive (through 2026-09-11)
+
+History, not rules. These rows record what was decided and why, including decisions
+later reversed by other rows in the same table. Do not read this file to learn how the
+system behaves - read the code.
+
+The subset that is still true of the code, and still worth reading before a deploy or a
+schema change, was moved to `docs/CONSTRAINTS.md`. Nothing is appended here any more.
 
 One row per decision. Newest at the bottom.
 
