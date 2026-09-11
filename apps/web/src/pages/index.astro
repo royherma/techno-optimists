@@ -1,28 +1,8 @@
 ---
 import Base from '../layouts/Base.astro'
-import ChallengeRow from '../components/ChallengeRow.astro'
-import Sheet from '../components/Sheet.astro'
-import BrowseFrame from '../components/BrowseFrame.astro'
-import EmptyIndex from '../components/EmptyIndex.astro'
-import FeedTopUp from '../components/FeedTopUp'
+import NewspaperShell from '../components/newspaper/NewspaperShell.astro'
+import FrontPage from '../components/newspaper/FrontPage'
 import { getFeed } from '../lib/api'
 const { challenges } = await getFeed('?limit=50')
 ---
-<Base
-  title="Techno Optimists - find real problems, help solve them"
-  description="A live index of real-world Challenges - problems, ideas, experiments and builds - posted by people who want them fixed. Browse them, or bring your own."
->
-  <Sheet>
-    <BrowseFrame label="Challenge index">
-        <div class="index-columns"><span>No.</span><span>Grid ref.</span><span>Challenge</span><span>Impact</span><span>Stage</span></div>
-        <p class="feed-status" aria-live="polite" data-feed-status></p>
-        <FeedTopUp client:load known={challenges.map(c => c.slug)} />
-        {challenges.map((c,i) => <ChallengeRow challenge={c} index={i} priority={i < 2} />)}
-        <EmptyIndex hidden={challenges.length > 0} />
-    </BrowseFrame>
-  </Sheet>
-</Base>
-<script>
-  import { initFeedFilters } from '../lib/feed-filters'
-  initFeedFilters()
-</script>
+<Base title="Explore Challenges - Techno Optimists"><NewspaperShell challenges={challenges}><FrontPage initial={challenges} client:load /></NewspaperShell></Base>

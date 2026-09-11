@@ -1,8 +1,0 @@
----
-import Base from '../layouts/Base.astro'
-import NewspaperShell from '../components/newspaper/NewspaperShell.astro'
-import FrontPage from '../components/newspaper/FrontPage'
-import { getFeed } from '../lib/api'
-const { challenges } = await getFeed('?limit=50')
----
-<Base title="Explore Challenges - Techno Optimists"><NewspaperShell challenges={challenges}><FrontPage initial={challenges} client:load /></NewspaperShell></Base>
