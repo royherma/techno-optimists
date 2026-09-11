@@ -18,6 +18,27 @@ export async function getFeed(params = ''): Promise<{ challenges: Challenge[]; n
   return r.json()
 }
 
+/**
+ * The site-wide visit total, baked into the footer at build time so the hit
+ * counter opens on the last known figure instead of six zeros.
+ *
+ * Never throws. Every other call here failing should fail the build - a feed
+ * that 500s must not ship as an empty index - but a counter is decoration on
+ * top of the page, and a build that dies because a cosmetic number was
+ * unavailable is the wrong trade. An API without the route yet, or without the
+ * table, returns 0 and the island corrects it on first load.
+ */
+export async function getSiteViews(): Promise<number> {
+  try {
+    const r = await fetch(`${BASE}/api/site/views`)
+    if (!r.ok) return 0
+    const { views } = await r.json() as { views?: number }
+    return typeof views === 'number' ? views : 0
+  } catch {
+    return 0
+  }
+}
+
 export async function getChallenge(slug: string): Promise<{
   challenge: Challenge; updates: Update[]; people: DetailPerson[]
 }> {

@@ -84,6 +84,14 @@
   color: var(--color-ink-faint);
 }
 
+/* The hit counter sits in the mark row, between the strapline and the year. */
+.footer-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--color-ink-faint);
+}
+
 /*
  * The fixed bottom nav rail below 760px sits over the end of the page, so the
  * band needs clearance or the rail covers the last line. The shell already
