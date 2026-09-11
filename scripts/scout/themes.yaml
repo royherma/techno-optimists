@@ -1,0 +1,56 @@
+# Local news, papers and direct reports. Sources are leads, never verified facts.
+{
+  "sources": [
+    "https://patnapress.com/how-to-keep-rooftop-water-tanks-cool-in-summer/",
+    "https://pure.ug.edu.gh/en/publications/impact-of-roofing-materials-on-school-temperatures-in-tropical-af/",
+    "https://www.gavi.org/vaccineswork/nigerian-border-town-solar-vaccine-fridge-changing-lives",
+    "https://newsinfo.inquirer.net/2262406/massive-fish-kill-hits-pangasinan-town",
+    "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11816148/",
+    "https://science.thewire.in/politics/government/stubble-burning-punjab-haryana-rice-harvesting-wheat-sowing-delhi-air-pollution/",
+    "https://www.timeslive.co.za/news/sci-tech/2010-07-21-baboons-listen-for-car-alarms/",
+    "https://www.scmp.com/week-asia/health-environment/article/3339656/how-japans-capital-put-lid-crow-chaos-simple-fix",
+    "https://permies.com/t/15162/hydrogen-sulfide-rainwater-system"
+  ],
+  "themes": [
+    "classroom roof heat",
+    "fish pond oxygen losses",
+    "milk cooling losses",
+    "water tank overheating",
+    "clinic generator outages",
+    "crop raiding losses",
+    "rainwater smell",
+    "street flooding",
+    "irrigation failures",
+    "stubble burning window",
+    "streetlight timer",
+    "food spoilage",
+    "well salinity",
+    "power outages",
+    "school water supply",
+    "fishing catch storage",
+    "house heat loss",
+    "mosquito surge",
+    "waste collection",
+    "bridge access"
+  ],
+  "places": [
+    "Chiang Mai Thailand",
+    "Accra Ghana",
+    "Patna India",
+    "Binmaley Philippines",
+    "Kurunegala Sri Lanka",
+    "Ipokia Nigeria",
+    "Nepalganj Nepal",
+    "Nairobi Kenya",
+    "Cape Town South Africa",
+    "Dhaka Bangladesh",
+    "Lahore Pakistan",
+    "Kampala Uganda",
+    "Jakarta Indonesia",
+    "Lima Peru",
+    "Palermo Italy"
+  ],
+  "max_queries": 20,
+  "feeds": [],
+  "reddit": []
+}
