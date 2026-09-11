@@ -119,7 +119,7 @@ export default function SettingsForm({ person, section }: { person: Me; section:
     return (
       <div className="space-y-3">
         <p className="text-(--color-ink-soft)">Sign in to change your account.</p>
-        <a href="/signin?next=/settings" className="inline-block border border-(--color-rule) px-5 py-2.5 text-sm">
+        <a href="/signin?next=/settings" className="feedback-control inline-block border border-(--color-rule) px-5 py-2.5 text-sm">
           Sign in
         </a>
       </div>
@@ -241,7 +241,7 @@ export default function SettingsForm({ person, section }: { person: Me; section:
         <button
           type="submit"
           disabled={saving}
-          className="w-full border border-(--color-rule) bg-(--color-ink) py-3.5 text-sm text-(--color-paper) disabled:opacity-40"
+          className="feedback-control w-full border border-(--color-rule) bg-(--color-ink) py-3.5 text-sm text-(--color-paper) disabled:opacity-40"
         >
           {saving ? 'Saving...' : section === 'profile' ? 'Save profile' : 'Save skills & roles'}
         </button>

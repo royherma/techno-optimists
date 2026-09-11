@@ -45,6 +45,12 @@
   .discovery-link:hover .discovery-arrow { transform: translateX(3px); }
   .feedback-row:hover > span:last-child { transform: translateX(2px); }
   .feedback-row:hover > span:first-child { transform: scale(1.12); }
+  .manifesto-word:hover { color: var(--color-accent); transform: translateY(-2px); }
+  .lifecycle-step:hover { background-color: var(--color-paper-sunk); }
+  .lifecycle-step:hover .stage-dot { transform: scale(1.25); }
+  .map-pin:hover circle:not(.pin-hit) { stroke-width: 4; }
+  .map-pin:hover .pin-hit { fill: var(--color-selected); }
+  .action-account:hover { color: var(--color-accent); }
 }
 :is(.feedback-control, .side-links a, .view-tabs a, .type-tabs a,
     .session-nav a, .session-nav button, .search-toggle, .discovery-link,
@@ -57,7 +63,7 @@
       .form-surface button, .form-surface a[href^="/signin"]),
   :is(.feedback-icon, .side-links a img, .view-tabs a img, .search-toggle img,
       .session-nav img, .discovery-icon, .discovery-arrow, .feedback-row > span:first-child, .feedback-row > span:last-child,
-      .brand-word, .brand-future img, .brand-mark img) {
+      .brand-word, .brand-future img, .brand-mark img, .manifesto-word, .stage-dot) {
     transform: none !important;
   }
 }
@@ -97,10 +103,18 @@
   transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .brand-mark img { transition: transform 300ms var(--feedback-ease); }
+.manifesto-word {
+  display: inline-block;
+  transition: color var(--ease-ink), transform 220ms var(--feedback-ease);
+}
+.lifecycle-step { transition: background-color var(--ease-ink); }
+.stage-dot { transition: transform var(--feedback-duration) var(--feedback-ease); }
+.map-pin circle { transition: stroke-width var(--ease-ink), fill var(--ease-ink); }
+.action-account { transition: color var(--ease-ink); }
 @media (hover: hover) and (pointer: fine) {
   .type-tabs a:hover::after { transform: scaleX(1); }
   .brand-word:hover { color: var(--color-accent); transform: translateY(-2px); }
-  .brand-future img:hover { transform: rotate(24deg); }
+  .brand-future:hover img { transform: rotate(24deg); }
   .brand-mark:hover img { transform: rotate(90deg); }
 }
 @media (prefers-reduced-motion: reduce) {
