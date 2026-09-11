@@ -64,7 +64,8 @@ async function measure(shot: Shot): Promise<{ w: number; h: number } | null> {
   })
 }
 
-export default function CaptureForm() {
+export default function CaptureForm({ paged = false }: { paged?: boolean } = {}) {
+  const [step, setStep] = useState(0)
   const [me, setMe] = useState<Me | null | undefined>(undefined)
   const [type, setType] = useState<ChallengeType>('problem')
   const [title, setTitle] = useState('')
@@ -189,7 +190,8 @@ export default function CaptureForm() {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-8">
+    <form onSubmit={submit} className="space-y-8 np-capture" data-capture-step={paged ? step : undefined}>
+      {paged && <nav className="np-form-steps" aria-label="Share a Challenge steps">{['Notice', 'Describe', 'Place', 'Review'].map((label, index) => <button key={label} type="button" aria-current={step === index ? 'step' : undefined} onClick={() => setStep(index)}>{label}</button>)}</nav>}
       {/* The photo comes first because that is the order of the real act. */}
       <section className="space-y-3">
         <Legend n="01" label="What you saw" />
@@ -326,7 +328,12 @@ export default function CaptureForm() {
         <PlacePicker lat={lat} lng={lng} onChange={(la, ln) => { setLat(la); setLng(ln) }} />
       </section>
 
-      <div className="space-y-3 border-t border-(--color-rule-soft) pt-6">
+      {paged && <section className="np-capture-review">
+        <h2>Ready to share?</h2><p className="np-story-meta">{TYPE_LABEL[type]}{location && ` · ${location}`}</p>
+        <h3>{title || 'Add a title in Describe.'}</h3><p>{summary || 'Add a summary in Describe.'}</p>
+        {body && <p>{body}</p>}{shots.length > 0 && <p>{shots.length} media attachment{shots.length === 1 ? '' : 's'}.</p>}
+      </section>}
+      <div hidden={paged && step !== 3} className="space-y-3 border-t border-(--color-rule-soft) pt-6">
         <button
           type="submit"
           disabled={!ready || submitting}
@@ -339,6 +346,7 @@ export default function CaptureForm() {
           Posted as @{me.handle}
         </p>
       </div>
+      {paged && <nav className="np-step-nav" aria-label="Share a Challenge step controls"><button type="button" disabled={step === 0} onClick={() => setStep(step - 1)}>← Previous step</button><span>{step + 1} / 4</span><button type="button" disabled={step === 3} onClick={() => setStep(step + 1)}>Next step →</button></nav>}
     </form>
   )
 }

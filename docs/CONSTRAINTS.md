@@ -136,3 +136,5 @@ today, so weigh those separately.
 `/api/auth/me` alone.** `SELECT p.*` then cannot leak an address, and `name` is derived
 from the email local part at signup - a real name nobody chose to publish.
 `PublicPerson = Omit<Person,'name'>` names the safe shape once.
+
+**V2 pages need Worker fallback routing.** Keep `/v2/*` in `assets.run_worker_first` alongside `/c/*`, `/api/*` and `/media/*`. The shared Challenge handler serves `/v2/c/_shell` for Challenges created after a build; unknown V2 URLs serve `/v2/404` with status 404. Without the routing entry, newly posted V2 Challenges stop at the asset handler.

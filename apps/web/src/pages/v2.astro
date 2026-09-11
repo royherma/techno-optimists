@@ -1,8 +1,8 @@
 ---
 import Base from '../layouts/Base.astro'
-import EditorialFeed from '../components/EditorialFeed'
+import NewspaperShell from '../components/newspaper/NewspaperShell.astro'
+import FrontPage from '../components/newspaper/FrontPage'
 import { getFeed } from '../lib/api'
-import '../styles/editorial.css'
 const { challenges } = await getFeed('?limit=50')
 ---
-<Base title="Front page - Techno Optimists"><EditorialFeed initial={challenges} client:load /></Base>
+<Base title="The edition - Techno Optimists"><NewspaperShell challenges={challenges}><FrontPage initial={challenges} client:load /></NewspaperShell></Base>

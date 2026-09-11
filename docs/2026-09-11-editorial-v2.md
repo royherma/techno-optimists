@@ -1,19 +1,32 @@
 # Editorial V2
 
-Roy's references: [first](design/2026-09-11-editorial-v2/reference-1.png), [second](design/2026-09-11-editorial-v2/reference-2.png). Preserved at original resolution. These are visual references, not product instructions or factual data.
+Roy's references: [first](design/2026-09-11-editorial-v2/reference-1.png), [second](design/2026-09-11-editorial-v2/reference-2.png), [latest](design/2026-09-11-editorial-v2/reference-3.png). Original resolution. They guide visual hierarchy, density and detail; their sample metrics are not product data.
 
-## Direction
+## The newspaper
 
-A newspaper front page: a large serif masthead, fine dividers, warm paper, one lead Challenge, supporting stories, and a quiet progress sidebar. Borrow the second reference's strong lead story and the first reference's clear navigation. Keep existing Challenge vocabulary and real data; never reproduce invented reference metrics.
+Warm paper, black Georgia masthead, fine rules, generous lead headline, image above the lead story, two stacked secondary stories, and a three-column briefs strip when space permits. Keep the smaller editorial details: type and place, typed participation counts, contour marks, source attribution, map, colophon. Keep the right legend visible on laptops; small screens get a dedicated Legend view, not a missing legend. Do not copy the reference's geographic labels onto participation ranks: the rings represent relative contributions, not measured real-world impact.
 
-## Viewport rule
+## One view, one screen
 
-Each browsing view fits the screen. Use explicit previous/next pages, not an infinite feed or hidden scroll panels. Show five stories on spacious desktops, three on laptops, and one on phones or short windows. Collapse the supporting sidebar before shrinking the reading content. Summaries are previews; Read more opens the complete existing Challenge page. Extreme zoom and windows below 480px tall retain natural overflow for accessibility.
+Six stories on large desktop editions, three on laptops, one on phones. Previous and next editions replace the infinite feed. Details have Story, Context, Discussion, Progress, People, Participate and Source sections. Reading uses real browser column fragmentation and explicit page turns, retaining all content and preserving native text selection. Controls stay mounted when turning pages; focus and form validation turn to the relevant page. Discussion separates reading from writing, and posting uses Notice, Describe, Place and Review steps.
 
-## Switching and scope
+The frame fits the viewport, with no document or inner scrolling required to browse or read. Textareas retain native editing behavior. Exception: windows shorter than the 400px minimum retain natural overflow to avoid making controls impossible to operate.
 
-`/v2` is the independently styled front page. The existing toolbar links to it; Classic view returns to `/`. Existing details, map, account and contribution flows remain shared. This first increment applies the new viewport rule to browsing. Subsequent reference-driven work should apply it to detail sections and forms with explicit steps or tabs rather than clipping their content.
+## Routing and switching
 
-## Content and interaction
+All screens live under `/v2`: `/v2/c/<slug>`, `/v2/map`, `/v2/people`, `/v2/settings`, `/v2/post`, `/v2/signin`, `/v2/contribute`, `/v2/privacy`, `/v2/terms`. Existing pages also accept `?v=2`. A tab remembers the edition, including after sign-in and programmatic redirects. Classic returns to the same screen with `?v=1`. Query parameters and profile handles are preserved. Canonical links point to the unversioned content.
 
-Filter by Challenge type and search title, summary or location. Pagination resets on filter and viewport changes. Refresh all feed pages from the API after hydration; retain the build-time edition with a visible message if refresh fails. Progress counts describe loaded Challenges by stage, not measured impact. Empty results have explicit recovery guidance. No fabricated community activity or decorative map data.
+V2 Challenge routes share the existing Worker fallback for newly published Challenges. `/v2/*` belongs in `assets.run_worker_first` in each target; missing V2 pages return the newspaper recovery screen with status 404. The example config records this requirement.
+
+## Component boundaries
+
+- `NewspaperShell.astro`: masthead, navigation, layout, edition links and colophon.
+- `Legend.tsx`: rings, lifecycle meanings, action vocabulary and supporting world overview.
+- `FrontPage.tsx`, `StoryTile.tsx`, `useFeed.ts`: feed state, composition and reusable story tile.
+- `ChallengePage.tsx`: Challenge loading and section selection; shared Discussion, Progress, ActionBar, PeopleLive and Editorial retain the existing APIs and permission checks.
+- `PagedContent.tsx`: reusable page fragmentation, measurement and keyboard focus handling.
+- Map, account, sign-in, submission, community and article adapters each have their own file.
+- `src/content/*.html`: one checked-in source for both editions' legal and contribution articles.
+- Styles split into newspaper shell and content compositions. Classic styles remain scoped to their existing pages.
+
+Use `node scripts/preview-editorial.mjs` after a production-API build for a read-only local preview. Use the normal local Worker for form tests. Do not publish test Challenges to production.
