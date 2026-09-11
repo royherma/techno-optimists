@@ -125,7 +125,7 @@ Run `npm run agents:status` to see who holds the build/deploy lock, or the last
 operation when idle. Use `AGENT_NAME=my-task npm run ship:dev` to identify your run.
 Root build, database and deployment scripts serialize automatically across local
 Git worktrees; a busy command exits with code 75 so you can retry later. Python 3
-is required. See [AGENTS.md](AGENTS.md) for scope and simultaneous-edit rules.
+is required. See [CLAUDE.md](CLAUDE.md#agent-coordination) for scope and simultaneous-edit rules.
 
 ## Challenge discussion and editorial tools
 
