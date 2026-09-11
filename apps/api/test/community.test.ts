@@ -143,3 +143,15 @@ it('paginates contributions without exposing private fields or dropping rows', a
   expect(second.next_offset).toBeNull()
   expect(new Set([...first.contributions, ...second.contributions].map((r: {id: string}) => r.id)).size).toBe(35)
 })
+
+
+it('persists media-only responses and enforces the attachment limit', async () => {
+  const image = '![Water measurement](/media/u/p1/sample.png)'
+  const video = '![Field test](/media/u/p1/sample.mp4)'
+  const body = `${image}\n\n${video}\n\n[Research](https://example.org)`
+  expect((await request('one/comments', 'POST', comment({ body }))).status).toBe(201)
+  const data = await (await request('one/comments')).json()
+  expect(data.comments[0].body).toBe(body)
+  expect((await request('one/comments', 'POST', comment({ body: Array(5).fill(image).join('\n') }))).status).toBe(400)
+  expect((await request('one/comments', 'POST', comment({ body: Array(4).fill(image).join('\n') }))).status).toBe(201)
+})

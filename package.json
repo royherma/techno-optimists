@@ -42,6 +42,7 @@
     "db:migrate:prod": "python3 scripts/coordinate.py run db:migrate:prod 'node scripts/migrate-community.mjs prod'",
     "db:editorial:local": "python3 scripts/coordinate.py run db:editorial:local 'wrangler d1 execute techno-optimists --local --file packages/db/editorial-2026-09-11.sql'",
     "db:editorial:prod": "python3 scripts/coordinate.py run db:editorial:prod 'wrangler d1 execute techno-optimists --remote --file packages/db/editorial-2026-09-11.sql'",
+    "test:discussion-media:local": "python3 scripts/coordinate.py run test:discussion-media:local 'node scripts/test-discussion-media.mjs'",
     "test:community:local": "python3 scripts/coordinate.py run test:community:local 'node scripts/test-community.mjs'"
   },
   "overrides": {

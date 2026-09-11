@@ -20,7 +20,7 @@ const editorialBody = z.object({
 }).strict().refine((v) => Object.keys(v).length > 0)
 
 const commentBody = z.object({
-  body: z.string().trim().min(1).max(5000),
+  body: z.string().trim().min(1).max(5000).refine((body) => (body.match(/!\[/g) ?? []).length <= 4, 'Up to 4 attachments per response.'),
   kind: z.enum(COMMENT_KINDS).default('comment'),
   parent_id: z.string().min(1).max(64).nullable().default(null),
   // A retry after an interrupted response must not publish the same text twice.
