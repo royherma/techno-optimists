@@ -1,0 +1,36 @@
+/* Match the measured edition before React arrives, including short laptops. */
+.np-front { container: edition / size; }
+.np-front .np-loading-grid { grid-template: 1fr / 1fr; }
+.np-front .np-loading-grid .np-skeleton { display: none; overflow: hidden; }
+.np-front .np-loading-grid .np-skeleton:first-child { display: flex; grid-area: auto; flex-direction: column; border-right: 0; padding-right: 0; }
+.np-skeleton-image,.np-skeleton-meta,.np-skeleton-headline i,.np-skeleton-lines i {
+  display: block;
+  background: color-mix(in srgb, var(--np-ink) 9%, var(--np-paper));
+}
+.np-skeleton-image { position: relative; overflow: hidden; }
+.np-skeleton-image::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 20%, color-mix(in srgb, var(--np-paper) 65%, transparent) 50%, transparent 80%); transform: translateX(-100%); }
+.np-skeleton-meta { width: 36%; height: 8px; margin-bottom: 12px; }
+.np-skeleton-headline { display: grid; gap: 7px; margin-bottom: 16px; }
+.np-skeleton-headline i { height: 20px; width: 94%; }
+.np-skeleton-headline i:last-child { width: 64%; }
+.np-lead .np-skeleton-headline i { height: clamp(24px, 3cqi, 42px); }
+.np-skeleton-lines { display: grid; gap: 8px; }
+.np-skeleton-lines i { height: 9px; }
+.np-skeleton-lines i:last-child { width: 72%; }
+.np-skeleton footer .np-skeleton-meta { width: 48%; margin: 0; }
+@container edition (min-width: 680px) and (min-height: 440px) {
+  .np-front .np-loading-grid { grid-template: minmax(0,1.15fr) minmax(0,1fr) / repeat(2,minmax(0,1fr)); }
+  .np-front .np-loading-grid .np-skeleton:nth-child(-n+3) { display: flex; }
+  .np-front .np-loading-grid .np-skeleton:first-child { grid-column: 1/-1; grid-row: 1; flex-direction: row; }
+}
+@container edition (min-width: 980px) and (min-height: 580px) {
+  .np-front .np-loading-grid { grid-template-rows: minmax(0,1.25fr) repeat(2,minmax(0,1fr)); }
+  .np-front .np-loading-grid .np-skeleton { display: flex; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .np-skeleton-image::after { animation: np-press-sweep 1.8s ease-in-out infinite; }
+  .np-skeleton:nth-child(even) .np-skeleton-image::after { animation-delay: .18s; }
+  .np-edition-ready { animation: np-edition-in 220ms ease-out; }
+  @keyframes np-press-sweep { to { transform: translateX(100%); } }
+  @keyframes np-edition-in { from { opacity: .45; } to { opacity: 1; } }
+}
