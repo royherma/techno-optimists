@@ -181,7 +181,7 @@ export default function CaptureForm() {
     return (
       <div className="space-y-3">
         <p className="text-(--color-ink-soft)">Sign in to post a Challenge.</p>
-        <a href="/signin?next=/post" className="inline-block border border-(--color-rule) px-5 py-2.5 text-sm">
+        <a href="/signin?next=/post" className="feedback-control inline-block border border-(--color-rule) px-5 py-2.5 text-sm">
           Sign in
         </a>
       </div>
@@ -222,7 +222,7 @@ export default function CaptureForm() {
                 type="button"
                 onClick={() => setShots((s) => s.filter((x) => x.id !== shot.id))}
                 aria-label="Remove photo"
-                className="absolute top-1 right-1 h-6 w-6 bg-(--color-paper) text-xs leading-none text-(--color-ink)"
+                className="feedback-control absolute top-1 right-1 h-6 w-6 bg-(--color-paper) text-xs leading-none text-(--color-ink)"
               >
                 x
               </button>
@@ -330,7 +330,7 @@ export default function CaptureForm() {
         <button
           type="submit"
           disabled={!ready || submitting}
-          className="w-full border border-(--color-rule) bg-(--color-ink) py-3.5 text-sm text-(--color-paper) disabled:opacity-40"
+          className="feedback-control w-full border border-(--color-rule) bg-(--color-ink) py-3.5 text-sm text-(--color-paper) disabled:opacity-40"
         >
           {submitting ? 'Posting...' : uploading ? 'Waiting for photos...' : 'Post this Challenge'}
         </button>
