@@ -37,5 +37,6 @@ export async function getMe(): Promise<Me | null> {
 }
 
 export async function signOut(): Promise<void> {
-  await fetch('/api/auth/signout', { method: 'POST', credentials: 'same-origin' })
+  const r = await fetch('/api/auth/signout', { method: 'POST', credentials: 'same-origin' })
+  if (!r.ok) throw new Error('Sign out failed')
 }

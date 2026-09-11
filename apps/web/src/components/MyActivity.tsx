@@ -25,7 +25,7 @@ export default function MyActivity() {
   }
   useEffect(() => { void load(0) }, [])
   const shown = items.filter((item) => filter === 'all' || item.kinds.includes(filter as ActionKind))
-  return <section id="activity" className="my-activity" aria-labelledby="activity-title">
+  return <section className="my-activity" aria-labelledby="activity-title">
     <h2 id="activity-title">Your marked Challenges</h2>
     <p>Pick up where you left off. Your responses and followed Challenges live here.</p>
     {signedOut ? <a href="/signin?next=/settings%23activity">Sign in to see your Challenges</a> : <>
