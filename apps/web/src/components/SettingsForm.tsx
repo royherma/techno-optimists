@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ROLES, type Role } from '../../../../packages/types/index'
-import { getMe, type Me } from '../lib/session'
+import { getMe, signOut, type Me } from '../lib/session'
 import { snack } from '../lib/snack'
 
 /**
@@ -224,6 +224,16 @@ export default function SettingsForm() {
         <p className="text-xs text-(--color-ink-faint)">
           Only you can see this address. It is never shown on your Challenges or to anyone else.
         </p>
+        <button
+          type="button"
+          onClick={async () => {
+            await signOut()
+            window.location.href = '/'
+          }}
+          className="mt-2 border border-(--color-rule-soft) px-5 py-2.5 text-sm text-(--color-ink-soft) hover:border-(--color-rule) hover:text-(--color-ink)"
+        >
+          Sign out
+        </button>
       </section>
 
       <div className="space-y-3 border-t border-(--color-rule-soft) pt-6">

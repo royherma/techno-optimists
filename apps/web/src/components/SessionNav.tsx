@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getMe, signOut, type Me } from "../lib/session";
+import { getMe, type Me } from "../lib/session";
 
 export default function SessionNav() {
   const [me, setMe] = useState<Me | null | undefined>(undefined);
@@ -11,17 +11,9 @@ export default function SessionNav() {
   return (
     <span className="session-nav">
       {me ? (
-        <>
-          <a href="/settings">@{me.handle}</a>
-          <button
-            onClick={async () => {
-              await signOut();
-              window.location.reload();
-            }}
-          >
-            Sign out
-          </button>
-        </>
+        <a href="/settings" className="handle-link">
+          @{me.handle}
+        </a>
       ) : (
         <a href="/signin" aria-label="Sign in">
           Sign in

@@ -72,12 +72,6 @@
 .search-toggle:hover {
   background: var(--color-selected);
 }
-.toolbar-purpose {
-  border-left: 1px solid var(--color-rule);
-  padding-left: 22px;
-  flex-shrink: 0;
-  font-size: 9px;
-}
 .index-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 310px;
@@ -330,9 +324,6 @@
   }
 }
 @media (max-width: 1700px) {
-  .toolbar-purpose {
-    display: none;
-  }
   .type-tabs {
     gap: 20px;
   }
@@ -575,9 +566,6 @@
   }
   .type-tabs a {
     font-size: 14px;
-  }
-  .toolbar-purpose {
-    font-size: 11px;
   }
   .index-layout {
     grid-template-columns: minmax(0, 1fr) 386px;
