@@ -55,7 +55,7 @@ export default defineConfig({
         'font-src https://fonts.gstatic.com',
         // R2 media is served same-origin through /media/*, so 'self' covers it.
         // data: is for the inline SVGs the map draws.
-        "img-src 'self' data:",
+        "img-src 'self' data: https://tile.openstreetmap.org",
         "connect-src 'self'",
         "form-action 'self'",
         "base-uri 'self'",
