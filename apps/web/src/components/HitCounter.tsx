@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import '../styles/newspaper/odometer.css'
 
 /**
@@ -39,8 +39,10 @@ export default function HitCounter({ initial = 0 }: { initial?: number }) {
     <span className="np-odometer" role="img" aria-label={`${views.toLocaleString('en')} visits to this site`}>
       {digits.map((digit, i) => {
         const fromEnd = digits.length - 1 - i
+        // Siblings, not a wrapper: a wrapping span would become the flex item
+        // and take the gap and alignment meant for the digit window itself.
         return (
-          <span key={i}>
+          <Fragment key={i}>
             {fromEnd > 0 && fromEnd % 3 === 2 && i > 0 && <span className="np-odometer-sep" aria-hidden="true">,</span>}
             <span className="np-odometer-digit" aria-hidden="true">
               <span
@@ -50,7 +52,7 @@ export default function HitCounter({ initial = 0 }: { initial?: number }) {
                 {['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].map((n) => <span key={n}>{n}</span>)}
               </span>
             </span>
-          </span>
+          </Fragment>
         )
       })}
     </span>

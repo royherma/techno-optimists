@@ -56,7 +56,8 @@ body:has(.newspaper) { background: #f7f4eb; }
 .np-colophon { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid; padding-top: 6px; font-size: 9px; letter-spacing: .02em; flex-shrink: 0; }
 .np-colophon nav { display: flex; gap: 18px; }
 /* Between the strapline and the links, in the same 9px colophon type. */
-.np-colophon-counter { display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: .12em; }
+/* Same 9px ink as the strapline it sits beside - not a heading of its own. */
+.np-colophon-counter { display: inline-flex; align-items: center; gap: 6px; letter-spacing: .02em; opacity: .75; }
 .np-legend { height: 100%; display: flex; flex-direction: column; gap: 13px; }
 .np-rule-heading { display: flex; align-items: baseline; justify-content: space-between; border-bottom: 1px solid; padding-bottom: 7px; }
 .np-rule-heading h2 { font: bold 25px/1.1 Georgia,serif; letter-spacing: -.025em; }
