@@ -75,3 +75,7 @@ previews and published responses. Uploaded attachments survive a reload with the
 draft; failed uploads must be retried or explicitly omitted before publishing.
 Show the four-file and 100 MB per-file limits before selection. External images
 remain text rather than loading tracking resources inside the discussion.
+
+## Editorial V2 alternative
+
+The switchable `/v2` front page follows the [2026-09-11 editorial brief](docs/2026-09-11-editorial-v2.md) and its two saved references. It uses a warm newspaper surface and explicit pagination: five, three, or one Challenge per screen according to available space. The existing `/` design remains available through Classic view. This alternative supersedes the scrolling feed rule only on `/v2`; shared detail and account routes retain their existing behavior.
