@@ -1,0 +1,66 @@
+/* Shared interaction vocabulary. Opt new controls into .feedback-control and
+   their moving glyph into .feedback-icon; informational rows use .feedback-row. */
+:root {
+  --feedback-duration: 120ms;
+  --feedback-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+:is(.feedback-control, .side-links a, .view-tabs a, .type-tabs a,
+    .session-nav a, .session-nav button, .search-toggle, .discovery-link,
+    .form-surface button, .form-surface a[href^="/signin"]) {
+  transition: transform var(--feedback-duration) var(--feedback-ease),
+    background-color var(--ease-ink), border-color var(--ease-ink), color var(--ease-ink);
+}
+:is(.feedback-icon, .side-links a img, .view-tabs a img, .search-toggle img,
+    .session-nav img, .discovery-icon, .discovery-arrow, .feedback-row > span:first-child) {
+  transition: transform var(--feedback-duration) var(--feedback-ease);
+}
+.feedback-row {
+  border-radius: 6px;
+  transition: background-color var(--ease-ink);
+}
+:is(.feedback-control, .side-links a, .view-tabs a, .type-tabs a,
+    .session-nav a, .session-nav button, .search-toggle, .discovery-link,
+    .form-surface button):focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+:is(.view-tabs a, .type-tabs a, .search-toggle):focus-visible,
+.feedback-row:focus-within {
+  background-color: var(--color-selected);
+}
+.challenge-row:focus-within {
+  background-color: var(--color-selected);
+}
+@media (hover: hover) and (pointer: fine) {
+  :is(.feedback-control, .session-nav a, .session-nav button,
+      .discovery-link, .form-surface button):not(:disabled):not([aria-disabled="true"]):hover {
+    transform: translateY(-2px);
+  }
+  :is(.side-links a, .view-tabs a, .type-tabs a):hover {
+    background-color: var(--color-selected);
+  }
+  :is(.side-links a, .view-tabs a, .search-toggle):hover img,
+  .feedback-control:hover .feedback-icon {
+    transform: translateY(-2px) rotate(-5deg);
+  }
+  .discovery-link:hover .discovery-icon { transform: rotate(-5deg) scale(1.04); }
+  .discovery-link:hover .discovery-arrow { transform: translateX(3px); }
+  .feedback-row:hover {
+    background-color: color-mix(in oklch, var(--feedback-color, var(--color-accent)) 9%, var(--color-paper));
+  }
+  .feedback-row:hover > span:first-child { transform: scale(1.12); }
+}
+:is(.feedback-control, .side-links a, .view-tabs a, .type-tabs a,
+    .session-nav a, .session-nav button, .search-toggle, .discovery-link,
+    .form-surface button):not(:disabled):not([aria-disabled="true"]):active {
+  transform: translateY(1px) scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.feedback-control, .side-links a, .view-tabs a, .type-tabs a,
+      .session-nav a, .session-nav button, .search-toggle, .discovery-link,
+      .form-surface button, .form-surface a[href^="/signin"]),
+  :is(.feedback-icon, .side-links a img, .view-tabs a img, .search-toggle img,
+      .session-nav img, .discovery-icon, .discovery-arrow, .feedback-row > span:first-child) {
+    transform: none !important;
+  }
+}
