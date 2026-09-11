@@ -82,6 +82,34 @@ await check('missing page serves 404', async () => {
   return { ok: r.status === 404 && body.length > 0, detail: `${r.status}, ${body.length} bytes` }
 })
 
+await check('a real Challenge page renders', async () => {
+  // The check that was missing when every /c/* on prod 404'd while the API
+  // served all of them 200. Only the bogus-slug 404 above was asserted, so all
+  // 14 checks passed with the detail pages completely broken.
+  //
+  // The cause was a build, not a route: `deploy:prod` points getStaticPaths at
+  // the prod API, which returned nothing usable, so Astro emitted zero pages -
+  // and the shell fallback in apps/api/src/index.ts needs an existing built
+  // page to borrow, so it could not fire either.
+  //
+  // The slug comes from the feed rather than a constant: a hardcoded one rots
+  // with the corpus, and would fail on an empty database for the wrong reason.
+  const feed = await (await fetch(`${BASE}/api/challenges?limit=1`)).json()
+  const c0 = feed.challenges?.[0]
+  if (!c0) return { ok: true, detail: 'no Challenges yet - nothing to render' }
+
+  const r = await fetch(`${BASE}/c/${c0.slug}`)
+  const html = await r.text()
+  const title = html.match(/<title>([^<]*)<\/title>/)?.[1] ?? '(no title)'
+  // Either path is correct: a prerendered page, or the live shell that fills
+  // itself from the API. Both must answer 200 and carry the challenge sheet.
+  const isSheet = /challenge-detail/.test(html)
+  return {
+    ok: r.status === 200 && isSheet,
+    detail: `${r.status} /c/${c0.slug} "${title}"${isSheet ? '' : ' (no challenge sheet in HTML)'}`,
+  }
+})
+
 await check('sign-in accepts a request', async () => {
   const r = await fetch(`${BASE}/api/auth/request`, {
     method: 'POST',
