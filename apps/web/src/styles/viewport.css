@@ -1,13 +1,23 @@
-/* Shared desktop application frame: page content scrolls; navigation stays fixed. */
+/*
+ * Shared desktop frame.
+ *
+ * The page scrolls. This used to be a locked application frame -
+ * `body:has(.site-shell){overflow:hidden}` with the shell pinned to 100dvh and
+ * only `.index-main` scrolling inside it - which meant nothing could ever sit
+ * below the fold: no footer, no colophon, no Terms link. Roy's call on
+ * 2026-09-11 was to unlock it and let the whole document scroll like a normal
+ * site, so the masthead and toolbar scroll away with the content.
+ *
+ * `min-height` rather than `height`: the shell still fills a tall viewport, so
+ * a short page keeps the footer at the bottom instead of floating mid-screen,
+ * but a long index is free to run past it.
+ */
 @media (min-width: 1024px) {
-  body:has(.site-shell) {
-    overflow: hidden;
-  }
   .site-shell {
-    height: 100dvh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
-    padding-bottom: 20px;
+    padding-bottom: 0;
   }
   .site-shell .masthead {
     flex-shrink: 0;
@@ -29,16 +39,25 @@
     min-height: 0;
     align-items: stretch;
   }
+  /*
+   * The index no longer owns a scrollbar - the page does. Keeping
+   * `overflow-y:auto` here would trap the rows in an inner scroller again and
+   * put the footer permanently out of reach, which is the whole thing being
+   * undone.
+   */
   .site-shell .index-main {
-    height: 100%;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-gutter: stable;
+    height: auto;
+    overflow: visible;
   }
+  /*
+   * The column header still sticks, but to the viewport now rather than to the
+   * top of an inner scroller.
+   */
   .index-columns {
     position: sticky;
     top: 0;
     z-index: 10;
+    background: var(--color-paper);
   }
   .index-legend {
     min-height: 0;
@@ -77,12 +96,26 @@
   .site-shell .sheet-legend section:last-child li {
     padding: 1px 0;
   }
+  /*
+   * The rail sticks to the viewport now that the document scrolls.
+   *
+   * It used to be `position:static` with `height:calc(100% - 104px)` inside the
+   * locked 100dvh frame, where `100%` was a known quantity. Unlocking the scroll
+   * on 2026-09-11 took that away: the workspace is now as tall as the feed, so a
+   * percentage height would make the rail hundreds of pixels long and a static
+   * one would scroll off the top and leave the reader with no navigation.
+   *
+   * Sticky keeps it in place while the index scrolls past. `top` clears the
+   * masthead's share of the first screen, and the height is measured against the
+   * viewport (`dvh`) rather than the parent, so it stays a rail and not a strip.
+   */
   .workspace .side-nav {
-    height: calc(100% - 104px);
+    position: sticky;
+    top: 20px;
+    height: calc(100dvh - 124px);
     min-height: 0;
     margin-top: 104px;
-    position: static;
-    align-self: stretch;
+    align-self: flex-start;
   }
   .workspace .side-links {
     gap: 6px;
@@ -235,13 +268,15 @@
     border-radius: 16px;
     padding: 12px 22px;
   }
+  /*
+   * Detail, map, forms and account: same change as .index-main above. These
+   * were the second inner scroller; the page scrolls them now.
+   */
   .sheet-content > main,
   .sheet-content > .map-page {
-    flex: 1;
+    flex: 1 0 auto;
     min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-gutter: stable;
+    overflow: visible;
     background: var(--color-paper);
     border: 1px solid var(--color-rule);
   }
