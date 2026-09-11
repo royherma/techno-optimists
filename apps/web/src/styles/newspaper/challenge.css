@@ -90,7 +90,7 @@
 .newspaper .update-byline {
   display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 9px;
   font:11px/1.5 system-ui,sans-serif; color:var(--np-muted);
-  break-after:avoid;
+  break-after:auto;
 }
 .newspaper .update-byline a { color:var(--np-ink); text-decoration:none; }
 .newspaper .update-byline a:hover { text-decoration:underline; text-underline-offset:3px; }
@@ -111,3 +111,4 @@
 .np-place-map { display:block; break-inside:avoid; margin-bottom:8px; }
 .np-place-map svg { width:100%; max-height:100px; }
 .np-challenge-kicker { flex-wrap:wrap; }
+.newspaper .np-panel-discussion .np-panel-write { margin-bottom:6px; }

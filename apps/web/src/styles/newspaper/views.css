@@ -1,0 +1,3 @@
+.newspaper .np-views { display:inline-flex; align-items:center; gap:5px; padding:2px; color:inherit; font:inherit; font-variant-numeric:tabular-nums; vertical-align:middle; cursor:pointer; }
+.newspaper .np-views:hover { color:var(--np-red); }
+.newspaper .np-views:focus-visible { outline:2px solid currentColor; outline-offset:3px; }
