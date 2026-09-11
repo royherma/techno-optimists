@@ -6,20 +6,14 @@ export const TYPE_LABEL: Record<ChallengeType, string> = {
 }
 
 export const STAGE_LABEL: Record<Stage, string> = {
-  spot: 'Spotted', understand: 'Understanding', ideas: 'Ideas',
+  spot: 'Noticing', understand: 'Understanding', ideas: 'Ideating',
   build: 'Building', test: 'Testing', learn: 'Learning', improve: 'Improving',
 }
 
 export const STAGE_ORDER: Stage[] = ['spot', 'understand', 'ideas', 'build', 'test', 'learn', 'improve']
 
-/**
- * The stamp in the sheet margin. Present tense and short, because it is set in
- * caps beside every row and the lifecycle reads as a sequence of verbs.
- */
-export const STAGE_STAMP: Record<Stage, string> = {
-  spot: 'Spot', understand: 'Understand', ideas: 'Ideas',
-  build: 'Build', test: 'Test', learn: 'Learn', improve: 'Improve',
-}
+/** One set of ongoing-stage labels across cards, progress and the field guide. */
+export const STAGE_STAMP = STAGE_LABEL
 
 /**
  * What each stage means, shown once in the legend so the sheet teaches itself.

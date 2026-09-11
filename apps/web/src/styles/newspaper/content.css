@@ -302,3 +302,12 @@
   .np-map-story .np-story-meta { font-size:9px; flex-wrap:wrap; }
   .np-map-page .np-page-controls>div { gap:10px; }
 }
+
+/* The navigation owns the single rule beneath each capture step. */
+.np-form .np-capture[data-capture-step="0"]>section:nth-of-type(2),
+.np-form .np-capture[data-capture-step="1"]>section:nth-of-type(3),
+.np-form .np-capture[data-capture-step="2"]>section:nth-of-type(4),
+.np-form .np-capture[data-capture-step="3"]>.np-capture-review { border-bottom:0; }
+.np-form .np-capture[data-capture-step="3"]>div.border-t { border-top:0; }
+.np-story-meta { flex-wrap:wrap; gap:4px 10px; }
+.np-story-meta .np-stage-badge { overflow:visible; }
