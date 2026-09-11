@@ -36,13 +36,17 @@
   text-transform: uppercase;
   color: var(--color-ink-soft);
 }
+/*
+  No uppercase transform here: the wordmark is the domain, and the capital T
+  and O are what make TechnoOptimists.org read as two words instead of one
+  run-on string. Flattening it to caps loses that boundary.
+*/
 .brand-title > a {
   display: block;
   font-family: var(--font-display);
   font-size: clamp(40px, 6.2vw, 116px);
   line-height: 1.02;
   letter-spacing: -0.038em;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 .brand-title p {
