@@ -31,3 +31,26 @@ CREATE TABLE IF NOT EXISTS challenge_views (
 );
 -- The count for a card is COUNT(*) by challenge_id, so that is the index.
 CREATE INDEX IF NOT EXISTS views_challenge ON challenge_views(challenge_id);
+
+-- One row per (visitor, day) for the whole site, not per Challenge.
+--
+-- Deliberately not SUM(challenge_views): that table only records Challenge
+-- opens, so the front page, the map and the community page - most of the
+-- traffic - would never appear in a number whose whole job is "how many people
+-- loaded the site". Summing it would also double-count a reader who opened
+-- three Challenges in one visit.
+--
+-- Same privacy shape as challenge_views: viewer_key is a hash of IP +
+-- User-Agent + a fixed site salt, never the address. It exists only to stop a
+-- refresh from counting twice, and a day-granularity window means the same
+-- reader returning tomorrow is a real second view.
+CREATE TABLE IF NOT EXISTS site_views (
+  viewer_key TEXT NOT NULL,
+  viewed_on  TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (viewer_key, viewed_on)
+);
+-- The counter is COUNT(*) over the whole table, which the PK already covers.
+-- This index serves "views per day" without scanning, for the day the question
+-- stops being a single total.
+CREATE INDEX IF NOT EXISTS site_views_day ON site_views(viewed_on);
