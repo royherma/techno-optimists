@@ -312,8 +312,10 @@
 
 /* Keep every legend action visible on short laptop screens. */
 @media (min-width: 1024px) and (max-height: 780px) {
-  .site-shell .sheet-legend summary { padding-block: 8px; }
+  .site-shell .sheet-legend summary { padding-block: 8px; line-height: 1.1; }
   .site-shell .sheet-legend section { padding-block: 4px; }
+  .site-shell .sheet-legend section li { padding-block: 0; }
+  .site-shell .sheet-legend section li > span:last-child { line-height: 1.25; }
   .site-shell .sheet-legend section:nth-of-type(1) svg { max-height: 21px; max-width: 21px; }
   .site-shell .sheet-legend section:last-child li { min-height: 18px; }
   .site-shell .sheet-legend section:last-child svg { width: 16px; height: 16px; }
