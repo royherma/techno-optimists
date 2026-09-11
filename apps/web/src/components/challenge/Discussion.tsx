@@ -4,11 +4,12 @@ import type { ChallengeComment, CommentKind } from '../../../../../packages/type
 import type { Me } from '../../lib/session'
 import ResponseContent, { isDiscussionMedia } from './ResponseContent'
 import { ago } from '../../lib/vocab'
+import { uuid } from '../../lib/uuid'
 
 const LABEL: Record<CommentKind, string> = { comment: 'Comment', idea: 'Idea', question: 'Question', evidence: 'Evidence', test_result: 'Test result' }
 type Attachment = { url: string; name: string }
 type Draft = { attachments?: Attachment[]; body: string; kind: CommentKind; parent_id: string | null; request_id: string }
-const emptyDraft = (): Draft => ({ body: '', kind: 'comment', parent_id: null, request_id: crypto.randomUUID() })
+const emptyDraft = (): Draft => ({ body: '', kind: 'comment', parent_id: null, request_id: uuid() })
 
 export default function Discussion({ slug, me, sessionReady }: { slug: string; me: Me | null; sessionReady: boolean }) {
   const [comments, setComments] = useState<ChallengeComment[]>([])
@@ -57,7 +58,7 @@ export default function Discussion({ slug, me, sessionReady }: { slug: string; m
     void load()
     const focusIdea = () => {
       setPreview(false)
-      setDraft((d) => ({ ...d, kind: 'idea', parent_id: null, request_id: crypto.randomUUID() }))
+      setDraft((d) => ({ ...d, kind: 'idea', parent_id: null, request_id: uuid() }))
       input.current?.focus()
       input.current?.scrollIntoView({ block: 'center', behavior: 'instant' })
     }
@@ -71,7 +72,7 @@ export default function Discussion({ slug, me, sessionReady }: { slug: string; m
   }, [draft, ready, key])
 
   function change(values: Partial<Draft>) {
-    setDraft((d) => ({ ...d, ...values, request_id: crypto.randomUUID() }))
+    setDraft((d) => ({ ...d, ...values, request_id: uuid() }))
     setStatus('')
   }
 
@@ -103,7 +104,7 @@ export default function Discussion({ slug, me, sessionReady }: { slug: string; m
         const r = await fetch('/api/uploads', { method: 'PUT', credentials: 'same-origin', headers: { 'content-type': file.type }, body: file })
         if (!r.ok) throw new Error(r.status === 401 ? 'Your session expired. Sign in again before attaching files.' : `Could not upload ${file.name}. Choose the file again to retry.`)
         const { media } = await r.json()
-        setDraft((d) => ({ ...d, attachments: [...(d.attachments ?? []), { url: media.url, name: file.name.slice(0, 120) }], request_id: crypto.randomUUID() }))
+        setDraft((d) => ({ ...d, attachments: [...(d.attachments ?? []), { url: media.url, name: file.name.slice(0, 120) }], request_id: uuid() }))
       } catch (e) { setUploadFailed(true); setUploadError(e instanceof Error ? e.message : 'Upload failed. Choose the file again to retry.'); break }
     }
     uploadLock.current = false; setUploading(false)
