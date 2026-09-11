@@ -19,13 +19,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # No `cache: npm`. Its cache key and its post-run save step both read
+      # package-lock.json, which the Install step below deletes on purpose.
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-          cache: npm
 
+      # vitest 5 bundles rolldown, whose native binding ships as 15 per-platform
+      # optional deps. package-lock.json was generated on darwin-arm64: rolldown's
+      # entry lists all 15 optionalDependencies, but the installed-package set
+      # names only @rolldown/binding-darwin-arm64. With a lockfile present npm
+      # installs that named set verbatim, so on ubuntu-x64 no usable binding is
+      # installed and vitest dies at startup with "Cannot find native binding"
+      # (npm/cli#4828). npm ci and npm install both fail this way - the lockfile
+      # is the constraint, not the install command.
+      #
+      # Dropping the lockfile makes npm re-resolve against the runner and write
+      # all 15 bindings, including binding-linux-x64-gnu. This deletes it in the
+      # CI workspace only; the committed lockfile is never modified. The cost is
+      # that CI floats within the package.json ranges instead of pinning.
+      #
+      # Committing a 15-binding lockfile was tried and rejected: a clean re-resolve
+      # is not a binding-only change - it also moved 15 unrelated packages
+      # (chokidar 5.0.0->4.0.3, undici 8.10.2->7.29.0), added 86 and removed 36.
       - name: Install
-        run: npm ci
+        run: |
+          rm -f package-lock.json
+          npm install --no-audit --no-fund
 
       # Same command CONTRIBUTING.md asks contributors to run:
       # npm run typecheck && npm test. No Cloudflare account, no secrets,
