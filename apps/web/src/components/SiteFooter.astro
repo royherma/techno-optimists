@@ -1,5 +1,7 @@
 ---
 import '../styles/footer.css'
+import HitCounter from './HitCounter'
+import { getSiteViews } from '../lib/api'
 
 /*
  * The colophon: who this is for, what the place is, and the two pages anyone
@@ -19,6 +21,10 @@ import '../styles/footer.css'
  *
  */
 const year = new Date().getFullYear()
+
+// Baked in at build time so the wheels open on the last known total instead of
+// six zeros. The island rolls them up to the live figure on load.
+const initialViews = await getSiteViews()
 ---
 <footer class="site-footer">
   <div class="footer-inner">

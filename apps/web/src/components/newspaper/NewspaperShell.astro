@@ -5,8 +5,13 @@ import '../../styles/newspaper/shell.css'
 import '../../styles/newspaper/content.css'
 import '../../styles/newspaper/controls.css'
 import DelightText from '../DelightText.astro'
+import HitCounter from '../HitCounter'
+import { getSiteViews } from '../../lib/api'
 interface Props { challenges?: Challenge[]; section?: string }
 const { challenges = [], section = 'Front page' } = Astro.props
+// Baked in at build time so the wheels open on the last known total rather
+// than six zeros; the island rolls them up to the live figure on load.
+const initialViews = await getSiteViews()
 const taglines = ['People', 'Ideas', 'Technology', 'A better today', 'A brighter tomorrow']
 const manifesto = ['Explore.', 'Solve.', 'Build together', 'for a more human', 'tomorrow.']
 ---
@@ -25,7 +30,7 @@ const manifesto = ['Explore.', 'Solve.', 'Build together', 'for a more human', '
     <div class="np-nav-end"><a href="/settings">Account</a><a class="np-submit" href="/post">＋ Share</a><button type="button" class="np-legend-toggle" data-legend-toggle aria-expanded="false">Legend</button><a href="/v1" data-classic-switch>V1 / Classic</a></div>
   </nav>
   <div class="np-workspace"><main id="newspaper-main" class="np-main"><slot /></main><aside class="np-sidebar" aria-label="Field guide and legend"><Legend client:load challenges={challenges} /></aside></div>
-  <footer class="np-colophon"><span>Real problems. Real ideas. A brighter tomorrow.</span><nav aria-label="About this site"><a href="/contribute">Contribute</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></footer>
+  <footer class="np-colophon"><span>Real problems. Real ideas. A brighter tomorrow.</span><span class="np-colophon-counter">Visits <HitCounter client:load initial={initialViews} /></span><nav aria-label="About this site"><a href="/contribute">Contribute</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></footer>
 </div>
 <script>
   import { classicPath, editionPath } from '../../lib/edition'
