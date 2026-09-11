@@ -19,14 +19,14 @@ const { challenges } = await getFeed('?limit=3')
     <FormPage title="A different path, perhaps?" description="This Challenge may have moved, or the link may be mistyped." icon="compass">
       <a
         href="/"
-        class="recovery-link mt-8 inline-block border border-(--color-rule) px-4 py-2.5 font-[family-name:--font-mono] text-[0.7rem] uppercase tracking-[0.1em] hover:bg-(--color-ink) hover:text-(--color-paper)"
+        class="recovery-link mt-8 inline-block border border-(--color-rule) px-4 py-2.5 font-[family-name:var(--font-mono)] text-[0.7rem] uppercase tracking-[0.1em] hover:bg-(--color-ink) hover:text-(--color-paper)"
       >
         Back to the index
       </a>
 
       {challenges.length > 0 && (
         <section class="mt-12 border-t border-(--color-rule) pt-6">
-          <h2 class="font-[family-name:--font-mono] text-[0.68rem] font-bold uppercase tracking-[0.06em]">
+          <h2 class="font-[family-name:var(--font-mono)] text-[0.68rem] font-bold uppercase tracking-[0.06em]">
             Recently active
           </h2>
           <ul class="mt-3">

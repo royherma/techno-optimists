@@ -10,5 +10,5 @@ const { challenge: c, rings } = Astro.props
   <h1 data-field="title">{c.title}</h1>
   <p class="detail-summary" data-field="summary">{c.summary}</p>
   <div class="detail-byline"><span class="author-avatar" aria-hidden="true">{c.author.handle.slice(0,1).toUpperCase()}</span><span>Spotted by <strong data-field="author">@{c.author.handle}</strong>{c.author.location && <span> · {c.author.location}</span>}</span></div>
-  <div class="detail-impact"><ContourRings rings={rings} color={stageColor(c.stage)} label={`Impact: ${depthLabel(rings)}`} size={52} /><span>{depthLabel(rings)} impact</span></div>
+  <div class="detail-impact"><ContourRings rings={rings} color={stageColor(c.stage)} label={`Impact: ${depthLabel(rings)}`} size={52} /><span>{depthLabel(rings).split(' - ')[0]} impact</span></div>
 </header>

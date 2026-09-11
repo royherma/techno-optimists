@@ -209,7 +209,7 @@ export default function CaptureForm() {
               <img src={shot.preview} alt="" className="h-full w-full object-contain" />
               {shot.state !== 'done' && (
                 <figcaption
-                  className={`absolute inset-x-0 bottom-0 py-1 text-center font-[family-name:--font-mono] text-[10px] ${
+                  className={`absolute inset-x-0 bottom-0 py-1 text-center font-[family-name:var(--font-mono)] text-[10px] ${
                     shot.state === 'failed'
                       ? 'bg-(--color-problem) text-(--color-paper)'
                       : 'bg-(--color-ink) text-(--color-paper)'
@@ -345,8 +345,8 @@ export default function CaptureForm() {
 
 const Legend = ({ n, label }: { n: string; label: string }) => (
   <div className="form-section-heading">
-    <span className="font-[family-name:--font-mono] text-[11px] text-(--color-ink-faint)">{n}</span>
-    <span className="font-[family-name:--font-mono] text-[11px] tracking-[0.14em] text-(--color-ink-soft) uppercase">{label}</span>
+    <span className="font-[family-name:var(--font-mono)] text-[11px] text-(--color-ink-faint)">{n}</span>
+    <span className="font-[family-name:var(--font-mono)] text-[11px] tracking-[0.14em] text-(--color-ink-soft) uppercase">{label}</span>
   </div>
 )
 
@@ -365,7 +365,7 @@ function Field({ name, label, hint, value, onChange, maxLength, min, rows, optio
   const hintId = `${name}-hint`
   return (
     <label className="block">
-      <span className="font-[family-name:--font-mono] text-[11px] tracking-[0.14em] text-(--color-ink-faint) uppercase">
+      <span className="font-[family-name:var(--font-mono)] text-[11px] tracking-[0.14em] text-(--color-ink-faint) uppercase">
         {label}{optional && <span className="normal-case tracking-normal"> - optional</span>}
       </span>
       {rows ? (
