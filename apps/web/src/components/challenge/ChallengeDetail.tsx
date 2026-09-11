@@ -20,29 +20,29 @@ const PROMPT: Record<Stage, string> = {
   improve: 'How could this work better or help more people?',
 }
 
-export default function ChallengeDetail({ initial, rings }: { initial: Detail; rings: number }) {
+export default function ChallengeDetail({ initial, rings }: { initial?: Detail; rings: number }) {
   const [data, setData] = useState(initial)
   const [me, setMe] = useState<Me | null>(null)
   const [sessionReady, setSessionReady] = useState(false)
   const [error, setError] = useState('')
-  const [actual, setActual] = useState(initial.challenge.slug)
+  const [actual, setActual] = useState(initial?.challenge.slug ?? '')
   const refresh = useCallback(async () => {
-    const slug = window.location.pathname.split('/').filter(Boolean)[1] ?? initial.challenge.slug
+    const slug = window.location.pathname.split('/').filter(Boolean)[1] ?? initial?.challenge.slug ?? ''
     setActual(slug)
     const r = await fetch(`/api/challenges/${encodeURIComponent(slug)}`, { cache: 'no-store' })
     if (!r.ok) throw new Error('The latest Challenge could not load.')
     const next = await r.json() as Detail
     setData(next); setError('')
     document.title = `${next.challenge.title} - Techno Optimists`
-  }, [initial.challenge.slug])
+  }, [initial?.challenge.slug])
   useEffect(() => {
     void refresh().catch(() => setError('The latest Challenge could not load. Please retry.'))
     void getMe().then((person) => { setMe(person); setSessionReady(true) })
   }, [refresh])
 
-  const c = data.challenge
+  const c = data?.challenge
   const n = Math.min(5, Math.max(1, rings))
-  if (actual !== c.slug) return <div><p role="status">{error || 'Loading Challenge…'}</p>{error && <button onClick={() => void refresh().catch(() => setError('The latest Challenge could not load. Please retry.'))}>Try again</button>}</div>
+  if (!c || !data || actual !== c.slug) return <div><p role="status">{error || 'Loading Challenge…'}</p>{error && <button onClick={() => void refresh().catch(() => setError('The latest Challenge could not load. Please retry.'))}>Try again</button>}</div>
   const reached = STAGE_ORDER.indexOf(c.stage)
   return <div>
     {error && <p role="alert" className="form-error">{error} <button onClick={() => void refresh().catch(() => setError('The latest Challenge could not load. Please retry.'))}>Retry</button></p>}

@@ -311,6 +311,8 @@ app.post('/api/challenges', async (c) => {
  *    2024 paper does not land on the feed as today's news.
  */
 const importRow = createBody.extend({
+  // Editorial title corrections must preserve the original public address.
+  slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(180).optional(),
   stage: z.enum(STAGES).default('spot'),
   source_url: z.string().trim().max(500).optional(),
   source_name: z.string().trim().max(120).optional(),
@@ -382,7 +384,7 @@ app.post('/api/challenges/import', async (c) => {
       problems.push({ index: i, error: 'no_source', detail: row.title })
       continue
     }
-    const slug = slugify(row.title)
+    const slug = row.slug ?? slugify(row.title)
     if (!slug) { problems.push({ index: i, error: 'untitled', detail: row.title }); continue }
     if (planned.some((p) => p.slug === slug)) {
       problems.push({ index: i, error: 'duplicate_in_batch', detail: slug })
@@ -1119,6 +1121,7 @@ app.get('/api/health', async (c) => {
  */
 app.get('/c/:slug', async (c) => {
   if (!c.env.ASSETS) return c.notFound()
+  if (c.req.param('slug') === '_shell') return c.notFound()
 
   const prerendered = await c.env.ASSETS.fetch(new Request(c.req.url, { headers: c.req.raw.headers }))
   if (prerendered.status === 200) return prerendered
@@ -1127,22 +1130,14 @@ app.get('/c/:slug', async (c) => {
   const exists = await c.env.DB.prepare('SELECT 1 FROM challenges WHERE slug = ?').bind(slug).first()
   if (!exists) return prerendered
 
-  // The shell is a real built page, so it carries the same CSS and islands.
-  const shellSlug = await c.env.DB.prepare(
-    'SELECT slug FROM challenges ORDER BY created_at ASC LIMIT 1',
-  ).first<{ slug: string }>()
-  if (!shellSlug) return prerendered
-
+  // Always built, even for an empty corpus. Never borrow another Challenge's
+  // content or inject a script that the page's CSP would reject.
   const shellUrl = new URL(c.req.url)
-  shellUrl.pathname = `/c/${shellSlug.slug}`
+  shellUrl.pathname = '/c/_shell'
   const shell = await c.env.ASSETS.fetch(new Request(shellUrl.toString(), { headers: c.req.raw.headers }))
   if (shell.status !== 200) return prerendered
 
-  const html = (await shell.text()).replace(
-    '</body>',
-    `<script>window.__LIVE_CHALLENGE__=${JSON.stringify(slug)}</script></body>`,
-  )
-  return new Response(html, {
+  return new Response(shell.body, {
     status: 200,
     headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' },
   })

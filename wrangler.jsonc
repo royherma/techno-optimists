@@ -24,7 +24,7 @@
     // /api/* response could be served - and edge-cached - as a static asset.
     // A cached 404.html against /api/auth/callback broke sign-in outright:
     // cf-cache-status HIT, the Worker never ran, the token never redeemed.
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": ["/api/*", "/c/*"]
   },
 
   "d1_databases": [
@@ -71,7 +71,7 @@
         "binding": "ASSETS",
         "not_found_handling": "404-page",
         "html_handling": "drop-trailing-slash",
-        "run_worker_first": ["/api/*"]
+        "run_worker_first": ["/api/*", "/c/*"]
       },
       "d1_databases": [
         { "binding": "DB", "database_name": "techno-optimists-dev", "database_id": "916bfcc8-69fb-4ded-b2a1-7faed95de1c3" },
@@ -113,7 +113,7 @@
         "binding": "ASSETS",
         "not_found_handling": "404-page",
         "html_handling": "drop-trailing-slash",
-        "run_worker_first": ["/api/*"]
+        "run_worker_first": ["/api/*", "/c/*"]
       },
       "d1_databases": [
         { "binding": "DB", "database_name": "techno-optimists", "database_id": "195e34f1-f441-49ce-9d47-21eb7ad78209" },
