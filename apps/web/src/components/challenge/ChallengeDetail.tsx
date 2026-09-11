@@ -10,6 +10,9 @@ import Progress from './Progress'
 import Editorial from './Editorial'
 
 type Detail = { challenge: Challenge; updates: Update[]; people: DetailPerson[] }
+function sourceLink(value: string | null | undefined) {
+  try { const url = new URL(value ?? ''); return ['https:', 'http:'].includes(url.protocol) ? url : null } catch { return null }
+}
 const PROMPT: Record<Stage, string> = {
   spot: 'What have you noticed? Help describe the Challenge.',
   understand: 'What causes this? Share what you know or ask a useful question.',
@@ -44,10 +47,11 @@ export default function ChallengeDetail({ initial, rings }: { initial?: Detail; 
   const n = Math.min(5, Math.max(1, rings))
   if (!c || !data || actual !== c.slug) return <div><p role="status">{error || 'Loading Challenge…'}</p>{error && <button onClick={() => void refresh().catch(() => setError('The latest Challenge could not load. Please retry.'))}>Try again</button>}</div>
   const reached = STAGE_ORDER.indexOf(c.stage)
+  const source = sourceLink(c.source?.url)
   return <div>
     {error && <p role="alert" className="form-error">{error} <button onClick={() => void refresh().catch(() => setError('The latest Challenge could not load. Please retry.'))}>Retry</button></p>}
     <header className="detail-header">
-      <div className="detail-meta"><span>{gridRef(c.id)}</span><span className="type-pill">Started as a {TYPE_LABEL[c.type].toLowerCase()}</span>{c.location && <span>{c.location}</span>}</div>
+      <div className="detail-meta"><span>{gridRef(c.id)}</span><span className="type-pill">Started as {['idea', 'experiment'].includes(c.type) ? 'an' : 'a'} {TYPE_LABEL[c.type].toLowerCase()}</span>{c.location && <span>{c.location}</span>}</div>
       <h1>{c.emoji && <span className="challenge-emoji" aria-hidden="true">{c.emoji} </span>}{c.title}</h1>
       <p className="detail-summary">{c.summary}</p>
       <div className="detail-byline"><span className="author-avatar" aria-hidden="true">{c.author.handle.slice(0, 1).toUpperCase()}</span><span>{c.source ? 'Shared' : 'Spotted'} by <strong>@{c.author.handle}</strong><span> · Active {ago(c.last_activity_at)}</span></span></div>
@@ -63,7 +67,7 @@ export default function ChallengeDetail({ initial, rings }: { initial?: Detail; 
       <div className="detail-story">
         {c.media.length > 0 && <div className="detail-media">{c.media.map((m) => m.kind === 'video' ? <video key={m.url} src={m.url} controls playsInline preload="metadata" /> : <img key={m.url} src={m.url} alt={m.alt ?? ''} width={m.w} height={m.h} />)}</div>}
         {c.body && <section className="detail-section challenge-context"><h2>The Challenge</h2>{c.body.split(/\n\s*\n/).map((p, i) => <p key={i}>{p}</p>)}</section>}
-        {c.source && <div className="challenge-source"><span>Source: </span>{c.source.url && /^https?:\/\//i.test(c.source.url) ? <a href={c.source.url} target="_blank" rel="noopener noreferrer">{c.source.name ?? new URL(c.source.url).hostname}</a> : <span>{c.source.name ?? c.source.url}</span>}{c.source.note && <details><summary>About this source</summary><p>{c.source.note}</p></details>}</div>}
+        {c.source && <div className="challenge-source"><span>Source: </span>{source ? <a href={source.href} target="_blank" rel="noopener noreferrer">{c.source.name ?? source.hostname}</a> : <span>{c.source.name ?? c.source.url}</span>}{c.source.note && <details><summary>About this source</summary><p>{c.source.note}</p></details>}</div>}
         <Discussion key={c.slug} slug={c.slug} me={me} sessionReady={sessionReady} />
         <Progress key={`progress-${c.slug}`} challenge={c} updates={data.updates} me={me} refresh={refresh} />
       </div>

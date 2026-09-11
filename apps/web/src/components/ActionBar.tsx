@@ -59,7 +59,7 @@ export default function ActionBar({ slug, type, actions }: {
       setCounts(d.challenge.actions)
       setMine(p.mine)
       setReady(true)
-      setStatus('Choose any that fit. Click a selected response to undo.')
+      setStatus('Choose what fits. “I have an idea” opens the composer.')
     }).catch(() => {
       if (!cancelled) { setError(true); setStatus('Your selections could not load.') }
     })
