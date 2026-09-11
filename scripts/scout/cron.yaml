@@ -1,0 +1,27 @@
+# One finite job per invocation. Run on the host with Ollama and local-imagegen.
+base: https://technooptimists.org
+author: atlas
+limit: 12
+publish_limit: 5
+max_queries: 4
+timeout_minutes: 45
+images: true
+sources: []
+feeds:
+  - https://nepalitimes.com/feed
+  - https://news.mongabay.com/feed/
+reddit: []
+themes:
+  - classroom roof heat
+  - fish pond oxygen losses
+  - milk cooling losses
+  - water supply failure
+  - clinic power outages
+  - crop losses
+places:
+  - Chiang Mai Thailand
+  - Accra Ghana
+  - Patna India
+  - Binmaley Philippines
+  - Nepalganj Nepal
+  - Ipokia Nigeria
