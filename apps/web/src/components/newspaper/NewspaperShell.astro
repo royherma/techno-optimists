@@ -4,16 +4,19 @@ import type { Challenge } from '../../../../../packages/types'
 import '../../styles/newspaper/shell.css'
 import '../../styles/newspaper/content.css'
 import '../../styles/newspaper/controls.css'
+import DelightText from '../DelightText.astro'
 interface Props { challenges?: Challenge[]; section?: string }
 const { challenges = [], section = 'Front page' } = Astro.props
+const taglines = ['People', 'Ideas', 'Technology', 'A better today', 'A brighter tomorrow']
+const manifesto = ['Explore.', 'Solve.', 'Build together', 'for a more human', 'tomorrow.']
 ---
 <div class="newspaper">
   <a class="np-skip" href="#newspaper-main">Skip to content</a>
   <header class="np-masthead">
     <a class="np-motto" href="/">A brighter<br />tomorrow<br />builds today<span></span></a>
-    <div class="np-nameplate"><a href="/">TechnoOptimists.org</a><p>People <i>×</i> Ideas <i>×</i> Technology <i>×</i> A better today <i>×</i> A brighter tomorrow</p></div>
-    <blockquote>Explore.<br />Solve.<br />Build together<br />for a more human<br />tomorrow.</blockquote>
-    <img class="np-orb" src="/images/optimist-orb.png" alt="" width="110" height="110" />
+    <div class="np-nameplate"><a href="/" aria-label="TechnoOptimists.org"><DelightText text="TechnoOptimists.org" letters /></a><p>{taglines.map((phrase, i) => <>{i > 0 && <> <i class="delight-separator" aria-hidden="true">×</i> </>}<DelightText text={phrase} color={i} /></>)}</p></div>
+    <blockquote>{manifesto.map((phrase, i) => <>{i > 0 && <br />}<DelightText text={phrase} color={i} /></>)}</blockquote>
+    <span class="np-orb-hit delight-orb-hit" aria-hidden="true"><img class="np-orb delight-orb" src="/images/optimist-orb.png" alt="" width="110" height="110" /></span>
   </header>
   <nav class="np-navigation" aria-label="Main navigation">
     <a href="/" aria-current={section === 'Front page' ? 'page' : undefined}>Home</a>
