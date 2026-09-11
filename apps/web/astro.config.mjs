@@ -1,7 +1,21 @@
+import { createHash } from 'node:crypto'
 import { defineConfig } from 'astro/config'
 import react from '@astrojs/react'
 import sitemap from '@astrojs/sitemap'
 import tailwind from '@tailwindcss/vite'
+import { SCHEMA_JSON } from './src/lib/schema.mjs'
+
+// The JSON-LD tag Base.astro prints is an inline script, and the CSP below is
+// `script-src 'self'` plus hashes. Astro computes hashes for the inline scripts
+// it generates itself - island hydration, directive content, the prebuilt
+// island runtime - but not for a hand-written one, so without this line the tag
+// is emitted and then refused at parse time. Measured, not assumed: the built
+// page hashed to sha256-UTj24gb... against eight unrelated CSP hashes.
+//
+// Hashing the same exported string the layout renders is what keeps the two in
+// step - edit the schema and this follows on the next build. A pasted literal
+// would go stale silently.
+const SCHEMA_HASH = `sha256-${createHash('sha256').update(SCHEMA_JSON, 'utf8').digest('base64')}`
 
 // Tailwind v4 goes through the Vite plugin, NOT @astrojs/tailwind - that
 // integration has a peer-dep conflict on Astro 7 (creators-of-today GOTCHAS #5).
@@ -44,6 +58,9 @@ export default defineConfig({
         "base-uri 'self'",
         "object-src 'none'",
       ],
+      scriptDirective: {
+        hashes: [SCHEMA_HASH],
+      },
       styleDirective: {
         // Tailwind is a real stylesheet ('self'); this adds the font CSS origin
         // alongside whatever hashes Astro computes for its own inline styles.
