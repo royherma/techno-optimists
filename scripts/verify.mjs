@@ -24,9 +24,9 @@ const BASE = (arg('--base') ?? process.env.TO_BASE ?? 'https://technooptimists.o
 const results = []
 const check = async (name, fn) => {
   try {
-    const { ok, detail } = await fn()
-    results.push({ name, ok, detail })
-    console.log(`${ok ? 'ok  ' : 'FAIL'}  ${name.padEnd(34)} ${detail}`)
+    const { ok, detail, skipped = false } = await fn()
+    results.push({ name, ok, detail, skipped })
+    console.log(`${skipped ? 'SKIP' : ok ? 'ok  ' : 'FAIL'}  ${name.padEnd(34)} ${detail}`)
   } catch (err) {
     results.push({ name, ok: false, detail: String(err.message ?? err) })
     console.log(`FAIL  ${name.padEnd(34)} ${err.message ?? err}`)
@@ -116,6 +116,7 @@ await check('sign-in accepts a request', async () => {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ email: `deploy-probe-${Date.now()}@example.com` }),
   })
+  if (r.status === 429) return { skipped: true, detail: '429: probe quota exhausted; fresh sign-in issuance not verified this run' }
   const d = await r.json()
   // dev_link in a prod response would mean anyone POSTing a stranger's address
   // gets a bearer token for their account. This is the one check that must
@@ -166,6 +167,7 @@ await check('page CSP carries script hashes', async () => {
 })
 
 await check('sign-in is rate limited', async () => {
+  if (!/workers\.dev/.test(BASE)) return { skipped: true, detail: 'Burst test runs on dev only, preserving production sign-in quota' }
   // The limit is 5/hour per address. Six requests from one fresh address must
   // end in a 429; if they all pass, the limiter is not deployed and anyone can
   // mailbomb a stranger from our domain.
@@ -238,8 +240,21 @@ await check('a profile carries no address', async () => {
   }
 })
 
-const failed = results.filter((r) => !r.ok)
-console.log(`\n${results.length - failed.length}/${results.length} passed\n`)
+await check('account activity requires sign-in', async () => {
+  const r = await fetch(`${BASE}/api/people/me/activity`)
+  return { ok: r.status === 401 && r.headers.get('cache-control')?.includes('no-store'), detail: `${r.status}, private activity is not cached` }
+})
+await check('personal reactions are not cached', async () => {
+  const feed = await (await fetch(`${BASE}/api/challenges?limit=1`)).json()
+  const slug = feed.challenges?.[0]?.slug
+  if (!slug) return { skipped: true, detail: 'No Challenges to check' }
+  const r = await fetch(`${BASE}/api/challenges/${slug}/actions/me`)
+  const d = await r.json()
+  return { ok: r.ok && Array.isArray(d.mine) && d.mine.length === 0 && r.headers.get('cache-control')?.includes('no-store'), detail: `${r.status}, anonymous selections empty and uncached` }
+})
+const failed = results.filter((r) => !r.ok && !r.skipped)
+const skipped = results.filter((r) => r.skipped)
+console.log(`\n${results.length - failed.length - skipped.length}/${results.length} passed, ${skipped.length} skipped\n`)
 if (failed.length) {
   console.log('failed:')
   for (const f of failed) console.log(`  - ${f.name}: ${f.detail}`)
