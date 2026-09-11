@@ -148,3 +148,9 @@ emoji. Topic tags remain stored but are not displayed in the feed.
 The private `/c/_shell` asset is always built and excluded from the sitemap.
 `/c/*` runs through the Worker so a new Challenge gets a working page immediately,
 without borrowing another Challenge's content or injecting unhashed scripts.
+
+Public author links open `/people?handle=…`. The profile lists authored Challenges,
+comments and progress updates, with links back to their context. Its API
+(`/api/people/:handle/contributions`) explicitly selects public contribution fields;
+it does not join identities, sessions or action selections. Challenge provenance
+separates the original record date from the platform import date.
