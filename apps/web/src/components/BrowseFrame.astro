@@ -1,11 +1,11 @@
 ---
-import IndexToolbar from './IndexToolbar.astro'
+import BrowseToolbar from './BrowseToolbar.astro'
 import SheetLegend from './SheetLegend.astro'
 import '../styles/index.css'
 interface Props { view?: 'index' | 'map'; label: string; contentClass?: string }
 const { view = 'index', label, contentClass } = Astro.props
 ---
-<IndexToolbar view={view} />
+<BrowseToolbar view={view} />
 <div class="index-layout">
   <main class:list={['index-main', contentClass]} aria-label={label} tabindex="0"><slot /></main>
   <aside class="index-legend"><SheetLegend /></aside>

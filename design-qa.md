@@ -56,3 +56,8 @@ final result: passed
 Fixed map and secondary-screen outer scrolling by promoting the index viewport contract into the shared Sheet. A shared toolbar-height token aligns the content and rail on every route, including the wrapped toolbar at narrow desktop widths. Map illustration height and spacing now adapt to available viewport height.
 
 Verified index, map, sign-in and challenge detail at 1024×768, 1440×900 and 2048×1173: identical content/rail top positions per size, rail bottom within viewport, document height equal to viewport height, no horizontal overflow. Post and settings also checked at 1440×900. At 1024×768 the last index legend action ends at y725 within the 768px viewport. Map, sign-in and detail retain normal page scrolling and no horizontal overflow at 390×844. Astro check: zero errors/warnings, three existing FormEvent hints.
+
+
+## Map browsing parity — 2026-09-11
+
+Replaced the map breadcrumb layout with BrowseFrame shared by Index and Map: same toolbar, full legend and column geometry. Normalized trailing slashes for sidebar selection. Shared filters now handle map pins and rows; the map SVG remains static to avoid hydration resetting filters. Verified Idea shows one placed result, search for plastic matches its pin/list row, unmatched search shows empty state with zero pins. PageDown scrolls the content while body stays at zero. Compared both views at 1024×768, 1440×900, 2048×1173 and 390×844; desktop positions match and mobile has no horizontal overflow.
