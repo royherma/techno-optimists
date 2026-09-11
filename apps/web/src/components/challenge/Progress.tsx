@@ -1,3 +1,4 @@
+import { formatDateTime, dateISO } from '../../lib/dates'
 import { useRef, useState } from 'react'
 import type { Challenge, Update } from '../../../../../packages/types/index'
 import type { Me } from '../../lib/session'
@@ -25,7 +26,7 @@ export default function Progress({ challenge, updates, me, refresh }: { challeng
   return <section id="progress" className="detail-section progress-log">
     <h2>Progress log</h2><p className="section-intro">What was tried, what happened, and what comes next.</p>
     {updates.length ? <ol>{updates.map((u) => <li key={u.id}><span className="progress-dot" style={{ background: `var(--color-${u.stage ?? challenge.stage})` }} aria-hidden="true" /><div>
-      <div className="update-byline"><a href={`/people?handle=${encodeURIComponent(u.author.handle)}`}><strong>@{u.author.handle}</strong></a>{u.stage && <span>{STAGE_STAMP[u.stage]}</span>}<time dateTime={u.created_at.replace(' ', 'T') + 'Z'}>{ago(u.created_at)}</time></div>
+      <div className="update-byline"><a href={`/people?handle=${encodeURIComponent(u.author.handle)}`}><strong>@{u.author.handle}</strong></a>{u.stage && <span>{STAGE_STAMP[u.stage]}</span>}<time dateTime={dateISO(u.created_at)} title={formatDateTime(u.created_at)}>{ago(u.created_at)}</time></div>
       <p className="response-body">{u.body}</p>
       {u.media.map((m) => m.kind === 'video' ? <video key={m.url} src={m.url} controls playsInline /> : <img key={m.url} src={m.url} alt={m.alt ?? ''} loading="lazy" />)}
     </div></li>)}</ol> : <p className="quiet-empty">No progress updates yet. Tried something? Record the result here. Questions and ideas belong in <a href="#discussion">discussion</a>.</p>}

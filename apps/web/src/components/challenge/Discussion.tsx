@@ -1,3 +1,4 @@
+import { formatDateTime, dateISO } from '../../lib/dates'
 import { useEffect, useRef, useState } from 'react'
 import type { ChallengeComment, CommentKind } from '../../../../../packages/types/index'
 import type { Me } from '../../lib/session'
@@ -110,7 +111,7 @@ export default function Discussion({ slug, me, sessionReady }: { slug: string; m
       return <li id={`response-${comment.id}`} key={comment.id} className={comment.parent_id ? 'is-reply' : ''}>
         <div className="update-byline"><a href={`/people?handle=${encodeURIComponent(comment.author.handle)}`}><strong>@{comment.author.handle}</strong></a>
           {comment.kind !== 'comment' && <span className="response-kind">{LABEL[comment.kind]}</span>}
-          <time dateTime={comment.created_at.replace(' ', 'T') + 'Z'}>{ago(comment.created_at)}</time></div>
+          <time dateTime={dateISO(comment.created_at)} title={formatDateTime(comment.created_at)}>{ago(comment.created_at)}</time></div>
         {comment.parent_id && <p className="reply-context">Replying to {repliedTo ? <a href={`#response-${repliedTo.id}`}>@{repliedTo.author.handle}</a> : 'an earlier response'}</p>}
         <p className="response-body">{comment.body}</p>
         <button className="text-control" disabled={busy} onClick={() => { change({ parent_id: comment.id }); input.current?.focus(); input.current?.scrollIntoView({ block: 'center', behavior: 'instant' }) }}>Reply</button>

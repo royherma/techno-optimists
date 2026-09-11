@@ -1,0 +1,5 @@
+---
+interface Props { size?: number }
+const { size = 46 } = Astro.props
+---
+<img src="/icon-192.png" width={size} height={size} alt="" aria-hidden="true" class="brand-icon" />

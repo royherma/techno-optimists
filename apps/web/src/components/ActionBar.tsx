@@ -8,6 +8,8 @@ import '../styles/activity.css'
  * The one contribution control. Which actions appear depends on the Challenge's
  * type - offering "I have this problem" on someone's Build is noise.
  */
+const ACTION_ICON: Record<ActionKind, string> = { have_problem: 'plus', want_this: 'plus', have_idea: 'lightbulb', can_help: 'users', will_test: 'flask', building_this: 'rocket', follow: 'chart-line' }
+
 const FOR_TYPE: Record<Challenge['type'], ActionKind[]> = {
   problem: ['have_problem', 'have_idea', 'can_help', 'will_test', 'follow'],
   idea: ['want_this', 'have_idea', 'can_help', 'building_this', 'follow'],
@@ -59,7 +61,7 @@ export default function ActionBar({ slug, type, actions }: {
       setCounts(d.challenge.actions)
       setMine(p.mine)
       setReady(true)
-      setStatus('Choose what fits. “I have an idea” opens the composer.')
+      setStatus('')
     }).catch(() => {
       if (!cancelled) { setError(true); setStatus('Your selections could not load.') }
     })
@@ -129,6 +131,7 @@ export default function ActionBar({ slug, type, actions }: {
         return (
           <button
             key={kind}
+            data-action-kind={kind}
             onClick={() => act(kind)}
             disabled={busy !== null}
             type="button"
@@ -142,8 +145,8 @@ export default function ActionBar({ slug, type, actions }: {
                   : 'border-(--color-rule-soft) text-(--color-ink-soft) hover:border-(--color-rule) hover:bg-(--color-paper-sunk) hover:text-(--color-ink) active:bg-(--color-table)'
             }`}
           >
-            <span>{on && <span aria-hidden="true">✓ </span>}{ACTION_LABEL[kind]}</span>
-            <span className={`ml-2 tabular-nums ${on ? 'text-(--color-paper)' : 'text-(--color-ink-faint)'}`}>
+            <span className="action-label"><span className="action-icon" aria-hidden="true"><img src={`/icons/${ACTION_ICON[kind]}.svg`} width="20" height="20" alt="" /></span><span>{ACTION_LABEL[kind]}{kind === 'have_idea' && <small>Write your idea ↗</small>}</span>{on && <span className="action-check" aria-hidden="true">✓</span>}</span>
+            <span className={`action-count ml-2 tabular-nums ${on ? 'text-(--color-paper)' : 'text-(--color-ink-faint)'}`}>
               {counts[kind].toLocaleString('en-US')}
             </span>
           </button>
