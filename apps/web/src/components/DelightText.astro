@@ -1,0 +1,9 @@
+---
+import '../styles/delight.css'
+interface Props { text: string; letters?: boolean; color?: number }
+const { text, letters = false, color = 0 } = Astro.props
+const palette = ['spot', 'understand', 'ideas', 'test', 'improve']
+---
+<span class={letters ? 'delight-letters' : 'delight-phrase'} aria-hidden={letters ? 'true' : undefined}>
+  {letters ? Array.from(text).map((letter, i) => <span class="delight-letter" style={`--delight-color:var(--color-${palette[(i + color) % palette.length]})`}><span>{letter}</span></span>) : <span style={`--delight-color:var(--color-${palette[color % palette.length]})`}>{text}</span>}
+</span>

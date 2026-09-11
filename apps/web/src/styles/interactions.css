@@ -100,7 +100,6 @@
   /* Blend the white raster backing into the canvas and soften the circular edge. */
   mix-blend-mode: multiply;
   mask-image: radial-gradient(circle, #000 59%, transparent 70%);
-  transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .brand-mark img { transition: transform 300ms var(--feedback-ease); }
 .manifesto-word {
@@ -114,7 +113,6 @@
 @media (hover: hover) and (pointer: fine) {
   .type-tabs a:hover::after { transform: scaleX(1); }
   .brand-word:hover { color: var(--color-accent); transform: translateY(-2px); }
-  .brand-future:hover img { transform: rotate(24deg); }
   .brand-mark:hover img { transform: rotate(90deg); }
 }
 @media (prefers-reduced-motion: reduce) {

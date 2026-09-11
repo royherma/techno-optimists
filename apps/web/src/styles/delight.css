@@ -1,0 +1,27 @@
+/* Stationary hit areas let the ink move without flickering under the pointer. */
+.np-nameplate > a:hover,.brand-title > a:hover { text-decoration: none; }
+.delight-letter,.delight-letter > span { display: inline-block; }
+.delight-phrase > span { display: inline-block; }
+a:focus-visible .delight-letter > span { color: var(--delight-color); }
+.np-orb-hit { display: grid; place-items: center; }
+.np-orb-hit .np-orb { display: block; }
+@media (hover: hover) and (pointer: fine) {
+  .delight-letter:hover > span { color: var(--delight-color); }
+  .delight-phrase:hover > span { color: color-mix(in oklch, var(--delight-color) 88%, var(--color-ink)); }
+  .delight-orb-hit:hover .delight-orb { filter: saturate(1); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .delight-letter > span,.delight-phrase > span {
+    transition: color 600ms ease-out, transform 420ms cubic-bezier(.22,1,.36,1);
+  }
+  .delight-orb { transition: transform 900ms cubic-bezier(.22,1,.36,1), filter 400ms ease-out; }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .delight-letter:hover > span { transform: translateY(-.055em) rotate(-4deg); transition-duration: 120ms; }
+  .delight-letter:nth-child(even):hover > span { transform: translateY(-.055em) rotate(4deg); }
+  .delight-phrase:hover > span { transform: translateY(-2px); transition-duration: 140ms; }
+  .delight-separator { display: inline-block; transition: transform 420ms cubic-bezier(.22,1,.36,1), color 420ms ease-out; }
+  .delight-separator:hover { transform: rotate(90deg); color: var(--color-test); }
+  .delight-orb-hit:hover .delight-orb { transform: rotate(360deg) scale(1.07); }
+}
+@media (max-width: 599px) { .np-orb-hit { display: none; } }
