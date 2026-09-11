@@ -62,8 +62,9 @@ Binding **names** are identical in both, so no code branches on environment - on
 the IDs behind them differ.
 
 **The build prerenders from local D1.** Whatever rows are in it get baked into the
-static pages, so `make ship` empties local D1 first. Seeds are a dev fixture; they
-do not belong on the domain.
+static pages, so `deploy:prod` builds through `build:web:only`, which reads the
+production API instead of local D1. Seeds are a dev fixture; they do not belong on
+the domain. See [`docs/CONSTRAINTS.md`](docs/CONSTRAINTS.md).
 
 ## Docs
 
@@ -74,7 +75,7 @@ staleness shows.
 |---|---|
 | [`CLAUDE.md`](CLAUDE.md) | Rules for whoever edits: vocabulary, copy rules, how not to lose work |
 | [`PRODUCT.md`](PRODUCT.md) | What is being built and why |
-| [`docs/DECISIONS.md`](docs/DECISIONS.md) | One row per decision and the trap it avoids |
+| [`docs/CONSTRAINTS.md`](docs/CONSTRAINTS.md) | Traps that are still live in the code - read before a deploy or a schema change |
 | [`docs/2026-09-10-concept.md`](docs/2026-09-10-concept.md) | The raw brainstorm this came from |
 
 ## Run it
