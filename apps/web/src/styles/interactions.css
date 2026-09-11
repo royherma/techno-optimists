@@ -14,9 +14,8 @@
     .session-nav img, .discovery-icon, .discovery-arrow, .feedback-row > span:first-child) {
   transition: transform var(--feedback-duration) var(--feedback-ease);
 }
-.feedback-row {
-  border-radius: 6px;
-  transition: background-color var(--ease-ink);
+.feedback-row > span:last-child {
+  transition: transform var(--feedback-duration) var(--feedback-ease);
 }
 :is(.feedback-control, .side-links a, .view-tabs a, .type-tabs a,
     .session-nav a, .session-nav button, .search-toggle, .discovery-link,
@@ -24,8 +23,7 @@
   outline: 2px solid var(--color-accent);
   outline-offset: 3px;
 }
-:is(.view-tabs a, .type-tabs a, .search-toggle):focus-visible,
-.feedback-row:focus-within {
+:is(.view-tabs a, .search-toggle):focus-visible {
   background-color: var(--color-selected);
 }
 .challenge-row:focus-within {
@@ -36,7 +34,7 @@
       .discovery-link, .form-surface button):not(:disabled):not([aria-disabled="true"]):hover {
     transform: translateY(-2px);
   }
-  :is(.side-links a, .view-tabs a, .type-tabs a):hover {
+  :is(.side-links a, .view-tabs a):hover {
     background-color: var(--color-selected);
   }
   :is(.side-links a, .view-tabs a, .search-toggle):hover img,
@@ -45,9 +43,7 @@
   }
   .discovery-link:hover .discovery-icon { transform: rotate(-5deg) scale(1.04); }
   .discovery-link:hover .discovery-arrow { transform: translateX(3px); }
-  .feedback-row:hover {
-    background-color: color-mix(in oklch, var(--feedback-color, var(--color-accent)) 9%, var(--color-paper));
-  }
+  .feedback-row:hover > span:last-child { transform: translateX(2px); }
   .feedback-row:hover > span:first-child { transform: scale(1.12); }
 }
 :is(.feedback-control, .side-links a, .view-tabs a, .type-tabs a,
@@ -60,7 +56,60 @@
       .session-nav a, .session-nav button, .search-toggle, .discovery-link,
       .form-surface button, .form-surface a[href^="/signin"]),
   :is(.feedback-icon, .side-links a img, .view-tabs a img, .search-toggle img,
-      .session-nav img, .discovery-icon, .discovery-arrow, .feedback-row > span:first-child) {
+      .session-nav img, .discovery-icon, .discovery-arrow, .feedback-row > span:first-child, .feedback-row > span:last-child,
+      .brand-word, .brand-future img, .brand-mark img) {
     transform: none !important;
   }
 }
+
+/* Text navigation gets breathing room and a quiet ink underline, never a block fill. */
+.type-tabs a {
+  position: relative;
+  border-radius: 6px;
+  text-decoration: none !important;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.type-tabs a::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 6px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--feedback-duration) var(--feedback-ease);
+}
+.type-tabs a[aria-current="page"]::after,
+.type-tabs a:focus-visible::after { transform: scaleX(1); }
+.brand-word {
+  display: inline-block;
+  transition: color var(--ease-ink), transform 220ms var(--feedback-ease);
+}
+.brand-title > a { border-radius: 4px; }
+.brand-title > a:focus-visible .brand-word { color: var(--color-accent); }
+.brand-future img {
+  /* Blend the white raster backing into the canvas and soften the circular edge. */
+  mix-blend-mode: multiply;
+  mask-image: radial-gradient(circle, #000 59%, transparent 70%);
+  transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.brand-mark img { transition: transform 300ms var(--feedback-ease); }
+@media (hover: hover) and (pointer: fine) {
+  .type-tabs a:hover::after { transform: scaleX(1); }
+  .brand-word:hover { color: var(--color-accent); transform: translateY(-2px); }
+  .brand-future img:hover { transform: rotate(24deg); }
+  .brand-mark:hover img { transform: rotate(90deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .type-tabs a::after { transition: none; }
+}
+@media (min-width: 761px) {
+  .type-tabs { column-gap: 18px; }
+  .type-tabs a { padding-inline: 4px; }
+  .type-tabs a::after { left: 4px; right: 4px; }
+}
+.sheet-legend section li { column-gap: 12px; }
+.sheet-legend section li > span:last-child { line-height: 1.45; }
