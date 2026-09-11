@@ -220,8 +220,9 @@ export default function SettingsForm({ person, section }: { person: Me; section:
       <section hidden={section !== "signin"} className="space-y-3">
         <Legend n="04" label="Sign-in" />
         <p className="text-sm text-(--color-ink-soft)">
-          You sign in with{' '}
-          <span className="font-[family-name:var(--font-mono)] text-(--color-ink)">{me.email ?? 'a magic link'}</span>.
+          {me.email
+            ? <>You sign in with{' '}<span className="font-[family-name:var(--font-mono)] text-(--color-ink)">{me.email}</span>.</>
+            : <>You sign in with a link sent to your email.</>}
         </p>
         <p className="text-xs text-(--color-ink-faint)">
           Only you can see this address. It is never shown on your Challenges or to anyone else.
