@@ -1,5 +1,6 @@
 ---
 import TitleBlock from './TitleBlock.astro'
+import SiteFooter from './SiteFooter.astro'
 import '../styles/shell.css'
 import '../styles/viewport.css'
 import '../styles/interactions.css'
@@ -8,4 +9,10 @@ import '../styles/interactions.css'
   <a class="skip-link" href="#main-content">Skip to content</a>
   <TitleBlock />
   <div class="workspace"><div class="sheet-content" id="main-content"><slot /></div></div>
+  <!--
+    Inside the shell, not after it: from 1024px the shell is the full 100dvh and
+    the body does not scroll, so anything below this element is unreachable.
+    See the comment in SiteFooter.astro.
+  -->
+  <SiteFooter />
 </div>

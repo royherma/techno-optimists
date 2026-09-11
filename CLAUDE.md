@@ -95,11 +95,14 @@ point: no dangling markdown.
 | `CLAUDE.md` | Rules for whoever edits: vocabulary, copy rules, how not to lose work |
 | `README.md` | How to run it, and where the other docs are |
 | `PRODUCT.md` | What is being built and why - the product argument |
-| `docs/DECISIONS.md` | One row per decision and the trap it avoids |
+| `docs/CONSTRAINTS.md` | Traps that are still live in the code - read before a deploy or a schema change |
 
-- `DECISIONS.md` is **append-only**. Add a row, never rewrite one. `git log` records what
-  changed; that table records why, and what not to try again. A row earns its place by
-  naming a trap that cost real time, not by narrating a preference.
+- `CONSTRAINTS.md` holds only what is still true of the code: the manual prod ALTER, the
+  unusable rate-limit binding, the CSP split, the generated seed. Each entry names the
+  failure it prevents, so it is short enough to read every time. A rule whose trap the
+  code no longer has is moved out, not kept "for history".
+- History lives in `docs/2026-09-11-decisions-archive.md` and is not a rule. Do not
+  consult it for how the system behaves - read the code.
 - Anything time-boxed - a PRD, a spike writeup, a stack evaluation - is
   `docs/YYYY-MM-DD-slug.md`. The date is the staleness warning.
 - Throwaway probes and scripts go in the session scratchpad, never the repo. `*-tmp.mjs`

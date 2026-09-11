@@ -64,6 +64,7 @@ the IDs behind them differ.
 **Production builds read the production API.** Development builds read local D1.
 `ship` applies additive migrations before deploying; it never resets existing data.
 `schema.sql` is a destructive reset fixture for a new local database, not a migration.
+See [`docs/CONSTRAINTS.md`](docs/CONSTRAINTS.md).
 
 ## Docs
 
@@ -74,7 +75,7 @@ staleness shows.
 |---|---|
 | [`CLAUDE.md`](CLAUDE.md) | Rules for whoever edits: vocabulary, copy rules, how not to lose work |
 | [`PRODUCT.md`](PRODUCT.md) | What is being built and why |
-| [`docs/DECISIONS.md`](docs/DECISIONS.md) | One row per decision and the trap it avoids |
+| [`docs/CONSTRAINTS.md`](docs/CONSTRAINTS.md) | Traps that are still live in the code - read before a deploy or a schema change |
 | [`docs/2026-09-10-concept.md`](docs/2026-09-10-concept.md) | The raw brainstorm this came from |
 
 ## Run it

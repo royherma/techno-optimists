@@ -9,7 +9,8 @@ web
 ## Stack
 
 Astro + Cloudflare Worker + D1. Confirmed by the user 2026-09-10, resolving the "stack deferred"
-row in `docs/DECISIONS.md`. Matches `creators-of-today` and `She-Kee` in the sibling folder, and
+row in `docs/2026-09-11-decisions-archive.md`. Matches `creators-of-today` and `She-Kee` in the
+sibling folder, and
 the Cloudflare account key already present in `.env.example`. Node pinned to 22 in `.nvmrc`.
 
 ## Users

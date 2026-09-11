@@ -1,0 +1,120 @@
+/*
+ * Two shapes, one component.
+ *
+ * Below 1024px the body scrolls, so this is an ordinary footer: the whole
+ * colophon, reached by scrolling to the end of the page.
+ *
+ * From 1024px the body does NOT scroll (viewport.css), so the footer has to
+ * earn a permanent slice of a fixed-height frame. It collapses to one quiet
+ * line - the mission prose would cost three rows of a screen the index needs -
+ * and the rest is carried by the masthead, which already states the promise.
+ */
+.site-footer {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-rule);
+  text-align: center;
+}
+.footer-line {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-style: italic;
+  line-height: 1.45;
+  color: var(--color-ink-soft);
+  text-wrap: balance;
+}
+.footer-mission {
+  max-width: 62ch;
+  margin: 14px auto 0;
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--color-ink-faint);
+  text-wrap: pretty;
+}
+.footer-mark {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  line-height: 1.9;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+.footer-mark a {
+  color: var(--color-ink-soft);
+  text-underline-offset: 3px;
+  transition: color var(--ease-ink);
+}
+.footer-mark a:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+.footer-mark > span[aria-hidden="true"] {
+  color: var(--color-ink-faint);
+}
+
+/*
+ * The fixed bottom nav rail below 760px sits over the end of the page, so the
+ * last thing on it needs clearance or the rail covers the wordmark. The shell
+ * already pads for the safe area; this adds the rail's own height.
+ */
+@media (max-width: 760px) {
+  .site-footer {
+    margin-top: 22px;
+    padding-bottom: 74px;
+  }
+  .footer-line {
+    font-size: 17px;
+  }
+  .footer-mission {
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  .footer-mark {
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    gap: 7px;
+  }
+}
+
+/*
+ * Desktop: one row, never scrolled to, never shrinking. `flex-shrink:0` is what
+ * keeps it on screen - the workspace above it is `flex:1` and will give up its
+ * own height first. The prose and the wordmark go; the single line stays,
+ * which is the part that says who the place is for.
+ */
+@media (min-width: 1024px) {
+  .site-shell > .site-footer {
+    flex-shrink: 0;
+    margin-top: 12px;
+    padding-top: 10px;
+    padding-bottom: 0;
+  }
+  .site-footer .footer-mission,
+  .site-footer .footer-mark {
+    display: none;
+  }
+  .footer-line {
+    font-size: 15px;
+    line-height: 1.3;
+  }
+}
+@media (min-width: 1024px) and (max-height: 780px) {
+  .site-shell > .site-footer {
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+  .footer-line {
+    font-size: 13px;
+  }
+}
+@media (min-width: 1701px) {
+  .footer-line {
+    font-size: 18px;
+  }
+}

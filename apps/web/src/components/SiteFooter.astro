@@ -1,0 +1,43 @@
+---
+import '../styles/footer.css'
+
+/*
+ * The colophon: who this is for and what the place is, on every page.
+ *
+ * It is NOT at the bottom of the document, and that is deliberate. From 1024px
+ * up the shell is a fixed-height app frame - `viewport.css` sets
+ * `body:has(.site-shell){overflow:hidden}` and `.site-shell{height:100dvh}`,
+ * and the content island scrolls inside itself. A footer placed after the page
+ * content is therefore below a fold that can never be reached: the body does
+ * not scroll. That is how the first one died (a `mt-24` block in Base.astro,
+ * 3e1e0ac) and the second (a strapline in the nav rail, dropped when the rail
+ * was cut to two links). So this sits inside the shell's flex column as a
+ * non-shrinking row, always on screen, and only becomes a scrolled-to footer
+ * below 1024px where the page scrolls normally.
+ *
+ * The line is the one the concept doc names as the footer line, verbatim -
+ * see docs/2026-09-10-concept.md, "Positioning".
+ *
+ * No business model is stated here, and none may be. PRODUCT.md lists bounties,
+ * sponsored Challenges, talent and the R&D network as directions where "none is
+ * committed and none may appear in UI". "Non-profit" is a business-model claim
+ * like any other: it is nowhere in this repo, the concept doc points the other
+ * way, and a sponsored Challenge would make it retroactively false. The mission
+ * carries the page instead, which is what people actually came to read.
+ */
+---
+<footer class="site-footer">
+  <p class="footer-line">For people who believe technology can build a better present and a better future.</p>
+
+  <p class="footer-mission">
+    Techno Optimists is a global community of people using technology to understand
+    problems, try ideas and build better solutions together. Not startups, not charity,
+    not the far future. Fixing an irrigation system this afternoon counts.
+  </p>
+
+  <p class="footer-mark">
+    <a href="/">TechnoOptimists.org</a>
+    <span aria-hidden="true">·</span>
+    <span>Things can be better. We can build better.</span>
+  </p>
+</footer>

@@ -47,7 +47,7 @@ const app = new Hono<{ Bindings: Env }>()
  *
  * Without this, Hono answers a thrown error with a bare `Internal Server Error`
  * and nothing reaches the log with it. That is not hypothetical: prod sign-in
- * 500'd on `no such column: is_admin` (docs/DECISIONS.md, 2026-09-10) and the
+ * 500'd on `no such column: is_admin` (docs/CONSTRAINTS.md, "Database") and the
  * response carried no hint of which query, which column, or which request -
  * the cause had to be found by reading source. One log line here would have
  * named it.

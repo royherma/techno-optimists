@@ -59,7 +59,7 @@ const env = () => ({ DB: stubDb() as unknown as D1Database })
 /**
  * The boundary is what turned a bare "Internal Server Error" into something
  * diagnosable. A D1 throw used to reach the client with no request id, no path
- * and nothing in the log - see docs/DECISIONS.md for the sign-in outage that
+ * and nothing in the log - see docs/CONSTRAINTS.md for the sign-in outage that
  * cost an afternoon.
  */
 describe('an unhandled throw becomes a diagnosable 500', () => {
