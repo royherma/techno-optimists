@@ -7,6 +7,7 @@ export function initFeedFilters() {
   const toggle = document.querySelector<HTMLButtonElement>(".search-toggle")!;
   const empty = document.querySelector<HTMLElement>("[data-empty-index]")!;
   const status = document.querySelector<HTMLElement>("[data-feed-status]")!;
+  const base = location.pathname.replace(/\/$/, "") || "/";
   function apply() {
     const params = new URLSearchParams(location.search);
     const raw = params.get("type") ?? "";
@@ -27,6 +28,10 @@ export function initFeedFilters() {
       );
       if (!row.hidden) count++;
     });
+    document.querySelectorAll<SVGElement>("[data-feed-pin]").forEach(pin => {
+      const hidden = !!((type && pin.dataset.type !== type) || (query && !pin.dataset.search?.includes(query)));
+      pin.style.display = hidden ? "none" : "";
+    });
     empty.hidden = count > 0;
     status.textContent =
       type || query
@@ -44,8 +49,8 @@ export function initFeedFilters() {
       .forEach((link) => {
         const url = new URL(link.href);
         if (
-          url.pathname === "/" &&
-          (url.searchParams.get("type") ?? "") === type
+          (url.pathname.replace(/\/$/, "") || "/") === base &&
+          (base === "/map" || (url.searchParams.get("type") ?? "") === type)
         )
           link.setAttribute("aria-current", "page");
         else link.removeAttribute("aria-current");
@@ -65,7 +70,7 @@ export function initFeedFilters() {
     )
       return;
     const url = new URL(link.href);
-    if (url.pathname !== "/" || url.origin !== location.origin) return;
+    if ((url.pathname.replace(/\/$/, "") || "/") !== base || url.origin !== location.origin) return;
     event.preventDefault();
     const query = input.value.trim();
     if (query) url.searchParams.set("q", query);
