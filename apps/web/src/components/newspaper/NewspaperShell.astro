@@ -33,7 +33,7 @@ const manifesto = ['Explore.', 'Solve.', 'Build together', 'for a more human', '
     <a href="/map" aria-current={section === 'World map' ? 'page' : undefined}>Map</a><a href="/people" aria-current={section === 'Community' ? 'page' : undefined}>Community</a>
     <div class="np-nav-end"><a href="/settings">Account</a><a class="np-submit" href="/post">＋ Share</a><button type="button" class="np-legend-toggle" data-legend-toggle aria-expanded="false">Legend</button><a href="/v1" data-classic-switch>V1 / Classic</a></div>
   </nav>
-  <div class="np-workspace"><main id="newspaper-main" class="np-main"><slot /></main><aside class="np-sidebar" aria-label="Field guide and legend"><Legend client:load challenges={challenges} /></aside></div>
+  <div class="np-workspace"><main id="newspaper-main" class="np-main"><slot /></main><aside class="np-sidebar" aria-label="Field guide and legend"><Legend client:load challenges={challenges} impact={impact} /></aside></div>
   <footer class="np-colophon"><span>Real problems. Real ideas. A brighter tomorrow.</span><span class="np-colophon-counter">Visits <HitCounter client:load initial={initialViews} /></span><nav aria-label="About this site"><a href="/contribute">Contribute</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></footer>
 </div>
 <script>
