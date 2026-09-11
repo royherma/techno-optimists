@@ -137,4 +137,6 @@ today, so weigh those separately.
 from the email local part at signup - a real name nobody chose to publish.
 `PublicPerson = Omit<Person,'name'>` names the safe shape once.
 
-**V2 pages need Worker fallback routing.** Keep `/v2/*` in `assets.run_worker_first` alongside `/c/*`, `/api/*` and `/media/*`. The shared Challenge handler serves `/v2/c/_shell` for Challenges created after a build; unknown V2 URLs serve `/v2/404` with status 404. Without the routing entry, newly posted V2 Challenges stop at the asset handler.
+**Both editions need Worker fallback routing.** Keep `/c/*`, `/v1/*` and `/v2/*` in `assets.run_worker_first` alongside `/api/*` and `/media/*`. The shared Challenge handler serves `/c/_shell` (or `/v1/c/_shell`) for Challenges created after a build; unknown Classic URLs serve `/v1/404` with status 404, and `/v2/*` 301s to the same path without the prefix. Without the routing entries, newly posted Challenges stop at the asset handler and the retired `/v2` links stop redirecting.
+
+**The newspaper is served at `/`, never by a redirect.** Base.astro used to run a client-side `location.replace` sending every bare path to its `/v2` twin, so the address bar never kept the URL anyone typed. `scripts/test-edition.mjs` asserts no `location.replace` survives in that layout. If a design switch is ever needed again, it is a path or a server response - not a redirect after first paint.

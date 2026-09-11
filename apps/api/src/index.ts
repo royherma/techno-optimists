@@ -1119,7 +1119,7 @@ app.get('/api/health', async (c) => {
  * load. The reader gets their Challenge immediately; the next build turns it
  * into a static page like any other.
  */
-app.on('GET', ['/c/:slug', '/v2/c/:slug'], async (c) => {
+app.on('GET', ['/c/:slug', '/v1/c/:slug'], async (c) => {
   if (!c.env.ASSETS) return c.notFound()
   if (c.req.param('slug') === '_shell') return c.notFound()
 
@@ -1128,9 +1128,10 @@ app.on('GET', ['/c/:slug', '/v2/c/:slug'], async (c) => {
 
   const slug = c.req.param('slug')
   const exists = await c.env.DB.prepare('SELECT 1 FROM challenges WHERE slug = ?').bind(slug).first()
+  const classic = c.req.path.startsWith('/v1/')
   if (!exists) {
-    if (!c.req.path.startsWith('/v2/')) return prerendered
-    const missingUrl = new URL(c.req.url); missingUrl.pathname = '/v2/404'
+    if (classic) return prerendered
+    const missingUrl = new URL(c.req.url); missingUrl.pathname = '/404'
     const missing = await c.env.ASSETS.fetch(new Request(missingUrl, { headers: c.req.raw.headers }))
     return new Response(missing.body, { status: 404, headers: missing.headers })
   }
@@ -1138,7 +1139,7 @@ app.on('GET', ['/c/:slug', '/v2/c/:slug'], async (c) => {
   // Always built, even for an empty corpus. Never borrow another Challenge's
   // content or inject a script that the page's CSP would reject.
   const shellUrl = new URL(c.req.url)
-  shellUrl.pathname = c.req.path.startsWith('/v2/') ? '/v2/c/_shell' : '/c/_shell'
+  shellUrl.pathname = classic ? '/v1/c/_shell' : '/c/_shell'
   const shell = await c.env.ASSETS.fetch(new Request(shellUrl.toString(), { headers: c.req.raw.headers }))
   if (shell.status !== 200) return prerendered
 
@@ -1168,12 +1169,30 @@ app.get('/api/_throw', (c) => {
   throw new Error('deliberate: verifying the error boundary')
 })
 
-// Keep the selected edition on unknown URLs, with a genuine 404 status.
-app.get('/v2/*', async (c) => {
+/*
+ * The newspaper used to live under /v2 and a script on every page redirected
+ * there, so every address anyone typed or pasted grew a prefix on arrival. It
+ * is served at the bare paths now. These 301s keep the old links working -
+ * bookmarks, anything already indexed, a URL in someone's message - and hand
+ * back the clean address permanently rather than serving both forever.
+ */
+app.get('/v2/*', (c) => {
+  const url = new URL(c.req.url)
+  url.pathname = url.pathname.replace(/^\/v2(?=\/|$)/, '') || '/'
+  return c.redirect(url.toString(), 301)
+})
+app.get('/v2', (c) => {
+  const url = new URL(c.req.url); url.pathname = '/'
+  return c.redirect(url.toString(), 301)
+})
+
+// Unknown Classic URLs keep the Classic 404 rather than falling through to the
+// newspaper's, so a reader browsing /v1 is not silently moved between designs.
+app.get('/v1/*', async (c) => {
   if (!c.env.ASSETS) return c.notFound()
   const response = await c.env.ASSETS.fetch(c.req.raw)
   if (response.status !== 404) return response
-  const url = new URL(c.req.url); url.pathname = '/v2/404'
+  const url = new URL(c.req.url); url.pathname = '/v1/404'
   const missing = await c.env.ASSETS.fetch(new Request(url, { headers: c.req.raw.headers }))
   return new Response(missing.body, { status: 404, headers: missing.headers })
 })

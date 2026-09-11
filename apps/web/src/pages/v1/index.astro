@@ -1,11 +1,11 @@
 ---
-import Base from '../layouts/Base.astro'
-import ChallengeRow from '../components/ChallengeRow.astro'
-import Sheet from '../components/Sheet.astro'
-import BrowseFrame from '../components/BrowseFrame.astro'
-import EmptyIndex from '../components/EmptyIndex.astro'
-import FeedTopUp from '../components/FeedTopUp'
-import { getFeed } from '../lib/api'
+import Base from '../../layouts/Base.astro'
+import ChallengeRow from '../../components/ChallengeRow.astro'
+import Sheet from '../../components/Sheet.astro'
+import BrowseFrame from '../../components/BrowseFrame.astro'
+import EmptyIndex from '../../components/EmptyIndex.astro'
+import FeedTopUp from '../../components/FeedTopUp'
+import { getFeed } from '../../lib/api'
 const { challenges } = await getFeed('?limit=50')
 ---
 <Base
@@ -23,6 +23,6 @@ const { challenges } = await getFeed('?limit=50')
   </Sheet>
 </Base>
 <script>
-  import { initFeedFilters } from '../lib/feed-filters'
+  import { initFeedFilters } from '../../lib/feed-filters'
   initFeedFilters()
 </script>

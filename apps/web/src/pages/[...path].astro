@@ -1,20 +1,20 @@
 ---
-import Base from '../../layouts/Base.astro'
-import NewspaperShell from '../../components/newspaper/NewspaperShell.astro'
-import ChallengePage from '../../components/newspaper/ChallengePage'
-import MapPage from '../../components/newspaper/MapPage'
-import AccountPage from '../../components/newspaper/AccountPage'
-import SignInPage from '../../components/newspaper/SignInPage'
-import SubmissionPage from '../../components/newspaper/SubmissionPage'
-import CommunityPage from '../../components/newspaper/CommunityPage'
-import ReaderPage from '../../components/newspaper/ReaderPage'
-import privacy from '../../content/privacy.html?raw'
-import terms from '../../content/terms.html?raw'
-import contribute from '../../content/contribute.html?raw'
-import { getFeed, getChallenge } from '../../lib/api'
-import '../../styles/discussion.css'
-import '../../styles/account.css'
-import '../../styles/activity.css'
+import Base from '../layouts/Base.astro'
+import NewspaperShell from '../components/newspaper/NewspaperShell.astro'
+import ChallengePage from '../components/newspaper/ChallengePage'
+import MapPage from '../components/newspaper/MapPage'
+import AccountPage from '../components/newspaper/AccountPage'
+import SignInPage from '../components/newspaper/SignInPage'
+import SubmissionPage from '../components/newspaper/SubmissionPage'
+import CommunityPage from '../components/newspaper/CommunityPage'
+import ReaderPage from '../components/newspaper/ReaderPage'
+import privacy from '../content/privacy.html?raw'
+import terms from '../content/terms.html?raw'
+import contribute from '../content/contribute.html?raw'
+import { getFeed, getChallenge } from '../lib/api'
+import '../styles/discussion.css'
+import '../styles/account.css'
+import '../styles/activity.css'
 export async function getStaticPaths() {
   const { challenges } = await getFeed('?limit=50')
   return ['map','settings','signin','post','people','privacy','terms','contribute','404','c/_shell', ...challenges.map(c => 'c/' + c.slug)].map(path => ({ params: { path } }))
@@ -35,6 +35,6 @@ const articles: Record<string,string> = { privacy, terms, contribute }
     {path === 'post' && <SubmissionPage client:load />}
     {path === 'people' && <CommunityPage client:load challenges={challenges} />}
     {articles[path] && <ReaderPage client:load html={articles[path]} title={title} />}
-    {path === '404' && <div class="np-empty"><h1>A different path, perhaps?</h1><p>This page may have moved, or the link may be mistyped.</p><a href="/v2">Back to the edition →</a></div>}
+    {path === '404' && <div class="np-empty"><h1>A different path, perhaps?</h1><p>This page may have moved, or the link may be mistyped.</p><a href="/">Back to the edition →</a></div>}
   </NewspaperShell>
 </Base>
