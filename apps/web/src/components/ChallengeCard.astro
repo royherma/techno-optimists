@@ -45,6 +45,29 @@ const shown = ([demand, 'can_help', 'have_idea'] as const)
     <span>·</span><span>{ago(c.last_activity_at)}</span>
   </div>
 
+  {/*
+    Credit for a Challenge logged from someone else's report. Sits outside the
+    card's <a> because it carries its own link - an anchor inside an anchor is
+    invalid and the browser resolves it by dropping one of them.
+
+    `source.url` is not guaranteed to be a URL (an interview is a valid source),
+    so anything that is not http(s) renders as plain text rather than a link
+    pointing at nothing.
+  */}
+  {c.source && (c.source.name || c.source.url) && (
+    <p class="mt-1.5 text-[0.78rem] text-(--color-ink-faint)">
+      Reported by{' '}
+      {c.source.url?.startsWith('http')
+        ? <a
+            href={c.source.url}
+            target="_blank"
+            rel="noopener nofollow ugc"
+            class="underline decoration-dotted underline-offset-2 hover:text-(--color-ink-soft)"
+          >{c.source.name ?? new URL(c.source.url).hostname.replace(/^www\./, '')}</a>
+        : <span>{c.source.name ?? c.source.url}</span>}
+    </p>
+  )}
+
   <div class="mt-2 flex flex-wrap gap-x-3.5 gap-y-1 text-[0.82rem]">
     {shown.map(([k, n]) => (
       <span><strong class="font-semibold tabular-nums">{count(n)}</strong>

@@ -42,10 +42,10 @@ check: ## typecheck + tests
 # dev fixtures. Use `ship-dev` for the throwaway environment where seeds belong.
 
 ship: ## check, empty local d1, deploy PROD, verify
-	@npm run typecheck && npm run db:local && npm run deploy:prod && npm run verify
+	@npm run ship
 
 ship-dev: ## check, deploy dev, verify dev
-	@npm run typecheck && npm run deploy:dev && npm run verify:dev
+	@npm run ship:dev
 
 # --- is it actually working ------------------------------------------------
 
