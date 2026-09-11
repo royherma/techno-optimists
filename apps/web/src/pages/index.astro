@@ -10,7 +10,10 @@ import { depthScale } from '../lib/vocab'
 const { challenges } = await getFeed('?limit=50')
 const depth = depthScale(challenges)
 ---
-<Base title="Techno Optimists - find real problems, help solve them">
+<Base
+  title="Techno Optimists - find real problems, help solve them"
+  description="A live index of real-world Challenges - problems, ideas, experiments and builds - posted by people who want them fixed. Browse them, or bring your own."
+>
   <Sheet>
     <BrowseFrame label="Challenge index">
         <div class="index-columns"><span>No.</span><span>Grid ref.</span><span>Challenge</span><span>Impact</span><span>Stage</span></div>

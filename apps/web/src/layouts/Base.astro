@@ -15,6 +15,48 @@ const ogImage = new URL(image, ORIGIN).href
 // then omitted entirely rather than emitted empty, which Search Console reads
 // as a failed verification.
 const gscToken = import.meta.env.GSC_VERIFICATION ?? process.env.GSC_VERIFICATION ?? ''
+
+/*
+ * Structured data. Two nodes in one graph rather than two script tags, which is
+ * what Google's own examples do and what lets the WebSite reference the
+ * Organization by @id instead of repeating it.
+ *
+ * The Organization carries the legal entity, because the name a search engine
+ * shows in a knowledge panel should match the one on the Terms page. No
+ * `sameAs` profiles are listed - inventing URLs here would be a fabricated
+ * claim, and an absent property costs nothing.
+ *
+ * SearchAction is deliberately absent: the sitelinks searchbox needs a real
+ * query endpoint, and there is no /search route to point it at.
+ *
+ * It is emitted on indexable pages only. A noindex page telling a crawler it is
+ * the organisation's home is a contradiction, and the account and profile pages
+ * are both noindex.
+ */
+const schema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': `${ORIGIN}/#organization`,
+      name: 'Techno Optimists',
+      url: ORIGIN,
+      logo: new URL('/icon-192.png', ORIGIN).href,
+      description:
+        'A global community of people using technology to understand real-world problems, try ideas and build better solutions together.',
+      parentOrganization: { '@type': 'Organization', name: 'Techguyver Labs, LLC' },
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${ORIGIN}/#website`,
+      url: ORIGIN,
+      name: 'Techno Optimists',
+      description: 'Find interesting real-world problems and help solve them.',
+      publisher: { '@id': `${ORIGIN}/#organization` },
+      inLanguage: 'en',
+    },
+  ],
+}
 ---
 <!doctype html>
 <html lang="en">
@@ -66,6 +108,8 @@ const gscToken = import.meta.env.GSC_VERIFICATION ?? process.env.GSC_VERIFICATIO
       deploy-time guarantee.
     -->
     {gscToken && <meta name="google-site-verification" content={gscToken} />}
+
+    {!noindex && <script type="application/ld+json" set:html={JSON.stringify(schema)} />}
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
