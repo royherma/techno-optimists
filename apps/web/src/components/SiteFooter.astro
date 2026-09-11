@@ -2,42 +2,50 @@
 import '../styles/footer.css'
 
 /*
- * The colophon: who this is for and what the place is, on every page.
+ * The colophon: who this is for, what the place is, and the two pages anyone
+ * is entitled to read before handing over an email address.
  *
- * It is NOT at the bottom of the document, and that is deliberate. From 1024px
- * up the shell is a fixed-height app frame - `viewport.css` sets
- * `body:has(.site-shell){overflow:hidden}` and `.site-shell{height:100dvh}`,
- * and the content island scrolls inside itself. A footer placed after the page
- * content is therefore below a fold that can never be reached: the body does
- * not scroll. That is how the first one died (a `mt-24` block in Base.astro,
- * 3e1e0ac) and the second (a strapline in the nav rail, dropped when the rail
- * was cut to two links). So this sits inside the shell's flex column as a
- * non-shrinking row, always on screen, and only becomes a scrolled-to footer
- * below 1024px where the page scrolls normally.
+ * It is a full-bleed band at the end of the document. That is only possible
+ * because the desktop frame was unlocked on 2026-09-11 - the shell used to be
+ * a pinned 100dvh app frame with `body{overflow:hidden}`, so nothing could
+ * live below the fold and two earlier footers died of exactly that (a mt-24
+ * block in Base.astro, 3e1e0ac, and a strapline in the nav rail). See the
+ * comment at the top of viewport.css.
  *
- * The line is the one the concept doc names as the footer line, verbatim -
- * see docs/2026-09-10-concept.md, "Positioning".
+ * The band escapes the shell's 1920px max-width and 28px side padding, so it
+ * runs edge to edge while the content above stays in its column. The escape is
+ * done in CSS, not by moving the element out of the shell, because the shell is
+ * the flex column that keeps a short page's footer at the bottom.
  *
- * No business model is stated here, and none may be. PRODUCT.md lists bounties,
- * sponsored Challenges, talent and the R&D network as directions where "none is
- * committed and none may appear in UI". "Non-profit" is a business-model claim
- * like any other: it is nowhere in this repo, the concept doc points the other
- * way, and a sponsored Challenge would make it retroactively false. The mission
- * carries the page instead, which is what people actually came to read.
+ * No business model is claimed here, and none may be. PRODUCT.md lists
+ * bounties, sponsored Challenges, talent and the R&D network as directions
+ * where "none is committed and none may appear in UI". "Non-profit" is a
+ * business-model claim like any other and a sponsored Challenge would make it
+ * retroactively false, so the mission carries the page instead.
  */
+const year = new Date().getFullYear()
 ---
 <footer class="site-footer">
-  <p class="footer-line">For people who believe technology can build a better present and a better future.</p>
+  <div class="footer-inner">
+    <p class="footer-line">For people who believe technology can build a better present and a better future.</p>
 
-  <p class="footer-mission">
-    Techno Optimists is a global community of people using technology to understand
-    problems, try ideas and build better solutions together. Not startups, not charity,
-    not the far future. Fixing an irrigation system this afternoon counts.
-  </p>
+    <p class="footer-mission">
+      Techno Optimists is a global community of people using technology to understand
+      problems, try ideas and build better solutions together. Not startups, not charity,
+      not the far future. Fixing an irrigation system this afternoon counts.
+    </p>
 
-  <p class="footer-mark">
-    <a href="/">TechnoOptimists.org</a>
-    <span aria-hidden="true">·</span>
-    <span>Things can be better. We can build better.</span>
-  </p>
+    <nav class="footer-nav" aria-label="Site">
+      <a href="/">Index</a>
+      <a href="/map">Map</a>
+      <a href="/post">Post a Challenge</a>
+      <a href="/terms">Terms</a>
+      <a href="/privacy">Privacy</a>
+    </nav>
+
+    <p class="footer-mark">
+      <span>Things can be better. We can build better.</span>
+      <span class="footer-legal">{year} Techguyver Labs, LLC</span>
+    </p>
+  </div>
 </footer>
