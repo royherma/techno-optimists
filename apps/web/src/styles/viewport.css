@@ -265,3 +265,47 @@
 @media (min-width: 1701px) { .site-shell { --toolbar-height: 94px; } }
 @media (min-width: 1024px) and (max-height: 950px) { .site-shell { --toolbar-height: 70px; } }
 @media (min-width: 1024px) and (max-width: 1350px) { .site-shell { --toolbar-height: 120px; } }
+
+/* Wordmark follows its column, not the viewport; tagline retains breathing room. */
+.site-shell .brand-title { min-width: 0; container-type: inline-size; padding-top: 0; }
+.site-shell .brand-title > a { font-size: clamp(24px, 9.2cqi, 88px); }
+@media (min-width: 761px) {
+  .site-shell .masthead { height: auto; min-height: 0; margin-bottom: 24px; }
+  .site-shell .brand-title p { margin-top: 12px; font-size: 10px; letter-spacing: .18em; }
+}
+@media (min-width: 1024px) {
+  .site-shell .sheet-legend section { flex: 0 0 auto; }
+  .site-shell .sheet-legend section:last-child { flex: 1; }
+  .site-shell .sheet-legend section li { column-gap: 10px; }
+  .site-shell .sheet-legend section li > span:first-child { width: 32px; }
+  .site-shell .sheet-legend section:nth-of-type(2) li > span:first-child { width: 14px; height: 14px; margin-inline: 9px; }
+  .site-shell .sheet-legend section:last-child li { min-height: 28px; padding: 2px 0; }
+  .site-shell .sheet-legend section:last-child svg { width: 20px; height: 20px; }
+  .site-shell .empty-index { padding: 24px; }
+  .site-shell .empty-landscape { height: clamp(130px, 20dvh, 220px); object-fit: contain; margin-top: 0; }
+  .site-shell .empty-explanation { font-size: 12px; letter-spacing: .14em; margin-top: 16px; }
+  .site-shell .discovery-links { margin-top: 24px; gap: 16px; }
+  .site-shell .discovery-link { min-height: 112px; padding: 16px; gap: 12px; }
+  .site-shell .discovery-icon { width: 48px; height: 48px; }
+  .site-shell .discovery-icon img { width: 28px; height: 28px; }
+  .site-shell .discovery-link h2 { font-size: 20px; }
+  .site-shell .discovery-link p { font-size: 13px; }
+  .site-shell .discovery-arrow { display: none; }
+  .site-shell .empty-index blockquote { margin-top: 24px; }
+}
+@media (min-width: 1024px) and (max-height: 780px) {
+  .site-shell .masthead { margin-bottom: 20px; }
+  .site-shell .brand-title > a { font-size: clamp(24px, 9.2cqi, 72px); }
+  .site-shell .sheet-legend section:last-child li { min-height: 22px; padding: 0; }
+  .site-shell .sheet-legend section:last-child svg { width: 18px; height: 18px; }
+}
+
+/* Give real Challenge titles the reading width they need on smaller laptops. */
+@media (min-width: 1024px) and (max-width: 1350px) {
+  .site-shell .index-columns,
+  .site-shell .challenge-row { grid-template-columns: 2.5rem 6rem minmax(0, 1fr) 3rem 6rem !important; }
+  .site-shell .challenge-row > div:nth-child(4) > div { flex-direction: column; gap: 12px; }
+  .site-shell .challenge-row > div:nth-child(4) > div > a { width: 80px; }
+  .site-shell .challenge-row h2 { font-size: 21px; line-height: 1.25; }
+  .site-shell .challenge-row > div:last-child span { font-size: 10px; }
+}
