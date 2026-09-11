@@ -29,3 +29,7 @@
 .account-empty p { color:var(--color-ink-soft);margin:12px 0 24px; }
 .account-primary { display:inline-flex;padding:12px 22px;background:var(--color-ink);color:var(--color-paper);border-radius:100px;text-decoration:none; }
 @media (max-width:760px) { .account-header { padding:24px;display:block; } .account-header h1 { font-size:34px; } .account-header p { margin-top:12px; } .account-tabs { padding:0 24px;gap:24px; } .account-body { padding:24px;overflow:visible; } .account-body .account-roles { grid-template-columns:1fr 1fr; } .account-body .account-save { flex-wrap:wrap; } }
+
+.account-role-title { display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%; }
+.account-role-check { display:grid;place-items:center;flex-shrink:0;width:20px;height:20px;border:1px solid var(--color-rule);font:600 14px/1 system-ui,sans-serif; }
+.account-roles button[aria-pressed=true] .account-role-check { background:var(--color-ink);border-color:var(--color-ink);color:var(--color-paper); }

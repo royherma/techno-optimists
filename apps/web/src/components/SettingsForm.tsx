@@ -127,7 +127,7 @@ export default function SettingsForm({ person, section }: { person: Me; section:
   }
 
   return (
-    <form onSubmit={save} className="space-y-8">
+    <form onSubmit={save} className="account-settings-form space-y-8">
       <section hidden={section !== "profile"} className="space-y-5">
         <Legend n="01" label="Who you are here" />
 
@@ -135,7 +135,7 @@ export default function SettingsForm({ person, section }: { person: Me; section:
           <span className="font-[family-name:var(--font-mono)] text-[11px] tracking-[0.14em] text-(--color-ink-faint) uppercase">
             Handle
           </span>
-          <span className="mt-2 flex items-baseline gap-1 border-b border-(--color-rule-soft) focus-within:border-(--color-rule)">
+          <span className="account-handle mt-2 flex items-baseline gap-1 border-b border-(--color-rule-soft) focus-within:border-(--color-rule)">
             <span className="text-lg text-(--color-ink-faint)">@</span>
             <input
               type="text"
@@ -146,6 +146,7 @@ export default function SettingsForm({ person, section }: { person: Me; section:
               autoCorrect="off"
               spellCheck={false}
               aria-describedby="handle-hint"
+              aria-invalid={!!handleError}
               onChange={(e) => { setHandle(e.target.value); setHandleError(null) }}
               className="w-full bg-transparent pb-2 text-lg text-(--color-ink) outline-none"
             />
@@ -194,12 +195,12 @@ export default function SettingsForm({ person, section }: { person: Me; section:
                   : 'border-(--color-rule-soft) text-(--color-ink-soft) hover:border-(--color-rule)'
               }`}
             >
-              <strong>{ROLE_LABEL[r]}</strong><small>{ROLE_HINT[r]}</small>
+              <span className="account-role-title"><strong>{ROLE_LABEL[r]}</strong><span className="account-role-check" aria-hidden="true">{roles.includes(r) ? '✓' : ''}</span></span><small>{ROLE_HINT[r]}</small>
             </button>
           ))}
         </div>
         <p className="text-xs text-(--color-ink-faint)">
-          Pick any that fit. They help people find you when a Challenge needs what you do.
+          {roles.length ? `${roles.length} selected. ` : 'Choose one or more. '}They help people find you when a Challenge needs what you do.
         </p>
       </section>
 
