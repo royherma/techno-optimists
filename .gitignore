@@ -46,3 +46,6 @@ outputs/
 # config.json and mocks/ ARE tracked - they are design-decision artifacts.
 .impeccable/questions/
 .impeccable/build/
+
+# worktrees
+.worktrees/

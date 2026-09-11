@@ -117,3 +117,9 @@ Read [AGENTS.md](AGENTS.md) for the simultaneous-work protocol. `npm run agents:
 shows the shared operation lock. Root npm build, database and deployment commands
 acquire it automatically; `ship` keeps it through verification. Use those entry
 points in every agent. Python 3 is required for the macOS/Linux OS lock.
+
+The lock serializes processes; it does not protect source files. Editing a path another
+session is in, and `git checkout`/`restore`/`stash`/`clean` on someone else's dirty
+tree, are how work actually gets destroyed here - see "The lock does not protect source
+files" in AGENTS.md, plus "Never lose work" above. Worktrees go in `.worktrees/`, never
+`/tmp`, which macOS reaps.
