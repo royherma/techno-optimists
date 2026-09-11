@@ -72,9 +72,11 @@ project.
 ## Reporting a security issue
 
 Do not open a public issue. Use GitHub's private vulnerability reporting on this repo
-(Security -> Report a vulnerability). Auth here is email magic links: tokens are stored
-as SHA-256 and never in plaintext, and a link is single-use with a 15 minute life. If
-you have found a way around any of that, it is worth reporting.
+(Security -> Report a vulnerability); if that tab is not available, email the address on
+the owner's GitHub profile and say it is a security report. Auth here is email magic
+links: tokens are stored as SHA-256 and never in plaintext, and a link is single-use
+with a 15 minute life. If you have found a way around any of that, it is worth
+reporting.
 
 ## Working alongside agents
 
