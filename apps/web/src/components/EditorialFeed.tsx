@@ -9,7 +9,7 @@ export default function EditorialFeed({ initial }: { initial: Challenge[] }) {
   const [size, setSize] = useState(5)
   const [error, setError] = useState(false)
   useEffect(() => {
-    const resize = () => { setSize(window.innerWidth < 700 || window.innerHeight < 600 ? 1 : window.innerWidth < 1100 || window.innerHeight < 800 ? 3 : 5); setPage(0) }
+    const resize = () => { setSize(window.innerWidth < 700 || window.innerHeight < 600 ? 1 : window.innerWidth < 1100 || window.innerHeight < 1000 ? 3 : 5); setPage(0) }
     resize(); window.addEventListener('resize', resize)
     const controller = new AbortController()
     async function refresh() {
