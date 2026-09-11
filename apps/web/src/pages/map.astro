@@ -25,7 +25,7 @@ const depth = depthScale(challenges)
   <Sheet>
     <PageToolbar label="Map" />
 
-    <div class="map-page">
+    <main class="map-page" aria-label="Challenge map" tabindex="0">
       <h1 class="font-[family-name:var(--font-display)] text-[2rem] leading-[1.1] tracking-tight sm:text-[2.4rem]">
         Where the Challenges are
       </h1>
@@ -92,7 +92,7 @@ const depth = depthScale(challenges)
           ))}
         </ul>
       )}
-    </div>
+    </main>
   </Sheet>
   <PostFab />
 </Base>

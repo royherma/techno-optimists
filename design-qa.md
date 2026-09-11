@@ -49,3 +49,10 @@ final result: passed
 - P3: generated mountain contours and orb texture vary from the supplied raster. Subject, palette, composition and white fade are retained.
 - Existing sample Challenge media are retained; this task does not replace the fictional fixture illustrations.
 - Uploading a real file, sending production email and publishing a new Challenge were not part of this visual verification.
+
+
+## Shared frame follow-up — 2026-09-11
+
+Fixed map and secondary-screen outer scrolling by promoting the index viewport contract into the shared Sheet. A shared toolbar-height token aligns the content and rail on every route, including the wrapped toolbar at narrow desktop widths. Map illustration height and spacing now adapt to available viewport height.
+
+Verified index, map, sign-in and challenge detail at 1024×768, 1440×900 and 2048×1173: identical content/rail top positions per size, rail bottom within viewport, document height equal to viewport height, no horizontal overflow. Post and settings also checked at 1440×900. At 1024×768 the last index legend action ends at y725 within the 768px viewport. Map, sign-in and detail retain normal page scrolling and no horizontal overflow at 390×844. Astro check: zero errors/warnings, three existing FormEvent hints.
