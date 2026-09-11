@@ -1,6 +1,6 @@
 # techno-optimists
 
-Public repo, Apache-2.0. Own git repo inside `techguyver-side-projects` — **not** a
+Public repo, MIT. Own git repo inside `techguyver-side-projects` — **not** a
 monorepo member. Outside contributors read [CONTRIBUTING.md](CONTRIBUTING.md); this file
 is the rules for whoever edits, and applies to them too.
 
