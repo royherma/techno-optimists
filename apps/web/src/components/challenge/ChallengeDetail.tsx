@@ -9,6 +9,7 @@ import PeopleLive from '../PeopleLive'
 import Discussion from './Discussion'
 import Progress from './Progress'
 import Editorial from './Editorial'
+import ChallengeLocation from './ChallengeLocation'
 
 type Detail = { challenge: Challenge; updates: Update[]; people: DetailPerson[] }
 function sourceLink(value: string | null | undefined) {
@@ -52,7 +53,7 @@ export default function ChallengeDetail({ initial, rings }: { initial?: Detail; 
   return <div>
     {error && <p role="alert" className="form-error">{error} <button onClick={() => void refresh().catch(() => setError('The latest Challenge could not load. Please retry.'))}>Retry</button></p>}
     <header className="detail-header">
-      <div className="detail-meta"><span>{gridRef(c.id)}</span><span className="type-pill">Started as {['idea', 'experiment'].includes(c.type) ? 'an' : 'a'} {TYPE_LABEL[c.type].toLowerCase()}</span>{c.location && <span>{c.location}</span>}</div>
+      <div className="detail-meta"><span>{gridRef(c.id)}</span><span className="type-pill">Started as {['idea', 'experiment'].includes(c.type) ? 'an' : 'a'} {TYPE_LABEL[c.type].toLowerCase()}</span>{(c.location || (c.lat != null && c.lng != null)) && <a className="detail-place-link" href="#location">{c.location || 'View location'} <span aria-hidden="true">↗</span></a>}</div>
       <h1>{c.emoji && <span className="challenge-emoji" aria-hidden="true">{c.emoji} </span>}{c.title}</h1>
       <p className="detail-summary">{c.summary}</p>
       <div className="detail-byline"><a className="author-avatar" href={`/people?handle=${encodeURIComponent(c.author.handle)}`} aria-label={`View @${c.author.handle} contributions`}>{c.author.handle.slice(0, 1).toUpperCase()}</a><span>{c.source ? 'Shared' : 'Spotted'} by <a href={`/people?handle=${encodeURIComponent(c.author.handle)}`}><strong>@{c.author.handle}</strong></a><span> · Active {ago(c.imported_at && c.imported_at > c.last_activity_at ? c.imported_at : c.last_activity_at)}</span></span></div>
@@ -79,7 +80,8 @@ export default function ChallengeDetail({ initial, rings }: { initial?: Detail; 
         <Progress key={`progress-${c.slug}`} challenge={c} updates={data.updates} me={me} refresh={refresh} />
       </div>
       <aside className="detail-sidebar">
-        <section id="contribute" className="detail-panel contribution-panel"><h2>How can you help?</h2><p>Mark what fits, or <a href="#discussion">write a response</a>.</p><div data-action-bar data-slug={c.slug}><ActionBar key={c.slug} slug={c.slug} type={c.type} actions={c.actions} /></div></section>
+        <ChallengeLocation challenge={c} />
+        <section id="contribute" className="detail-panel contribution-panel"><h2>How can you help?</h2><p>Have experience, an idea, or time to help?</p><div data-action-bar data-slug={c.slug}><ActionBar key={c.slug} slug={c.slug} type={c.type} actions={c.actions} /></div></section>
         <PeopleLive key={`people-${c.slug}`} slug={c.slug} initial={data.people} />
         {me?.is_admin && <Editorial key={`edit-${c.slug}`} challenge={c} refresh={refresh} />}
       </aside>
