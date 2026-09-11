@@ -3,10 +3,12 @@ import Icon from './Icon.astro'
 import SessionNav from './SessionNav'
 import { CHALLENGE_TYPES } from '../../../../packages/types/index'
 import { TYPE_LABEL } from '../lib/vocab'
+const { view = 'index' } = Astro.props
+const base = view === 'map' ? '/map' : '/'
 ---
 <div class="index-toolbar">
-  <nav class="view-tabs" aria-label="View"><a href="/" aria-current="page"><Icon name="map-trifold" />Index</a><a href="/map"><Icon name="map-pin" />Map</a></nav>
-  <nav class="type-tabs" aria-label="Filter by type"><a href="/" data-type-filter="" aria-current="page">Everything</a>{CHALLENGE_TYPES.map(t => <a href={`/?type=${t}`} data-type-filter={t}>{TYPE_LABEL[t]}</a>)}</nav>
+  <nav class="view-tabs" aria-label="View"><a href="/" aria-current={view === 'index' ? 'page' : undefined}><Icon name="map-trifold" />Index</a><a href="/map" aria-current={view === 'map' ? 'page' : undefined}><Icon name="map-pin" />Map</a></nav>
+  <nav class="type-tabs" aria-label="Filter by type"><a href={base} data-type-filter="" aria-current="page">Everything</a>{CHALLENGE_TYPES.map(t => <a href={`${base}?type=${t}`} data-type-filter={t}>{TYPE_LABEL[t]}</a>)}</nav>
   <div class="toolbar-actions"><button class="search-toggle" aria-label="Search Challenges" aria-expanded="false" aria-controls="feed-search"><Icon name="magnifying-glass" /></button><SessionNav client:load /></div>
   <p class="toolbar-purpose">Technology<br />for a brighter<br />human future</p>
 </div>

@@ -1,6 +1,6 @@
 ---
 import Icon from './Icon.astro'
-const path = Astro.url.pathname
+const path = Astro.url.pathname.replace(/\/$/, '') || '/'
 const links = [
   { label: 'Home', icon: 'house', href: '/' },
   { label: 'Map', icon: 'globe', href: '/map' },

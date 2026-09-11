@@ -22,6 +22,8 @@ export type Pin = {
   /** Set when the pin should be a link into the Challenge. */
   href?: string
   label?: string
+  type?: string
+  search?: string
 }
 
 export default function WorldPlate({
@@ -98,7 +100,7 @@ export default function WorldPlate({
           </>
         )
         return p.href ? (
-          <a key={i} href={p.href} className="map-pin">
+          <a key={i} href={p.href} className="map-pin" data-feed-pin data-type={p.type} data-search={p.search}>
             {p.label && <title>{p.label}</title>}
             {mark}
           </a>

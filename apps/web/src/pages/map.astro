@@ -1,13 +1,12 @@
 ---
 import Base from '../layouts/Base.astro'
 import Sheet from '../components/Sheet.astro'
-import PageToolbar from '../components/PageToolbar.astro'
+import BrowseFrame from '../components/BrowseFrame.astro'
 import '../styles/map.css'
 import PostFab from '../components/PostFab.astro'
 import WorldPlate from '../components/WorldPlate.tsx'
 import { getFeed } from '../lib/api'
-import { STAGE_STAMP, TYPE_LABEL, depthScale, stageColor } from '../lib/vocab'
-import { STAGES } from '../../../../packages/types/index'
+import { TYPE_LABEL, depthScale, stageColor } from '../lib/vocab'
 
 const { challenges } = await getFeed('?limit=50')
 
@@ -23,9 +22,7 @@ const depth = depthScale(challenges)
   description="Where the Challenges are. Every pin is a real place someone reported from."
 >
   <Sheet>
-    <PageToolbar label="Map" />
-
-    <main class="map-page" aria-label="Challenge map" tabindex="0">
+    <BrowseFrame view="map" label="Challenge map" contentClass="map-page">
       <h1 class="font-[family-name:var(--font-display)] text-[2rem] leading-[1.1] tracking-tight sm:text-[2.4rem]">
         Where the Challenges are
       </h1>
@@ -40,8 +37,9 @@ const depth = depthScale(challenges)
           and SVG drawn here into its children slot is discarded on hydration.
         -->
         <WorldPlate
-          client:load
           pins={placed.map((c) => ({
+            type: c.type,
+            search: `${c.title} ${c.summary} ${c.location ?? ''}`.toLowerCase(),
             lat: c.lat!,
             lng: c.lng!,
             r: 5 + depth(c) * 2.2,
@@ -52,36 +50,23 @@ const depth = depthScale(challenges)
         />
       </div>
 
-      <!--
-        The legend for this plate only: stage colour is the one mark the map
-        adds, so it is the one thing that needs explaining here. The full sheet
-        legend lives on the index.
-      -->
-      <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[0.72rem]">
-        {STAGES.map((s) => (
-          <span class="flex items-center gap-1.5">
-            <span class="inline-block h-2.5 w-2.5 rounded-full" style={`background:${stageColor(s)}`}></span>
-            <span class="uppercase tracking-[0.04em] text-(--color-ink-soft)">{STAGE_STAMP[s]}</span>
-          </span>
-        ))}
-      </div>
-
       <p class="mt-4 font-[family-name:var(--font-mono)] text-[0.7rem] uppercase tracking-[0.06em] text-(--color-ink-faint)">
         {placed.length} placed
         {unplaced > 0 && ` · ${unplaced} without a place`}
       </p>
 
-      {placed.length === 0 && (
+      <p class="feed-status" aria-live="polite" data-feed-status></p>
+      <div data-empty-index hidden={placed.length > 0}>
         <p class="mt-6 text-(--color-ink-soft)">
-          No Challenge carries a place yet. Post one and drop a pin to start the map.
+          No matching Challenges on the map. Try another filter or post one with a place.
         </p>
-      )}
+      </div>
 
       <!-- The placed Challenges as a readable list, so the map is not the only way in. -->
       {placed.length > 0 && (
         <ul class="mt-8 border-t border-(--color-rule)">
           {placed.map((c) => (
-            <li class="border-b border-(--color-rule-soft)">
+            <li data-feed-row data-type={c.type} data-search={`${c.title} ${c.summary} ${c.location ?? ''}`.toLowerCase()} class="border-b border-(--color-rule-soft)">
               <a href={`/c/${c.slug}`} class="ink-transition flex flex-wrap items-baseline gap-x-3 gap-y-1 px-1 py-2.5 hover:bg-(--color-paper-sunk)">
                 <span class="h-2.5 w-2.5 shrink-0 rounded-full" style={`background:${stageColor(c.stage)}`}></span>
                 <span class="font-[family-name:var(--font-display)] text-[1.05rem] leading-tight">{c.title}</span>
@@ -92,7 +77,7 @@ const depth = depthScale(challenges)
           ))}
         </ul>
       )}
-    </main>
+    </BrowseFrame>
   </Sheet>
   <PostFab />
 </Base>
@@ -110,3 +95,8 @@ const depth = depthScale(challenges)
   .map-pin:focus-visible { outline: none; }
   .map-pin:focus-visible circle:first-of-type { stroke: var(--color-ink); }
 </style>
+
+<script>
+  import { initFeedFilters } from '../lib/feed-filters'
+  initFeedFilters()
+</script>

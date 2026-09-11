@@ -2,29 +2,23 @@
 import Base from '../layouts/Base.astro'
 import ChallengeRow from '../components/ChallengeRow.astro'
 import Sheet from '../components/Sheet.astro'
-import SheetLegend from '../components/SheetLegend.astro'
-import IndexToolbar from '../components/IndexToolbar.astro'
+import BrowseFrame from '../components/BrowseFrame.astro'
 import EmptyIndex from '../components/EmptyIndex.astro'
 import FeedTopUp from '../components/FeedTopUp'
 import { getFeed } from '../lib/api'
 import { depthScale } from '../lib/vocab'
-import '../styles/index.css'
 const { challenges } = await getFeed('?limit=50')
 const depth = depthScale(challenges)
 ---
 <Base title="Techno Optimists - find real problems, help solve them">
   <Sheet>
-    <IndexToolbar />
-    <div class="index-layout">
-      <main class="index-main" aria-label="Challenge index" tabindex="0">
+    <BrowseFrame label="Challenge index">
         <div class="index-columns"><span>No.</span><span>Grid ref.</span><span>Challenge</span><span>Impact</span><span>Stage</span></div>
         <p class="feed-status" aria-live="polite" data-feed-status></p>
         <FeedTopUp client:load known={challenges.map(c => c.slug)} />
         {challenges.map((c,i) => <ChallengeRow challenge={c} rings={depth(c)} index={i} priority={i < 2} />)}
         <EmptyIndex hidden={challenges.length > 0} />
-      </main>
-      <aside class="index-legend"><SheetLegend /></aside>
-    </div>
+    </BrowseFrame>
   </Sheet>
 </Base>
 <script>
