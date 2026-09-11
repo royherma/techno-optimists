@@ -1,0 +1,7 @@
+.np-impact-current,.np-guide-context { display:none; }
+.newspaper:has(.np-challenge) .np-impact-current { display:block; padding:8px; margin:0 0 8px; background:var(--np-selected); color:var(--np-ink); }
+.newspaper:has(.np-challenge) .np-guide-context { display:block; font:11px/1.4 system-ui,sans-serif; margin:0 0 8px; }
+.newspaper .np-stage-now { font:10px/1.3 system-ui,sans-serif; margin-left:5px; padding:2px 4px; background:var(--np-ink); color:var(--np-paper); white-space:nowrap; }
+.newspaper .np-legend-stages strong { display:flex; flex-wrap:wrap; align-items:center; gap:3px; }
+.newspaper .np-rings-scale span { overflow-wrap:normal; font-size:9px; }
+.newspaper .np-legend .np-rule-heading>span { font-size:9px; letter-spacing:0; text-transform:none; }
