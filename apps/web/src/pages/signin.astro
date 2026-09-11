@@ -1,26 +1,7 @@
 ---
 import Base from '../layouts/Base.astro'
 import Sheet from '../components/Sheet.astro'
-import SignInForm from '../components/SignInForm.tsx'
-
-// The ?error= copy lives in SignInForm, not here. This page is prerendered, so
-// Astro.url.searchParams is empty at build time and anything gated on it is
-// dropped from the HTML - the reader saw nothing at all.
+import FormPage from '../components/FormPage.astro'
+import SignInForm from '../components/SignInForm'
 ---
-<Base title="Sign in - Techno Optimists">
-  <Sheet>
-    <div class="border-b border-(--color-rule) px-3 py-2 font-[family-name:--font-mono] text-[0.7rem] uppercase tracking-[0.06em]">
-      <a href="/" class="text-(--color-ink-soft) hover:text-(--color-ink)">← Back to the index</a>
-      <span class="ml-4 font-bold">Sign in</span>
-    </div>
-
-    <div class="mx-auto max-w-md px-5 py-12 sm:px-8">
-      <h1 class="font-[family-name:--font-display] text-[2.4rem] leading-[1.1] tracking-tight">Sign in</h1>
-      <p class="mt-2.5 mb-8 text-lg leading-relaxed text-(--color-ink-soft)">
-        We send a link. No password to remember.
-      </p>
-
-      <SignInForm client:load />
-    </div>
-  </Sheet>
-</Base>
+<Base title="Sign in - Techno Optimists"><Sheet><FormPage title="Sign in" description="Good things start with a conversation. We’ll send you a link to join yours." icon="users" compact><SignInForm client:load /></FormPage></Sheet></Base>

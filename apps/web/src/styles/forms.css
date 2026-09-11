@@ -1,0 +1,21 @@
+.form-page { max-width:780px; margin:0 auto; padding:44px 32px; }
+.form-page-compact { max-width:550px; padding-top:64px; }
+.form-page-header { margin-bottom:32px; }
+.form-page-icon { display:grid; place-items:center; width:64px; height:64px; border-radius:50%; background:var(--color-selected); margin-bottom:24px; }
+.form-page h1 { font-family:var(--font-display); font-size:48px; letter-spacing:-.02em; line-height:1.1; }
+.form-page-header p { max-width:55ch; font-size:16px; color:var(--color-ink-soft); line-height:1.7; margin-top:16px; }
+.form-surface form>section { padding-bottom:28px; border-bottom:1px solid var(--color-rule); }
+.form-surface input:not([type=checkbox]):not([type=radio]):not([type=file]),.form-surface textarea { padding:12px 14px; border:1px solid var(--color-rule-soft); background:var(--color-paper); font-size:16px; }
+.form-surface input:focus-visible,.form-surface textarea:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; }
+.form-surface button { border-radius:10px; min-height:44px; cursor:pointer; }
+.form-surface button[type=submit],.form-surface a[href^='/signin'] { border-radius:999px; min-height:48px; background:var(--color-ink); color:var(--color-paper); border:0; font-weight:600; padding:12px 24px; }
+.form-surface button[type=submit]:hover:not(:disabled),.form-surface a[href^='/signin']:hover { background:var(--color-accent); }
+.form-surface button:disabled { cursor:not-allowed; }
+.form-surface button[aria-pressed=true] { background:var(--color-selected); border-color:var(--color-accent); color:var(--color-accent); box-shadow:inset 0 0 0 1px var(--color-accent); }
+.form-surface button[aria-pressed=false]:hover { background:var(--color-paper-sunk); }
+.form-section-heading { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+.form-section-heading span:first-child { color:var(--color-ink-soft); font-size:11px; }
+.form-section-heading span:last-child { font-family:var(--font-display); font-size:26px; }
+.form-philosophy { font-family:var(--font-display); font-size:24px; font-style:italic; color:var(--color-ink-soft); border-top:1px solid var(--color-rule); padding-top:30px; margin-top:40px; }
+@media(max-width:600px){.form-page{padding:28px 22px}.form-page h1{font-size:38px}.form-page-header p{font-size:15px}.form-page-icon{width:50px;height:50px;margin-bottom:18px}.form-page-compact{padding-top:36px}}
+.recovery-link{background:var(--color-ink);color:white;border:0!important;border-radius:999px;padding:14px 24px!important}.recovery-link:hover{background:var(--color-accent)!important;color:white!important}

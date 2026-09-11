@@ -1,0 +1,10 @@
+---
+import type { DetailPerson } from '../../lib/api'
+import { ACTION_DOING } from '../../lib/vocab'
+import Icon from '../Icon.astro'
+interface Props { people: DetailPerson[] }
+const { people } = Astro.props
+---
+<section class="people-panel detail-panel"><h2><Icon name="users" size={23} />People on this</h2>
+  {people.length ? <ul>{people.map(p => <li><span class="person-avatar" aria-hidden="true">{p.handle.slice(0,1).toUpperCase()}</span><div><h3>@{p.handle}</h3><p>{p.kinds.map(k => ACTION_DOING[k]).join(' · ')}</p><p class="person-skills">{p.skills.slice(0,3).join(' · ')}{p.location && ` · ${p.location}`}</p></div></li>)}</ul> : <p class="quiet-empty">A useful perspective can come from anyone. Choose how you can help above.</p>}
+</section>

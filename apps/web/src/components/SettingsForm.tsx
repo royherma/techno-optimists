@@ -243,7 +243,7 @@ export default function SettingsForm() {
 }
 
 const Legend = ({ n, label }: { n: string; label: string }) => (
-  <div className="flex items-baseline gap-3 border-b border-(--color-rule-soft) pb-2">
+  <div className="form-section-heading">
     <span className="font-[family-name:--font-mono] text-[11px] text-(--color-ink-faint)">{n}</span>
     <span className="font-[family-name:--font-mono] text-[11px] tracking-[0.14em] text-(--color-ink-soft) uppercase">{label}</span>
   </div>

@@ -1,0 +1,10 @@
+---
+import type { Challenge } from '../../../../../packages/types/index'
+import { STAGE_ORDER, STAGE_STAMP, STAGE_MEANING } from '../../lib/vocab'
+interface Props { stage: Challenge['stage'] }
+const { stage } = Astro.props
+const reached = STAGE_ORDER.indexOf(stage)
+---
+<ol class="challenge-lifecycle" aria-label="Lifecycle stage">
+  {STAGE_ORDER.map((s,i) => <li class:list={['lifecycle-step',i <= reached && 'is-reached',i === reached && 'is-current']} aria-current={i === reached ? 'step' : undefined} style={`--stage-color:var(--color-${s})`}><span class="stage-dot" aria-hidden="true"></span><span class="stage-name">{STAGE_STAMP[s]}</span><span class="stage-description">{STAGE_MEANING[s]}</span>{i === reached && <span class="current-stage">Now</span>}</li>)}
+</ol>

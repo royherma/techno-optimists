@@ -1,0 +1,13 @@
+---
+import PageToolbar from './PageToolbar.astro'
+import Icon from './Icon.astro'
+import '../styles/forms.css'
+interface Props { title: string; description: string; icon: string; compact?: boolean }
+const { title, description, icon, compact = false } = Astro.props
+---
+<PageToolbar label={title} />
+<main class:list={['form-page', compact && 'form-page-compact']}>
+  <header class="form-page-header"><span class="form-page-icon"><Icon name={icon} size={30} /></span><h1>{title}</h1><p>{description}</p></header>
+  <div class="form-surface"><slot /></div>
+  <p class="form-philosophy">People. Ideas. A brighter tomorrow.</p>
+</main>

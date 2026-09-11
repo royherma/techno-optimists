@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ChallengeType, Media } from '../../../../packages/types/index'
-import { TYPE_LABEL, typeColor } from '../lib/vocab'
+import { TYPE_LABEL } from '../lib/vocab'
 import { getMe, type Me } from '../lib/session'
 import { snack } from '../lib/snack'
 import PlacePicker from './PlacePicker'
@@ -267,7 +267,7 @@ export default function CaptureForm() {
                   ? 'border-(--color-rule) bg-(--color-paper-sunk)'
                   : 'border-(--color-rule-soft) text-(--color-ink-soft) hover:border-(--color-rule)'
               }`}
-              style={type === t ? { borderLeftWidth: '3px', borderLeftColor: typeColor(t) } : undefined}
+              
             >
               {TYPE_LABEL[t]}
             </button>
@@ -344,7 +344,7 @@ export default function CaptureForm() {
 }
 
 const Legend = ({ n, label }: { n: string; label: string }) => (
-  <div className="flex items-baseline gap-3 border-b border-(--color-rule-soft) pb-2">
+  <div className="form-section-heading">
     <span className="font-[family-name:--font-mono] text-[11px] text-(--color-ink-faint)">{n}</span>
     <span className="font-[family-name:--font-mono] text-[11px] tracking-[0.14em] text-(--color-ink-soft) uppercase">{label}</span>
   </div>

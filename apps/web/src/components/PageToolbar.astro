@@ -1,0 +1,7 @@
+---
+import Icon from './Icon.astro'
+import SessionNav from './SessionNav'
+interface Props { label: string }
+const { label } = Astro.props
+---
+<div class="page-toolbar"><nav aria-label="Breadcrumb"><a href="/"><Icon name="map-trifold" size={20} />Index</a><span aria-hidden="true">/</span><span>{label}</span></nav><SessionNav client:load /></div>
