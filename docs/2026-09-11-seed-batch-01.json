@@ -207,8 +207,8 @@
     {
       "type": "problem",
       "stage": "learn",
-      "title": "Tokyo cut its crows to under a fifth without killing them",
-      "summary": "Twenty-five years of waste management and habit change did what culling did not. Worth copying where crows still win.",
+      "title": "Tokyo’s crow population fell below a fifth of its early-2000s peak",
+      "summary": "A 25-year campaign combined waste management and changes in everyday habits. What could other cities learn from it?",
       "location": "Tokyo, Japan",
       "lat": 35.68,
       "lng": 139.69,
@@ -219,9 +219,11 @@
       ],
       "source_url": "https://www.scmp.com/week-asia/health-environment/article/3339656/how-japans-capital-put-lid-crow-chaos-simple-fix",
       "source_name": "South China Morning Post",
-      "source_note": "A December survey put Tokyo's crow population at under 20% of its early-2000s peak after a 25-year campaign. Filed at Learn rather than as an open problem: this one is largely solved in Tokyo and is here as the worked example for cities where it is not.",
+      "source_note": "Reported by the South China Morning Post on 13 January 2026. The population comparison uses the early-2000s peak as its baseline. This is a reported example to learn from, not a test conducted by this community.",
       "created_at": "2026-01-01",
       "last_activity_at": "2026-01-01",
+      "body": "The problem: crows tore into rubbish bags left outside overnight, spreading waste through Tokyo’s streets. The report also describes aggressive behaviour during breeding season.\n\nThe response: a long-running city campaign focused on waste management and residents’ everyday habits.\n\nThe reported result: a December survey found the crow population was less than 20% of its early-2000s peak, according to the South China Morning Post’s January 2026 report.\n\nThe open question: which changes could help elsewhere, and how would another city measure the results?",
+      "slug": "tokyo-cut-its-crows-under-fifth",
       "media": [
         {
           "kind": "image",

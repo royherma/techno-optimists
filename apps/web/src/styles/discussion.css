@@ -1,0 +1,60 @@
+/* Keep discussion in the reading column. One clear writing surface; quiet lists. */
+.challenge-emoji { font-family: system-ui, sans-serif; font-size: 0.82em; }
+.detail-header h1 { overflow-wrap: anywhere; }
+.detail-jump { display: flex; flex-wrap: wrap; gap: 12px 24px; margin-top: 22px; font-size: 14px; }
+.detail-jump a, .challenge-source a, .discussion a, .progress-log a, .contribution-panel > p a { color: var(--color-accent); text-decoration: underline; text-underline-offset: 3px; }
+.stage-overview { border-block: 1px solid var(--color-rule); padding: 20px 0; margin-bottom: 26px; }
+.stage-overview > p { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 18px; font-size: 14px; line-height: 1.6; }
+.stage-overview > p > span { color: var(--color-ink-soft); }
+.stage-disclosure { margin-top: 10px; }
+.stage-disclosure summary, .progress-editor summary, .editorial-tools summary { cursor: pointer; font-size: 14px; font-weight: 600; }
+.stage-disclosure summary { color: var(--color-accent); font-size: 12px; }
+.stage-disclosure .challenge-lifecycle { border: 0; margin: 8px 0 0; padding: 0; }
+.stage-disclosure .stage-name { color: var(--color-ink); }
+.detail-story > .detail-section:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+.challenge-context > p + p { margin-top: 14px; }
+.challenge-source { margin-block: 20px; font-size: 13px; line-height: 1.7; color: var(--color-ink-soft); }
+.challenge-source details { margin-top: 6px; }
+.challenge-source summary { cursor: pointer; }
+.challenge-source p { margin-top: 8px; max-width: 72ch; }
+.detail-media img, .detail-media video, .progress-log img, .progress-log video { display: block; width: auto; max-width: 100%; max-height: 480px; object-fit: contain; margin-inline: auto; }
+.detail-media > * + * { margin-top: 18px; }
+.discussion, .progress-log, .discussion-list li { scroll-margin-top: 24px; }
+.discussion-composer { margin-top: 18px; padding: 18px; border: 1px solid var(--color-rule-soft); border-radius: 12px; background: var(--color-table); }
+.discussion-composer > label, .compact-form label { font-size: 14px; font-weight: 600; }
+.discussion-composer textarea, .compact-form textarea, .compact-form input, .compact-form select, .kind-label select { display: block; border: 1px solid var(--color-rule-soft); border-radius: 8px; background: white; color: var(--color-ink); padding: 10px 12px; font: inherit; min-width: 0; max-width: 100%; }
+.discussion-composer textarea, .compact-form textarea, .compact-form input { width: 100%; margin-top: 8px; font-weight: 400; }
+.discussion-composer textarea, .compact-form textarea { resize: vertical; min-height: 100px; line-height: 1.65; }
+.discussion-composer textarea::placeholder, .compact-form textarea::placeholder { color: var(--color-ink-soft); opacity: 1; }
+.composer-footer { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 14px; margin-top: 14px; }
+.kind-label { font-size: 12px; }
+.kind-label > span, .composer-note { color: var(--color-ink-soft); }
+.kind-label select { font-size: 14px; margin-top: 5px; min-height: 44px; }
+.primary-control { display: inline-flex; align-items: center; justify-content: center; background: var(--color-ink); color: white; border-radius: 999px; padding: 11px 18px; font-size: 14px; font-weight: 600; min-height: 44px; cursor: pointer; }
+.primary-control:hover { background: var(--color-accent); }
+.primary-control:disabled { background: var(--color-ink-soft); cursor: default; }
+.text-control { color: var(--color-accent); text-decoration: underline; text-underline-offset: 3px; font-size: 13px; padding: 10px 0; min-height: 44px; cursor: pointer; display: inline-block; }
+.text-control:disabled { color: var(--color-ink-soft); cursor: default; }
+.composer-note { font-size: 12px; line-height: 1.6; margin-top: 10px; }
+.form-error { color: oklch(42% 0.16 27); font-size: 14px; line-height: 1.6; margin-block: 14px; }
+.discussion-list { margin-top: 12px; }
+.discussion-list > li { padding: 22px 0 10px; border-bottom: 1px solid var(--color-rule); }
+.discussion-list > li.is-reply { margin-left: 24px; }
+.update-byline time { margin-left: auto; color: var(--color-ink-soft); }
+.response-kind { padding: 3px 8px; border-radius: 6px; color: var(--color-accent); background: var(--color-selected); }
+.response-body { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 15px; line-height: 1.75; margin-top: 10px; max-width: 72ch; }
+.reply-context { font-size: 12px; color: var(--color-ink-soft); margin-top: 8px; }
+.compact-form { display: flex; flex-direction: column; align-items: stretch; gap: 12px; margin-top: 16px; }
+.compact-form select { width: 100%; margin-top: 8px; font-weight: 400; }
+.compact-form .primary-control { align-self: start; }
+.compact-form > p { font-size: 13px; line-height: 1.6; }
+.editorial-tools summary span { color: var(--color-ink-soft); font-weight: 400; margin-left: 10px; font-size: 12px; }
+@media (max-width: 600px) {
+  .discussion-composer { padding: 14px; }
+  .composer-footer { align-items: stretch; }
+  .composer-footer .primary-control { align-self: end; }
+  .discussion-list > li.is-reply { margin-left: 14px; }
+  .stage-overview > p { display: block; }
+  .stage-overview > p > span { display: block; margin-top: 6px; }
+  .stage-disclosure .stage-description { display: block; font-size: 10px; }
+}

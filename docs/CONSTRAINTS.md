@@ -35,17 +35,13 @@ in `logs/serve.log`.
 
 ## Database
 
-**Prod D1 has no migration path. A new column never reaches it.**
-`db:prod` is `wrangler d1 execute techno-optimists --remote --file packages/db/schema.sql`
-and `packages/db/schema.sql` is bare `CREATE TABLE`s. There is no `migrations/` dir.
-`db:reset:dev` works only because it drops and rebuilds, which prod cannot do once it
-holds accounts. When `identities.is_admin` was added to `schema.sql` and shipped, the
-first real sign-in threw `no such column` on `INSERT INTO identities (...)` and Hono
-answered a bare `Internal Server Error`. Fixed by hand:
-`ALTER TABLE identities ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0`.
-Every new column needs the same manual `ALTER` against both remote databases until a
-real `migrations/` dir exists. `schema.sql` describes a fresh database, never an
-existing one.
+**Never apply `schema.sql` to an existing production database.** It drops tables.
+Use the coordinated `db:migrate:local`, `db:migrate:dev`, and `db:migrate:prod`
+scripts. `scripts/migrate-community.mjs` checks for the optional emoji column before
+adding it and applies the repeatable `packages/db/community.sql` table additions.
+`ship` and `ship:dev` run these migrations before deployment. Future schema changes
+must extend an additive migration; merely editing the reset fixture leaves existing
+databases behind. The original `identities.is_admin` incident is in the dated archive.
 
 **`ANALYTICS_DB` is bound but is not where traffic goes.** Use Analytics Engine
 (`to_events`). `schema-analytics.sql` was never applied, so both `to-analytics` and
@@ -72,9 +68,9 @@ pointed at prod that publishes local seed rows onto the domain. `build:web:only`
 reads the production API. Eight throwaway local rows ("...dry season 1353", "Testing
 whether a fresh Challenge renders") once shipped to dev this way and returned 200.
 
-**Deploying dev is two steps whenever the schema moved:** `db:reset:dev` then
-`deploy:dev`. Skipping the reset is how live sign-in 500'd on `no such table:
-magic_links` while every local test passed.
+**Deploy schema and code together:** use `ship:dev` or `ship`. Direct `deploy:*`
+commands do not migrate the database. Reset scripts are only for explicitly
+throwaway databases.
 
 ## Worker
 
