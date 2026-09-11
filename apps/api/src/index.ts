@@ -1106,6 +1106,70 @@ app.get('/api/health', async (c) => {
 })
 
 /* -------------------------------------------------------------------------- */
+/* Site-wide hit counter                                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The reader's key for the site counter: IP + User-Agent + a fixed salt,
+ * hashed and truncated. Same construction as the per-Challenge one in
+ * community.ts, with a constant where that one uses the Challenge id - here
+ * the whole site is the thing being counted, so there is nothing to vary.
+ *
+ * The salt means the two tables cannot be joined to follow a reader from the
+ * site counter onto a particular Challenge: the same person hashes to
+ * different keys in each.
+ */
+const siteViewerKey = async (c: { req: { header(name: string): string | undefined } }) => {
+  const raw = [
+    c.req.header('cf-connecting-ip') ?? '',
+    c.req.header('user-agent') ?? '',
+    'technooptimists-site-counter',
+  ].join('|')
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw))
+  return [...new Uint8Array(digest)].slice(0, 12).map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+/**
+ * Records that someone loaded the site, and answers with the running total.
+ *
+ * A POST from the page for the same reason the Challenge counter is one: most
+ * pages are prerendered static assets, so the Worker never sees the read and
+ * counting server-side would miss exactly the popular pages.
+ *
+ * Mounted here rather than on the `community` router because that router
+ * rejects a non-GET without an `application/json` content-type (415). A
+ * counter ping carries no body, and a page unloading mid-visit should be able
+ * to send it as a beacon, which sets its own content-type.
+ */
+app.post('/api/site/view', async (c) => {
+  const origin = c.req.header('origin')
+  if (origin && origin !== new URL(c.req.url).origin) return c.json({ error: 'bad_origin' }, 403)
+
+  const viewedOn = new Date().toISOString().slice(0, 10)
+  await c.env.DB.prepare(
+    'INSERT OR IGNORE INTO site_views (viewer_key, viewed_on) VALUES (?, ?)',
+  ).bind(await siteViewerKey(c), viewedOn).run()
+
+  track(c.env, 'site_view', new URL(c.req.url).pathname, {
+    country: c.req.header('cf-ipcountry') ?? '',
+    referrer: c.req.header('referer') ?? '',
+  })
+
+  const total = await c.env.DB.prepare('SELECT COUNT(*) n FROM site_views').first<{ n: number }>()
+  return c.json({ views: Number(total?.n ?? 0) })
+})
+
+/**
+ * The total on its own, for a page that wants to show the number without
+ * adding to it - and for the build, which bakes a starting value into the
+ * HTML so the counter is never visibly empty before its script runs.
+ */
+app.get('/api/site/views', async (c) => {
+  const total = await c.env.DB.prepare('SELECT COUNT(*) n FROM site_views').first<{ n: number }>()
+  return c.json({ views: Number(total?.n ?? 0) })
+})
+
+/* -------------------------------------------------------------------------- */
 /* Challenge pages created after the last build                               */
 /* -------------------------------------------------------------------------- */
 

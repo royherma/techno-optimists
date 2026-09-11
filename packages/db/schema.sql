@@ -211,3 +211,14 @@ CREATE TABLE IF NOT EXISTS challenge_views (
 );
 CREATE INDEX IF NOT EXISTS views_challenge ON challenge_views(challenge_id);
 CREATE INDEX IF NOT EXISTS comments_author_time ON challenge_comments(author_id, created_at);
+
+-- Site-wide hit counter: one row per visitor per day, for any page, not just a
+-- Challenge. See the longer note in community.sql for why this is not a SUM
+-- over challenge_views.
+CREATE TABLE IF NOT EXISTS site_views (
+  viewer_key TEXT NOT NULL,
+  viewed_on  TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (viewer_key, viewed_on)
+);
+CREATE INDEX IF NOT EXISTS site_views_day ON site_views(viewed_on);
