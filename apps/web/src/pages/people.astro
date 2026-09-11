@@ -1,0 +1,8 @@
+---
+import Base from '../layouts/Base.astro'
+import Sheet from '../components/Sheet.astro'
+import PageToolbar from '../components/PageToolbar.astro'
+import PublicProfile from '../components/PublicProfile'
+import '../styles/profile.css'
+---
+<Base title="Contributor - Techno Optimists" noindex><Sheet><PageToolbar label="Contributor" /><main><PublicProfile client:load /></main></Sheet></Base>

@@ -1052,6 +1052,27 @@ app.patch('/api/people/me', async (c) => {
  * Somebody else's profile. Returns PublicPerson: no name, no email, no admin
  * flag - see packages/types/index.ts for why each of those is absent.
  */
+// Public authored contributions only. Never includes follows, sessions or contact fields.
+app.get('/api/people/:handle/contributions', async (c) => {
+  const handle = normalizeHandle(c.req.param('handle'))
+  const person = await c.env.DB.prepare('SELECT id, handle FROM people WHERE handle = ?').bind(handle).first<{id: string; handle: string}>()
+  if (!person) return c.json({ error: 'not_found' }, 404)
+  const offset = Math.min(100000, Math.max(0, Number(c.req.query('offset')) || 0))
+  const rows = await c.env.DB.prepare(`
+    SELECT * FROM (
+      SELECT 'challenge' kind, ch.id, ch.slug, ch.title, ch.summary body, COALESCE(ch.imported_at, ch.created_at) created_at
+      FROM challenges ch WHERE ch.author_id = ?
+      UNION ALL
+      SELECT 'comment' kind, cm.id, ch.slug, ch.title, cm.body, cm.created_at
+      FROM challenge_comments cm JOIN challenges ch ON ch.id = cm.challenge_id WHERE cm.author_id = ?
+      UNION ALL
+      SELECT 'update' kind, u.id, ch.slug, ch.title, u.body, u.created_at
+      FROM updates u JOIN challenges ch ON ch.id = u.challenge_id WHERE u.author_id = ?
+    ) ORDER BY created_at DESC, id DESC LIMIT 31 OFFSET ?
+  `).bind(person.id, person.id, person.id, Math.floor(offset)).all()
+  return c.json({ person: { handle: person.handle }, contributions: rows.results.slice(0, 30), next_offset: rows.results.length > 30 ? Math.floor(offset) + 30 : null })
+})
+
 app.get('/api/people/:handle', async (c) => {
   const handle = normalizeHandle(c.req.param('handle'))
   const row = await c.env.DB.prepare(
