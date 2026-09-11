@@ -297,6 +297,157 @@ app.post('/api/challenges', async (c) => {
   return c.json({ ok: true, challenge: toChallenge(row as Row, []) }, 201)
 })
 
+/**
+ * One row in a bulk import. Differs from createBody in exactly three ways, and
+ * each one is why this route exists rather than looping the public one:
+ *  - `stage` is settable. A researched Challenge is often already understood or
+ *    has known ideas; forcing every imported row to 'spot' would throw away the
+ *    one thing the research established.
+ *  - `source_*` is settable, and `source_url` is effectively required by
+ *    convention - see the route.
+ *  - `created_at`/`last_activity_at` are settable, so a problem reported in a
+ *    2024 paper does not land on the feed as today's news.
+ */
+const importRow = createBody.extend({
+  stage: z.enum(STAGES).default('spot'),
+  source_url: z.string().trim().max(500).optional(),
+  source_name: z.string().trim().max(120).optional(),
+  source_note: z.string().trim().max(2_000).optional(),
+  // Accepted as any string SQLite's datetime() understands rather than a strict
+  // ISO shape, because 'now' and '2026-03-01' are both things an import file
+  // reasonably carries. Bad values surface as a NULL from datetime(), which the
+  // route rejects rather than storing.
+  created_at: z.string().max(40).optional(),
+  last_activity_at: z.string().max(40).optional(),
+  /** Demo scale, same meaning as challenges.seed_actions. */
+  seed_actions: z.record(z.enum(ACTION_KINDS), z.number().int().min(0)).optional(),
+})
+
+const importBody = z.object({
+  /**
+   * The handle every row in this batch is authored by. Must already exist -
+   * the route will not create people, because a typo'd handle silently minting
+   * a new account is how an import ends up with rows nobody can find.
+   */
+  author: z.string().trim().min(HANDLE_MIN).max(HANDLE_MAX),
+  /**
+   * Report what would happen and write nothing. The default is true on purpose:
+   * the destructive direction should be the one you have to ask for by name.
+   */
+  dry_run: z.boolean().default(true),
+  challenges: z.array(importRow).min(1).max(100),
+})
+
+/**
+ * Bulk-imports researched Challenges under one author. Admin only.
+ *
+ * This is the CLI's endpoint - see scripts/import-challenges.mjs. It exists
+ * because the public create route is deliberately narrow: it stamps 'spot',
+ * stamps now, and attributes to the caller, all of which are correct for a
+ * person posting their own problem and all of which are wrong for a batch of
+ * sourced research.
+ *
+ * Idempotent on slug. Re-running the same file updates the rows it already
+ * created rather than making a second copy with a `-2` suffix, so fixing a typo
+ * in an import file is a re-run and not a cleanup job.
+ */
+app.post('/api/challenges/import', async (c) => {
+  const me = await currentPerson(c)
+  if (!me) return c.json({ error: 'sign_in_required' }, 401)
+  // Not a 404-as-403: an admin route that 403s tells an attacker only that it
+  // exists, which is already public in this open-source repo.
+  if (!me.is_admin) return c.json({ error: 'admin_only' }, 403)
+
+  const parsed = importBody.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return c.json({ error: 'bad_body', detail: parsed.error.issues }, 400)
+  const { author, dry_run, challenges } = parsed.data
+
+  const authorRow = await c.env.DB.prepare('SELECT id FROM people WHERE handle = ?')
+    .bind(normalizeHandle(author)).first<{ id: string }>()
+  if (!authorRow) return c.json({ error: 'unknown_author', handle: author }, 400)
+
+  // Every row is checked before any row is written. A batch that fails halfway
+  // leaves a partial import that looks exactly like a successful smaller one.
+  const planned: {
+    slug: string; existing: string | null; row: z.infer<typeof importRow>
+  }[] = []
+  const problems: { index: number; error: string; detail?: string }[] = []
+
+  for (const [i, row] of challenges.entries()) {
+    // A row logged on someone else's behalf with no stated source is the exact
+    // thing these columns exist to prevent. Refused rather than defaulted.
+    if (!row.source_url && !row.source_name) {
+      problems.push({ index: i, error: 'no_source', detail: row.title })
+      continue
+    }
+    const slug = slugify(row.title)
+    if (!slug) { problems.push({ index: i, error: 'untitled', detail: row.title }); continue }
+    if (planned.some((p) => p.slug === slug)) {
+      problems.push({ index: i, error: 'duplicate_in_batch', detail: slug })
+      continue
+    }
+    const existing = await c.env.DB.prepare('SELECT id FROM challenges WHERE slug = ?')
+      .bind(slug).first<{ id: string }>()
+    planned.push({ slug, existing: existing?.id ?? null, row })
+  }
+
+  if (problems.length) return c.json({ error: 'bad_rows', problems }, 400)
+
+  const plan = planned.map((p) => ({
+    slug: p.slug, action: p.existing ? ('update' as const) : ('create' as const),
+  }))
+  if (dry_run) {
+    return c.json({ ok: true, dry_run: true, author: normalizeHandle(author), plan })
+  }
+
+  const writes = planned.map(({ slug, existing, row }) => {
+    const placed = row.lat != null && row.lng != null
+    const media = JSON.stringify(row.media)
+    const tags = JSON.stringify([...new Set(row.tags)])
+    const seedActions = JSON.stringify(row.seed_actions ?? {})
+    // datetime() normalizes whatever the file carried and answers NULL for
+    // anything it cannot read; COALESCE turns that into now rather than a NOT
+    // NULL violation halfway through a batch.
+    const created = row.created_at ?? 'now'
+    const active = row.last_activity_at ?? row.created_at ?? 'now'
+
+    return existing
+      ? c.env.DB.prepare(
+          `UPDATE challenges SET type=?, stage=?, title=?, summary=?, body=?, media=?,
+             location=?, lat=?, lng=?, tags=?, author_id=?,
+             created_at=COALESCE(datetime(?), created_at),
+             last_activity_at=COALESCE(datetime(?), last_activity_at),
+             seed_actions=?, source_url=?, source_name=?, source_note=?,
+             imported_at=datetime('now')
+           WHERE id=?`,
+        ).bind(
+          row.type, row.stage, row.title, row.summary, row.body ?? null, media,
+          row.location ?? null, placed ? row.lat : null, placed ? row.lng : null,
+          tags, authorRow.id, created, active, seedActions,
+          row.source_url ?? null, row.source_name ?? null, row.source_note ?? null,
+          existing,
+        )
+      : c.env.DB.prepare(
+          `INSERT INTO challenges (id, slug, type, stage, title, summary, body, media,
+             location, lat, lng, tags, author_id, created_at, last_activity_at,
+             seed_actions, source_url, source_name, source_note, imported_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+             COALESCE(datetime(?), datetime('now')),
+             COALESCE(datetime(?), datetime('now')),
+             ?, ?, ?, ?, datetime('now'))`,
+        ).bind(
+          `c_${mintToken().slice(0, 16)}`, slug, row.type, row.stage, row.title,
+          row.summary, row.body ?? null, media, row.location ?? null,
+          placed ? row.lat : null, placed ? row.lng : null, tags, authorRow.id,
+          created, active, seedActions,
+          row.source_url ?? null, row.source_name ?? null, row.source_note ?? null,
+        )
+  })
+
+  await c.env.DB.batch(writes)
+  return c.json({ ok: true, dry_run: false, author: normalizeHandle(author), plan }, 201)
+})
+
 /** Slugs are permanent, so a clash gets a numeric suffix rather than a rewrite. */
 const uniqueSlug = async (db: D1Database, base: string) => {
   for (let n = 1; n <= 50; n++) {

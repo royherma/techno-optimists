@@ -19,6 +19,15 @@ const img = (slug, tint, alt) => ({ kind: 'image', url: `/seed/${slug}.svg`, w: 
 // which is how a "temporary" demo value ends up looking like a real identity
 // the day someone writes a new query.
 const people = [
+  // The house account. Imported Challenges are authored by Atlas and carry a
+  // source_url naming whoever actually reported the problem - see the import
+  // route in apps/api/src/index.ts. Atlas is the scout who logged it, never the
+  // person living it, and the card has to keep those two facts apart.
+  //
+  // A real people row rather than a nullable author_id or a 'system' branch in
+  // toChallenge: challenges.author_id is NOT NULL REFERENCES people(id), so a
+  // special case here would add a null to every read path on the site forever.
+  ['p_atlas','atlas',null,['research','sourcing'],['scout','researcher']],
   ['p_niran','niran','Chiang Mai, Thailand',['dairy farming','field testing'],['scout','tester']],
   ['p_mei','mei','Shenzhen, China',['electronics','sourcing','PCB'],['builder','expert']],
   ['p_tomas','tomas','Krakow, Poland',['embedded','rust','firmware'],['builder','thinker']],

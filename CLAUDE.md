@@ -110,3 +110,10 @@ point: no dangling markdown.
 - Docs: `docs/YYYY-MM-DD-slug.md`.
 - Secrets: `.env` / `.dev.vars`, both gitignored. Templates are `.env.example`.
 - Node version pinned in `.nvmrc`.
+
+## Agent coordination
+
+Read [AGENTS.md](AGENTS.md) for the simultaneous-work protocol. `npm run agents:status`
+shows the shared operation lock. Root npm build, database and deployment commands
+acquire it automatically; `ship` keeps it through verification. Use those entry
+points in every agent. Python 3 is required for the macOS/Linux OS lock.
