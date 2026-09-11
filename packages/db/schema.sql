@@ -7,6 +7,7 @@ DROP TABLE IF EXISTS sessions;
 DROP TABLE IF EXISTS magic_links;
 DROP TABLE IF EXISTS identities;
 DROP TABLE IF EXISTS challenge_actions;
+DROP TABLE IF EXISTS challenge_comments;
 DROP TABLE IF EXISTS updates;
 DROP TABLE IF EXISTS challenges;
 DROP TABLE IF EXISTS people;
@@ -43,6 +44,7 @@ CREATE TABLE challenges (
   lat              REAL,
   lng              REAL,
   tags             TEXT NOT NULL DEFAULT '[]',   -- json array
+  emoji            TEXT,                       -- optional, admin-curated
   author_id        TEXT NOT NULL REFERENCES people(id),
   created_at       TEXT NOT NULL DEFAULT (datetime('now')),
   -- Feed sorts on this, not created_at: a 3-month-old Challenge that got a test
@@ -182,3 +184,18 @@ CREATE TABLE sessions (
 );
 
 CREATE INDEX idx_sessions_person ON sessions(person_id, created_at DESC);
+
+-- Additive, repeatable migration. Never use schema.sql against existing data.
+CREATE TABLE IF NOT EXISTS challenge_comments (
+  id TEXT PRIMARY KEY,
+  challenge_id TEXT NOT NULL REFERENCES challenges(id),
+  author_id TEXT NOT NULL REFERENCES people(id),
+  parent_id TEXT REFERENCES challenge_comments(id),
+  kind TEXT NOT NULL DEFAULT 'comment' CHECK(kind IN ('comment','idea','question','evidence','test_result')),
+  body TEXT NOT NULL,
+  request_id TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(author_id, request_id)
+);
+CREATE INDEX IF NOT EXISTS comments_challenge ON challenge_comments(challenge_id);
+CREATE INDEX IF NOT EXISTS comments_author_time ON challenge_comments(author_id, created_at);

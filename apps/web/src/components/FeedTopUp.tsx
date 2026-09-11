@@ -21,6 +21,16 @@ export default function FeedTopUp({ known }: { known: string[] }) {
       .then((d) => {
         if (cancelled || !d) return
         for (const c of d.challenges as Challenge[]) {
+          document.querySelectorAll<HTMLElement>('[data-feed-row][data-slug]').forEach((row) => {
+            if (row.dataset.slug !== c.slug) return
+            const emoji = row.querySelector('[data-feed-emoji]')
+            if (emoji) emoji.textContent = c.emoji ? `${c.emoji} ` : ''
+            const title = row.querySelector('[data-feed-title]')
+            if (title) title.textContent = c.title
+            const summary = row.querySelector('[data-feed-summary]')
+            if (summary) summary.textContent = c.summary
+            row.dataset.search = `${c.title} ${c.summary} ${c.location ?? ''} ${c.tags.join(' ')}`.toLowerCase()
+          })
           document.querySelectorAll<HTMLElement>('[data-challenge]').forEach((el) => {
             if (el.dataset.challenge !== c.slug) return
             const kind = el.dataset.action as keyof Challenge['actions']
@@ -70,7 +80,7 @@ export default function FeedTopUp({ known }: { known: string[] }) {
               <span className="font-[family-name:var(--font-mono)] text-[0.62rem] text-(--color-ink-faint)">{ago(c.created_at)}</span>
             </span>
             <span className="mt-0.5 block truncate font-[family-name:var(--font-display)] text-[1.05rem] leading-snug">
-              {c.title}
+              {c.emoji && <span aria-hidden="true">{c.emoji} </span>}{c.title}
             </span>
             <span className="mt-0.5 block truncate text-xs text-(--color-ink-faint)">{c.summary}</span>
           </span>
