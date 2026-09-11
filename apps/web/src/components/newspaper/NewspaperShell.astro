@@ -16,13 +16,13 @@ const { challenges = [], section = 'Front page', impact = null } = Astro.props
 // Baked in at build time so the wheels open on the last known total rather
 // than six zeros; the island rolls them up to the live figure on load.
 const initialViews = await getSiteViews()
-const taglines = ['People', 'Ideas', 'Technology', 'A better today', 'A brighter tomorrow']
-const manifesto = ['Explore.', 'Solve.', 'Build together', 'for a more human', 'tomorrow.']
+const taglines = ['People', 'Ideas', 'Technology']
+const manifesto = ['Explore.', 'Solve.', 'Build together.']
 ---
 <div class="newspaper">
   <a class="np-skip" href="#newspaper-main">Skip to content</a>
   <header class="np-masthead">
-    <a class="np-motto" href="/">A brighter<br />tomorrow<br />builds today<span></span></a>
+    <a class="np-motto" href="/">A better<br />tomorrow<br />starts today<span></span></a>
     <div class="np-nameplate"><a href="/" aria-label="TechnoOptimists.org"><DelightText text="TechnoOptimists.org" letters /></a><p>{taglines.map((phrase, i) => <>{i > 0 && <> <i class="delight-separator" aria-hidden="true">×</i> </>}<DelightText text={phrase} color={i} /></>)}</p></div>
     <blockquote>{manifesto.map((phrase, i) => <>{i > 0 && <br />}<DelightText text={phrase} color={i} /></>)}</blockquote>
     <span class="np-orb-hit delight-orb-hit" aria-hidden="true"><img class="np-orb delight-orb" src="/images/optimist-orb.png" alt="" width="110" height="110" /></span>
