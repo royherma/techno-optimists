@@ -26,6 +26,8 @@ export default function FeedTopUp({ known }: { known: string[] }) {
     return () => { cancelled = true }
   }, [])
 
+  useEffect(() => { window.dispatchEvent(new Event('feed-updated')) }, [fresh])
+
   if (!fresh.length) return null
 
   return (
@@ -33,6 +35,9 @@ export default function FeedTopUp({ known }: { known: string[] }) {
       {fresh.map((c) => (
         <a
           key={c.id}
+          data-feed-row
+          data-type={c.type}
+          data-search={`${c.title} ${c.summary} ${c.location ?? ''} ${c.tags.join(' ')}`.toLowerCase()}
           href={`/c/${c.slug}`}
           className="flex gap-3 border-b border-(--color-rule-soft) px-3 py-3 hover:bg-(--color-paper-sunk)"
         >

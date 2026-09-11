@@ -3,91 +3,31 @@ import Base from '../layouts/Base.astro'
 import ChallengeRow from '../components/ChallengeRow.astro'
 import Sheet from '../components/Sheet.astro'
 import SheetLegend from '../components/SheetLegend.astro'
+import IndexToolbar from '../components/IndexToolbar.astro'
+import EmptyIndex from '../components/EmptyIndex.astro'
+import FeedTopUp from '../components/FeedTopUp'
 import { getFeed } from '../lib/api'
-import { TYPE_LABEL, depthScale } from '../lib/vocab'
-import { CHALLENGE_TYPES } from '../../../../packages/types/index'
-import SessionNav from '../components/SessionNav.tsx'
-import FeedTopUp from '../components/FeedTopUp.tsx'
-import PostFab from '../components/PostFab.astro'
-
-const type = Astro.url.searchParams.get('type') ?? ''
-const valid = (CHALLENGE_TYPES as readonly string[]).includes(type)
-const { challenges } = await getFeed(`?limit=24${valid ? `&type=${type}` : ''}`)
-
-// Ring depth is relative to the sheet in front of the reader, so it is scaled
-// once here rather than per row.
+import { depthScale } from '../lib/vocab'
+import '../styles/index.css'
+const { challenges } = await getFeed('?limit=50')
 const depth = depthScale(challenges)
 ---
 <Base title="Techno Optimists - find real problems, help solve them">
   <Sheet>
-    <!--
-      The rule between the index and the legend is drawn by the legend column
-      stretching to full height, not by a border on its sticky inner box. A
-      border on the sticky element stops where the legend stops, which leaves
-      the bottom of a long sheet unruled - the one thing a ruled table must
-      never do.
-    -->
-    <div class="lg:grid lg:grid-cols-[1fr_19.5rem] lg:items-stretch">
-      <!--
-        On a phone the legend used to sit under all 24 rows, where a reader
-        meets it only after scrolling past everything it was meant to explain.
-        It is first in source order so it comes first there, and `lg:order-2`
-        returns it to the right-hand column once the grid exists. `order` only
-        applies inside a grid or flex container, so below lg the source order
-        is the only thing doing the work.
-      -->
-      <div class="border-b border-(--color-rule) p-3 lg:order-2 lg:border-b-0 lg:border-l">
-        <div class="lg:sticky lg:top-3"><SheetLegend /></div>
-      </div>
-
-      <!-- The index proper. -->
-      <div class="min-w-0 lg:order-1">
-        <nav
-          class="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-(--color-rule) px-3 py-2 font-[family-name:--font-mono] text-[0.7rem] uppercase tracking-[0.06em]"
-          aria-label="Filter by type"
-        >
-          <span class="font-bold">Index</span>
-          <a href="/map" class="ink-transition ink-underline text-(--color-ink-soft) hover:text-(--color-ink)">Map</a>
-          <span class="ml-auto"><SessionNav client:load /></span>
-          <a
-            href="/"
-            aria-current={valid ? undefined : 'page'}
-            class:list={[valid ? 'text-(--color-ink-soft) hover:text-(--color-ink)' : 'font-bold underline underline-offset-4']}
-          >Everything</a>
-          {CHALLENGE_TYPES.map((t) => (
-            <a
-              href={`/?type=${t}`}
-              aria-current={type === t ? 'page' : undefined}
-              class:list={[type === t ? 'font-bold underline underline-offset-4' : 'text-(--color-ink-soft) hover:text-(--color-ink)']}
-            >{TYPE_LABEL[t]}</a>
-          ))}
-        </nav>
-        <FeedTopUp client:load known={challenges.map((c) => c.slug)} />
-
-        <!--
-          Column headers, ruled to match the rows beneath them. These are the
-          same five names the legend uses; a reader who learns the legend has
-          already learned this strip.
-        -->
-        <div class="sticky top-0 z-10 hidden border-b-2 border-(--color-rule) bg-(--color-paper) font-[family-name:--font-mono] text-[0.68rem] font-bold uppercase tracking-[0.06em] sm:grid sm:grid-cols-[3rem_9.5rem_1fr_6rem_8rem]">
-          <span class="border-r border-(--color-rule) px-1 py-1.5 text-center">No.</span>
-          <span class="border-(--color-rule) px-2.5 py-1.5 sm:border-r">Grid ref.</span>
-          <span class="border-r border-(--color-rule) px-2.5 py-1.5">Challenge</span>
-          <span class="border-(--color-rule) px-1 py-1.5 text-center sm:border-r">Impact</span>
-          <span class="px-2.5 py-1.5 text-center">Stage</span>
-        </div>
-
-        {challenges.length === 0 ? (
-          <p class="px-4 py-16 text-(--color-ink-soft)">
-            Nothing on this sheet yet. Try another part of the index.
-          </p>
-        ) : (
-          challenges.map((c, i) => (
-            <ChallengeRow challenge={c} rings={depth(c)} index={i} priority={i < 2} />
-          ))
-        )}
-      </div>
+    <IndexToolbar />
+    <div class="index-layout">
+      <main class="index-main" aria-label="Challenge index">
+        <div class="index-columns"><span>No.</span><span>Grid ref.</span><span>Challenge</span><span>Impact</span><span>Stage</span></div>
+        <p class="feed-status" aria-live="polite" data-feed-status></p>
+        <FeedTopUp client:load known={challenges.map(c => c.slug)} />
+        {challenges.map((c,i) => <ChallengeRow challenge={c} rings={depth(c)} index={i} priority={i < 2} />)}
+        <EmptyIndex hidden={challenges.length > 0} />
+      </main>
+      <aside class="index-legend"><SheetLegend /></aside>
     </div>
   </Sheet>
-  <PostFab />
 </Base>
+<script>
+  import { initFeedFilters } from '../lib/feed-filters'
+  initFeedFilters()
+</script>

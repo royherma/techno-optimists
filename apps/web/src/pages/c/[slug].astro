@@ -1,4 +1,5 @@
 ---
+import '../../styles/detail.css'
 import Base from '../../layouts/Base.astro'
 import ActionBar from '../../components/ActionBar'
 import LiveChallenge from '../../components/LiveChallenge.tsx'
@@ -32,7 +33,7 @@ const ranked = ACTION_KINDS.map((k) => [k, c.actions[k]] as const)
 ---
 <Base title={`${c.title} - Techno Optimists`} description={c.summary}>
   <Sheet>
-  <main class="px-5 py-6">
+  <main class="challenge-detail px-5 py-6">
     <a href="/" class="ink-transition ink-underline font-[family-name:--font-mono] text-[0.7rem] uppercase tracking-[0.1em] text-(--color-ink-soft) hover:text-(--color-ink) hover:decoration-current">
       ← Back to the index
     </a>
@@ -142,7 +143,7 @@ const ranked = ACTION_KINDS.map((k) => [k, c.actions[k]] as const)
 
     <div class="mt-8 gap-10 lg:grid lg:grid-cols-[1fr_18rem]">
       <div class="min-w-0">
-        <section class="border-y border-(--color-rule) py-5">
+        <section id="contribute" class="border-y border-(--color-rule) py-5">
           <h2 class="mb-3 text-[0.72rem] font-semibold uppercase tracking-[0.14em]">How can you help?</h2>
           <div data-action-bar data-slug={c.slug}>
             <ActionBar client:load slug={c.slug} type={c.type} actions={c.actions} />

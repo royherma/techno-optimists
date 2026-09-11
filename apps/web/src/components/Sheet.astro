@@ -1,23 +1,10 @@
 ---
 import TitleBlock from './TitleBlock.astro'
-
-/*
- * One sheet, drawn once, used by every page. The neatline is the heavy border,
- * and everything else sits inside it. Every page shares this so the index and a
- * single entry are visibly the same document.
- *
- * The margins used to carry a graticule - eastings and northings printed down
- * all four edges. They indexed nothing: the coordinate space was a constant and
- * the row count, so two readers could not have used them to talk about the same
- * place. They are gone, and with them the sheet number, edition and live count.
- */
+import SideNav from './SideNav.astro'
+import '../styles/shell.css'
 ---
-<div class="relative mx-auto max-w-[104rem] px-2 sm:px-3">
-  <div class="relative [--sheet-margin:0.5rem] sm:[--sheet-margin:1.75rem]">
-    <!-- The neatline. Everything a reader is meant to read lives inside it. -->
-    <div class="m-(--sheet-margin) border-2 border-(--color-rule) bg-(--color-paper)">
-      <TitleBlock />
-      <slot />
-    </div>
-  </div>
+<div class="site-shell">
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <TitleBlock />
+  <div class="workspace"><SideNav /><div class="sheet-content" id="main-content"><slot /></div></div>
 </div>
