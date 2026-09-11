@@ -887,6 +887,18 @@ app.get('/api/auth/callback', async (c) => {
   ).bind(hash).first()
   if (!stillValid) return c.redirect('/signin?error=expired', 302)
 
+  // Claim the link here, not in the batch at the end of the handler. The reads
+  // above are diagnostic - they exist to tell the reader which of the three
+  // things went wrong - and between them and the old UPDATE sat uniqueHandle()
+  // and a person INSERT, so two clicks a few hundred ms apart both passed the
+  // used_at check and both got a session. `WHERE used_at IS NULL` makes the
+  // claim the same statement as the test: exactly one caller sees changes = 1,
+  // and the loser is told the link is used rather than handed a second session.
+  const claim = await c.env.DB.prepare(
+    "UPDATE magic_links SET used_at = datetime('now') WHERE token_hash = ? AND used_at IS NULL",
+  ).bind(hash).run()
+  if (claim.meta.changes !== 1) return c.redirect('/signin?error=used', 302)
+
   const email = String(link.email)
   let person = await c.env.DB.prepare(
     'SELECT p.id FROM identities i JOIN people p ON p.id = i.person_id WHERE i.email = ?',
@@ -906,7 +918,6 @@ app.get('/api/auth/callback', async (c) => {
 
   const session = mintToken()
   await c.env.DB.batch([
-    c.env.DB.prepare("UPDATE magic_links SET used_at = datetime('now') WHERE token_hash = ?").bind(hash),
     c.env.DB.prepare('INSERT INTO sessions (token_hash, person_id, expires_at, user_agent) VALUES (?, ?, ?, ?)')
       .bind(await hashToken(session), person.id, sessionExpiry(), c.req.header('user-agent') ?? null),
     c.env.DB.prepare("UPDATE identities SET last_login_at = datetime('now') WHERE email = ?").bind(email),
