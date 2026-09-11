@@ -85,3 +85,22 @@
 .np-paged-compact>.np-page-controls { min-height:20px; height:20px; padding:0; line-height:18px; }
 .np-paged-compact>.np-page-controls button { font-size:14px; line-height:18px; padding:0 5px; }
 .np-paged-compact { gap:3px; }
+
+/* Keep author, response kind and date legible as separate pieces of metadata. */
+.newspaper .update-byline {
+  display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 9px;
+  font:11px/1.5 system-ui,sans-serif; color:var(--np-muted);
+  break-after:avoid;
+}
+.newspaper .update-byline a { color:var(--np-ink); text-decoration:none; }
+.newspaper .update-byline a:hover { text-decoration:underline; text-underline-offset:3px; }
+.newspaper .update-byline time { display:inline-flex; gap:9px; margin-left:0; white-space:nowrap; color:var(--np-muted); }
+.newspaper .update-byline time::before { content:'·'; }
+.newspaper .update-byline .response-kind { padding:1px 6px; border-radius:2px; background:var(--np-selected); color:var(--np-ink); }
+.newspaper .np-panel .discussion-list { list-style:none; padding:0; margin:4px 0 0; }
+.newspaper .np-panel .discussion-list>li { padding:10px 0; }
+.newspaper .np-panel .discussion-list>li:first-child { padding-top:0; }
+.newspaper .np-panel .discussion-list>li.is-reply { margin-left:12px; }
+.newspaper .np-panel .response-body { margin-top:6px; font-size:15px; line-height:1.5; }
+.newspaper .np-panel .response-body p { margin:6px 0; }
+.newspaper .np-panel .discussion-list .text-control { padding:4px 0; min-height:28px; font-size:11px; color:var(--np-ink); }
