@@ -1,13 +1,13 @@
 ---
-import Base from '../layouts/Base.astro'
-import Sheet from '../components/Sheet.astro'
-import BrowseFrame from '../components/BrowseFrame.astro'
-import '../styles/map.css'
-import PostFab from '../components/PostFab.astro'
-import MediaPlate from '../components/MediaPlate.astro'
-import WorldPlate from '../components/WorldPlate.tsx'
-import { getFeed } from '../lib/api'
-import { TYPE_LABEL, stageColor } from '../lib/vocab'
+import Base from '../../layouts/Base.astro'
+import Sheet from '../../components/Sheet.astro'
+import BrowseFrame from '../../components/BrowseFrame.astro'
+import '../../styles/map.css'
+import PostFab from '../../components/PostFab.astro'
+import MediaPlate from '../../components/MediaPlate.astro'
+import WorldPlate from '../../components/WorldPlate.tsx'
+import { getFeed } from '../../lib/api'
+import { TYPE_LABEL, stageColor } from '../../lib/vocab'
 
 const { challenges } = await getFeed('?limit=50')
 
@@ -48,7 +48,7 @@ const unplaced = challenges.length - placed.length
 
       <section class="map-preview" aria-label="Challenge preview">
         <p data-preview-hint>Hover over a pin, use Tab, or tap to preview a Challenge.</p>
-        {placed.map((c) => <a href={`/c/${c.slug}`} data-map-preview={c.slug} hidden>
+        {placed.map((c) => <a href={`/v1/c/${c.slug}`} data-map-preview={c.slug} hidden>
           {c.media[0] && <div class="map-preview-media"><MediaPlate media={c.media[0]} fit="cover" /></div>}
           <span><small>{c.location} · {c.stage}</small><strong>{c.title}</strong><span>{c.summary}</span><b>Explore Challenge →</b></span>
         </a>)}
@@ -71,7 +71,7 @@ const unplaced = challenges.length - placed.length
         <ul class="mt-8 border-t border-(--color-rule)">
           {placed.map((c) => (
             <li data-feed-row data-type={c.type} data-search={`${c.title} ${c.summary} ${c.location ?? ''}`.toLowerCase()} class="border-b border-(--color-rule-soft)">
-              <a href={`/c/${c.slug}`} class="ink-transition flex flex-wrap items-baseline gap-x-3 gap-y-1 px-1 py-2.5 hover:bg-(--color-paper-sunk)">
+              <a href={`/v1/c/${c.slug}`} class="ink-transition flex flex-wrap items-baseline gap-x-3 gap-y-1 px-1 py-2.5 hover:bg-(--color-paper-sunk)">
                 <span class="h-2.5 w-2.5 shrink-0 rounded-full" style={`background:${stageColor(c.stage)}`}></span>
                 <span class="font-[family-name:var(--font-display)] text-[1.05rem] leading-tight">{c.title}</span>
                 <span class="text-[0.7rem] uppercase tracking-[0.06em] text-(--color-ink-faint)">{TYPE_LABEL[c.type]}</span>
@@ -101,7 +101,7 @@ const unplaced = challenges.length - placed.length
 </style>
 
 <script>
-  import { initFeedFilters } from '../lib/feed-filters'
+  import { initFeedFilters } from '../../lib/feed-filters'
   initFeedFilters()
   const previews = document.querySelectorAll<HTMLElement>('[data-map-preview]')
   const pins = document.querySelectorAll<SVGAElement>('[data-feed-pin]')

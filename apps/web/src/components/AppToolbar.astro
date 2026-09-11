@@ -5,7 +5,7 @@ interface Props { view?: string }
 const { view } = Astro.props
 ---
 <div class="index-toolbar app-toolbar">
-  <nav class="view-tabs" aria-label="View"><a href="/" aria-current={view === 'index' ? 'page' : undefined}><Icon name="map-trifold" />Index</a><a href="/map" aria-current={view === 'map' ? 'page' : undefined}><Icon name="map-pin" />Map</a><a href="/v2">Front page</a></nav>
+  <nav class="view-tabs" aria-label="View"><a href="/v1" aria-current={view === 'index' ? 'page' : undefined}><Icon name="map-trifold" />Index</a><a href="/v1/map" aria-current={view === 'map' ? 'page' : undefined}><Icon name="map-pin" />Map</a><a href="/">Front page</a></nav>
   <slot />
   <div class="toolbar-actions"><slot name="actions" /></div>
 </div>

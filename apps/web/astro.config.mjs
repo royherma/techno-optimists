@@ -29,7 +29,10 @@ export default defineConfig({
     react(),
     // /404 is noindex (see Base.astro), so listing it here would contradict
     // the page's own meta.
-    sitemap({ filter: (page) => !page.includes('/404') && !page.includes('/c/_shell') && !page.includes('/people') }),
+    // /v1 is Classic: a second rendering of the same Challenges, canonicalised
+    // to its newspaper twin. Listing those URLs would advertise ~30 duplicates
+    // of pages already in this file.
+    sitemap({ filter: (page) => !page.includes('/404') && !page.includes('/c/_shell') && !page.includes('/people') && !/\/v1(\/|$)/.test(new URL(page).pathname) }),
   ],
   // Static output: the Worker serves /api/*, the assets binding serves the rest.
   output: 'static',

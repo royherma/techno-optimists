@@ -10,19 +10,19 @@ const { challenges = [], section = 'Front page' } = Astro.props
 <div class="newspaper">
   <a class="np-skip" href="#newspaper-main">Skip to content</a>
   <header class="np-masthead">
-    <a class="np-motto" href="/v2">A brighter<br />tomorrow<br />builds today<span></span></a>
-    <div class="np-nameplate"><a href="/v2">TechnoOptimists.org</a><p>People <i>×</i> Ideas <i>×</i> Technology <i>×</i> A better today <i>×</i> A brighter tomorrow</p></div>
+    <a class="np-motto" href="/">A brighter<br />tomorrow<br />builds today<span></span></a>
+    <div class="np-nameplate"><a href="/">TechnoOptimists.org</a><p>People <i>×</i> Ideas <i>×</i> Technology <i>×</i> A better today <i>×</i> A brighter tomorrow</p></div>
     <blockquote>Explore.<br />Solve.<br />Build together<br />for a more human<br />tomorrow.</blockquote>
     <img class="np-orb" src="/images/optimist-orb.png" alt="" width="110" height="110" />
   </header>
   <nav class="np-navigation" aria-label="Main navigation">
-    <a href="/v2" aria-current={section === 'Front page' ? 'page' : undefined}>Home</a>
-    <a href="/v2?type=problem">Problems</a><a href="/v2?type=idea">Ideas</a><a href="/v2?type=experiment">Experiments</a><a href="/v2?type=build">Builds</a>
-    <a href="/v2/map" aria-current={section === 'World map' ? 'page' : undefined}>Map</a><a href="/v2/people" aria-current={section === 'Community' ? 'page' : undefined}>Community</a>
-    <div class="np-nav-end"><a href="/v2/settings">Account</a><a class="np-submit" href="/v2/post">＋ Share</a><button type="button" class="np-legend-toggle" data-legend-toggle aria-expanded="false">Legend</button><a href="/?v=1" data-classic-switch>V1 / Classic</a></div>
+    <a href="/" aria-current={section === 'Front page' ? 'page' : undefined}>Home</a>
+    <a href="/?type=problem">Problems</a><a href="/?type=idea">Ideas</a><a href="/?type=experiment">Experiments</a><a href="/?type=build">Builds</a>
+    <a href="/map" aria-current={section === 'World map' ? 'page' : undefined}>Map</a><a href="/people" aria-current={section === 'Community' ? 'page' : undefined}>Community</a>
+    <div class="np-nav-end"><a href="/settings">Account</a><a class="np-submit" href="/post">＋ Share</a><button type="button" class="np-legend-toggle" data-legend-toggle aria-expanded="false">Legend</button><a href="/v1" data-classic-switch>V1 / Classic</a></div>
   </nav>
   <div class="np-workspace"><main id="newspaper-main" class="np-main"><slot /></main><aside class="np-sidebar" aria-label="Field guide and legend"><Legend client:load challenges={challenges} /></aside></div>
-  <footer class="np-colophon"><span>Real problems. Real ideas. A brighter tomorrow.</span><nav aria-label="About this site"><a href="/v2/contribute">Contribute</a><a href="/v2/privacy">Privacy</a><a href="/v2/terms">Terms</a></nav></footer>
+  <footer class="np-colophon"><span>Real problems. Real ideas. A brighter tomorrow.</span><nav aria-label="About this site"><a href="/contribute">Contribute</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></footer>
 </div>
 <script>
   import { classicPath, editionPath } from '../../lib/edition'
@@ -50,5 +50,5 @@ const { challenges = [], section = 'Front page' } = Astro.props
   links()
   new MutationObserver(links).observe(root, { childList: true, subtree: true })
   const queryType = new URLSearchParams(location.search).get('type')
-  if (queryType) root.querySelector(`.np-navigation a[href="/v2?type=${CSS.escape(queryType)}"]`)?.setAttribute('aria-current', 'page')
+  if (queryType) root.querySelector(`.np-navigation a[href="/?type=${CSS.escape(queryType)}"]`)?.setAttribute('aria-current', 'page')
 </script>

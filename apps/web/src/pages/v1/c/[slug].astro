@@ -1,11 +1,11 @@
 ---
-import Base from '../../layouts/Base.astro'
-import Sheet from '../../components/Sheet.astro'
-import PageToolbar from '../../components/PageToolbar.astro'
-import ChallengeDetail from '../../components/challenge/ChallengeDetail'
-import { getChallenge, getFeed } from '../../lib/api'
-import '../../styles/detail.css'
-import '../../styles/discussion.css'
+import Base from '../../../layouts/Base.astro'
+import Sheet from '../../../components/Sheet.astro'
+import PageToolbar from '../../../components/PageToolbar.astro'
+import ChallengeDetail from '../../../components/challenge/ChallengeDetail'
+import { getChallenge, getFeed } from '../../../lib/api'
+import '../../../styles/detail.css'
+import '../../../styles/discussion.css'
 export async function getStaticPaths() {
   const { challenges } = await getFeed('?limit=50')
   return [...challenges.map(c => ({ params: { slug: c.slug } })), { params: { slug: '_shell' } }]

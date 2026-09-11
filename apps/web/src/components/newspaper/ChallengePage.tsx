@@ -43,7 +43,7 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
   let source: URL | null = null
   try { const url = new URL(c.source?.url || ''); if (['http:', 'https:'].includes(url.protocol)) source = url } catch { /* A source may be an interview. */ }
   return <div className="np-challenge np-challenge-sheet">
-    <div className="np-challenge-kicker"><a href="/v2">← All Challenges</a><span className={`type-${c.type}`}>{c.type} <span> / {c.location || 'Around the world'}</span></span><span className="np-relative">Impact not specified</span>{me?.is_admin && <button onClick={() => setEditing(true)}>Edit Challenge</button>}</div>
+    <div className="np-challenge-kicker"><a href="/">← All Challenges</a><span className={`type-${c.type}`}>{c.type} <span> / {c.location || 'Around the world'}</span></span><span className="np-relative">Impact not specified</span>{me?.is_admin && <button onClick={() => setEditing(true)}>Edit Challenge</button>}</div>
     {error && <p className="np-error" role="alert">{error} <button onClick={() => void refresh().catch(e => setError(e.message))}>Retry</button></p>}
     <div className="np-panel-grid">
       <section className="np-panel np-panel-story" aria-label="Challenge story">
@@ -51,7 +51,7 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
           {image?.kind === 'video' ? <video src={image.url} controls playsInline /> : image ? <img src={image.url} alt={image.alt || ''} /> : <p>Things can be better.</p>}
           {c.media.length > 1 && <div className="np-media-controls"><button aria-label="Previous image" disabled={media === 0} onClick={() => setMedia(media - 1)}>←</button><span>{media + 1} / {c.media.length}</span><button aria-label="Next image" disabled={media + 1 >= c.media.length} onClick={() => setMedia(media + 1)}>→</button></div>}
         </div>
-        <div className="np-story-reading"><PagedContent compact label="Story"><h1>{c.title}</h1><p className="np-deck">{c.summary}</p><p className="np-story-author">Shared by <a href={'/v2/people?handle=' + encodeURIComponent(c.author.handle)}>@{c.author.handle}</a> · {formatDate(c.imported_at || c.created_at)}</p>{c.body && c.body.split(/\n\s*\n/).map((p, i) => <p key={i}>{p}</p>)}</PagedContent></div>
+        <div className="np-story-reading"><PagedContent compact label="Story"><h1>{c.title}</h1><p className="np-deck">{c.summary}</p><p className="np-story-author">Shared by <a href={'/people?handle=' + encodeURIComponent(c.author.handle)}>@{c.author.handle}</a> · {formatDate(c.imported_at || c.created_at)}</p>{c.body && c.body.split(/\n\s*\n/).map((p, i) => <p key={i}>{p}</p>)}</PagedContent></div>
       </section>
       <Panel name="help" title="How you can help"><ActionBar slug={c.slug} type={c.type} actions={c.actions} /></Panel>
       <Panel name="discussion" title="Discussion"><Discussion panel slug={c.slug} me={me} sessionReady={sessionReady} /></Panel>

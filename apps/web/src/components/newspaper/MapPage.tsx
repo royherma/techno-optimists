@@ -20,12 +20,12 @@ export default function MapPage({ initial }: { initial: Challenge[] }) {
     }))} /></div>
     <article className="np-map-story" aria-label="Selected Challenge">
       {c ? <>
-        {media && <a className="np-map-image" href={'/v2/c/' + c.slug} tabIndex={-1} aria-hidden="true"><img src={media.url} alt="" /></a>}
+        {media && <a className="np-map-image" href={'/c/' + c.slug} tabIndex={-1} aria-hidden="true"><img src={media.url} alt="" /></a>}
         <div className="np-map-copy">
           <p className="np-story-meta">{c.location} · {TYPE_LABEL[c.type]} · {STAGE_STAMP[c.stage]}</p>
-          <h2><a href={'/v2/c/' + c.slug}>{c.title}</a></h2>
+          <h2><a href={'/c/' + c.slug}>{c.title}</a></h2>
           <p className="np-map-summary">{c.summary}</p>
-          <a className="np-arrow-link" href={'/v2/c/' + c.slug}>Explore this Challenge →</a>
+          <a className="np-arrow-link" href={'/c/' + c.slug}>Explore this Challenge →</a>
         </div>
       </> : <p>No matching Challenges have a location yet.</p>}
     </article>
