@@ -8,7 +8,7 @@ import '../styles/legal.css'
  * Terms. Written against what the code actually does, not a template:
  * anyone can read without an account, posting needs a magic-link sign-in,
  * Challenges are public the moment they are posted, and the stage field is
- * the one thing only an author or admin can move (apps/api/src/index.ts).
+ * limited to the author or an admin (apps/api/src/index.ts).
  */
 const updated = '11 September 2026'
 ---
@@ -35,9 +35,32 @@ const updated = '11 September 2026'
       <section>
         <h2>What the site is</h2>
         <p>
-          A place to post real-world Challenges and work on them together. Reading needs
+          A community built to connect people who want to understand real-world Challenges
+          and help each other make things better. There is no business model in place;
+          the focus is useful connections and collaboration. Reading needs
           no account. Posting a Challenge, adding progress or using a typed action needs
           you to sign in with your email address.
+        </p>
+      </section>
+
+      <section>
+        <h2>Open source and contributing</h2>
+        <p>
+          The site's code is <a href="https://github.com/royherma/techno-optimists">open source</a>
+          under the <a href="https://github.com/royherma/techno-optimists/blob/main/LICENSE">MIT license</a>.
+          You are welcome to suggest improvements, report bugs and submit pull requests.
+          See <a href="/contribute">how to contribute</a> for ways to help, with or without code.
+        </p>
+        <p>
+          The code license does not automatically apply to members' Challenges, comments
+          or uploads. You keep ownership of your contributions. Agree directly with
+          collaborators on permission to reuse their work and on any shared ownership,
+          credit, costs or payment before starting work together.
+        </p>
+        <p>
+          Contributing code does not grant access to member accounts, private data or
+          administration of this site. Maintainers review proposed changes before they
+          become part of the site.
         </p>
       </section>
 
@@ -65,7 +88,8 @@ const updated = '11 September 2026'
         <p>
           Anyone signed in can add progress, ideas and comments to any Challenge. Moving
           a Challenge through its lifecycle stages is limited to the person who posted
-          it, and to administrators.
+          it, and to administrators. Editorial changes to Challenge titles, summaries
+          and descriptions, and bulk imports, are limited to administrators.
         </p>
         <p>
           Advice on this site comes from other members, not from us. Nothing here is
