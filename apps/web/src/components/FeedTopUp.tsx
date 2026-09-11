@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Challenge } from '../../../../packages/types/index'
-import { TYPE_LABEL, ago, typeColor } from '../lib/vocab'
+import { ACTION_LABEL, count, TYPE_LABEL, ago, typeColor } from '../lib/vocab'
 
 /**
  * Challenges posted since the last build.
@@ -16,10 +16,22 @@ export default function FeedTopUp({ known }: { known: string[] }) {
   useEffect(() => {
     let cancelled = false
     const seen = new Set(known)
-    fetch('/api/challenges?limit=30', { credentials: 'same-origin' })
+    fetch('/api/challenges?limit=50', { credentials: 'same-origin' })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (cancelled || !d) return
+        for (const c of d.challenges as Challenge[]) {
+          document.querySelectorAll<HTMLElement>('[data-challenge]').forEach((el) => {
+            if (el.dataset.challenge !== c.slug) return
+            const kind = el.dataset.action as keyof Challenge['actions']
+            if (!kind) return
+            const label = `${ACTION_LABEL[kind]} - ${c.actions[kind]}`
+            el.setAttribute('aria-label', label)
+            el.title = label
+            const value = el.querySelector('span')
+            if (value) value.textContent = count(c.actions[kind])
+          })
+        }
         setFresh(d.challenges.filter((c: Challenge) => !seen.has(c.slug)))
       })
       .catch(() => {})

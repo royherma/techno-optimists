@@ -2,6 +2,8 @@
 import Base from '../layouts/Base.astro'
 import Sheet from '../components/Sheet.astro'
 import FormPage from '../components/FormPage.astro'
+import MyActivity from '../components/MyActivity'
+import '../styles/activity.css'
 import SettingsForm from '../components/SettingsForm'
 ---
-<Base title="Your account - Techno Optimists" noindex><Sheet><FormPage title="Your account" description="Your perspective belongs here. Share the skills and interests you bring to a Challenge." icon="users"><SettingsForm client:load /></FormPage></Sheet></Base>
+<Base title="Your account - Techno Optimists" noindex><Sheet><FormPage title="Your account" description="Your perspective belongs here. Share the skills and interests you bring to a Challenge." icon="users"><MyActivity client:load /><SettingsForm client:load /></FormPage></Sheet></Base>

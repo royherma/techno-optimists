@@ -1,0 +1,18 @@
+.my-activity { margin-bottom: 40px; padding-bottom: 32px; border-bottom: 1px solid var(--color-rule); scroll-margin-top: 20px; }
+.my-activity h2 { font: 32px/1.15 var(--font-display); margin-bottom: 12px; }
+.my-activity p { color: var(--color-ink-soft); font-size: 14px; margin: 12px 0; }
+.my-activity a { color: var(--color-ink); }
+.activity-filter { display: flex; align-items: center; gap: 12px; margin-top: 20px; }
+.activity-filter select { border: 1px solid var(--color-rule-soft); border-radius: 8px; padding: 10px; max-width: 100%; background: var(--color-paper); }
+.activity-item { display: flex; gap: 16px; padding: 20px 8px; border-bottom: 1px solid var(--color-rule); text-decoration: none; }
+.activity-item:hover, .activity-item:focus-visible { background: var(--color-selected); }
+.activity-item img { width: 76px; height: 76px; object-fit: cover; border-radius: 8px; }
+.activity-item strong { display: block; font: 24px/1.2 var(--font-display); margin: 6px 0 10px; overflow-wrap: anywhere; }
+.activity-item small { font-size: 11px; color: var(--color-ink-soft); }
+.activity-responses { display: flex; flex-wrap: wrap; gap: 6px; }
+.activity-responses > span { background: var(--color-selected); border-radius: 6px; padding: 4px 8px; font-size: 12px; }
+.action-status { font-size: 12px; color: var(--color-ink-soft); line-height: 1.5; margin: 12px 0 8px; }
+.action-account { font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
+.action-controls button { min-height: 44px; }
+.action-controls button:disabled { cursor: wait; opacity: .7; }
+.action-controls button[aria-pressed="true"] { background: var(--color-ink); color: var(--color-paper); border-color: var(--color-ink); }

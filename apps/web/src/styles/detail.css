@@ -219,7 +219,7 @@
 .contribution-panel [data-action-bar] {
   margin-top: 20px;
 }
-.contribution-panel [data-action-bar] > astro-island > div {
+.contribution-panel .action-controls > div {
   display: flex;
   flex-direction: column;
 }

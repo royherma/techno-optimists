@@ -62,3 +62,17 @@
   .map-surface { margin-top: 14px; }
   .map-surface svg { height: 28dvh; }
 }
+
+.map-preview { border-top: 1px solid var(--color-rule); padding: 20px 0; min-height: 100px; }
+.map-preview > p { font-size: 14px; color: var(--color-ink-soft); }
+.map-preview > a:not([hidden]) { display: flex; gap: 20px; color: var(--color-ink); text-decoration: none; }
+.map-preview a:hover strong { text-decoration: underline; text-underline-offset: 4px; }
+.map-preview-media { width: 120px; flex-shrink: 0; }
+.map-preview strong { display: block; font: 26px/1.15 var(--font-display); margin: 6px 0 10px; }
+.map-preview small { text-transform: uppercase; font-size: 11px; color: var(--color-ink-soft); }
+.map-preview span > span { display: block; font-size: 14px; color: var(--color-ink-soft); }
+.map-preview b { display: block; margin-top: 10px; font-size: 13px; }
+.map-pin { cursor: pointer; }
+.map-pin.is-previewed circle:not(.pin-hit), .map-pin:focus-visible circle:not(.pin-hit) { stroke-width: 4; }
+.map-pin.is-previewed .pin-hit { fill: var(--color-selected); }
+@media (max-width: 600px) { .map-preview-media { width: 70px; } .map-preview strong { font-size: 22px; } }
