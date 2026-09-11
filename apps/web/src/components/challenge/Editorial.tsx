@@ -20,7 +20,7 @@ export default function Editorial({ challenge: c, refresh }: { challenge: Challe
     } catch (e) { setMessage(e instanceof Error ? e.message : 'Changes did not save.') }
     finally { inFlight.current = false; setBusy(false) }
   }
-  return <details className="editorial-tools detail-panel"><summary>Edit Challenge <span>Admin</span></summary>
+  return <details className="editorial-tools detail-panel"><summary>Edit thread <span>Admin</span></summary>
     <form className="compact-form" onSubmit={save}>
       <label>Emoji <span className="composer-note">(optional)</span><input value={emoji} maxLength={32} disabled={busy} onChange={(e) => setEmoji(e.target.value)} aria-describedby="emoji-help" /></label>
       <p id="emoji-help" className="composer-note">One emoji beside the title. Leave empty to remove it.</p>

@@ -17,7 +17,7 @@ function sourceLink(value: string | null | undefined) {
   try { const url = new URL(value ?? ''); return ['https:', 'http:'].includes(url.protocol) ? url : null } catch { return null }
 }
 const PROMPT: Record<Stage, string> = {
-  spot: 'What have you noticed? Help describe the Challenge.',
+  spot: 'What have you noticed? Help describe the thread.',
   understand: 'What causes this? Share what you know or ask a useful question.',
   ideas: 'What could work? Suggest an approach worth trying.',
   build: 'What would help move the work forward?',
@@ -36,13 +36,13 @@ export default function ChallengeDetail({ initial }: { initial?: Detail }) {
     const slug = window.location.pathname.split('/').filter(Boolean)[1] ?? initial?.challenge.slug ?? ''
     setActual(slug)
     const r = await fetch(`/api/challenges/${encodeURIComponent(slug)}`, { cache: 'no-store' })
-    if (!r.ok) throw new Error('The latest Challenge could not load.')
+    if (!r.ok) throw new Error('The latest thread could not load.')
     const next = await r.json() as Detail
     setData(next); setError('')
     document.title = `${next.challenge.title} - Techno Optimists`
   }, [initial?.challenge.slug])
   useEffect(() => {
-    void refresh().catch(() => setError('The latest Challenge could not load. Please retry.'))
+    void refresh().catch(() => setError('The latest thread could not load. Please retry.'))
     void getMe().then((person) => { setMe(person); setSessionReady(true) })
   }, [refresh])
 
@@ -69,11 +69,11 @@ export default function ChallengeDetail({ initial }: { initial?: Detail }) {
   }, [data?.challenge.slug])
 
   const c = data?.challenge
-  if (!c || !data || actual !== c.slug) return <div><p role="status">{error || 'Loading Challenge…'}</p>{error && <button onClick={() => void refresh().catch(() => setError('The latest Challenge could not load. Please retry.'))}>Try again</button>}</div>
+  if (!c || !data || actual !== c.slug) return <div><p role="status">{error || 'Loading thread…'}</p>{error && <button onClick={() => void refresh().catch(() => setError('The latest thread could not load. Please retry.'))}>Try again</button>}</div>
   const reached = STAGE_ORDER.indexOf(c.stage)
   const source = sourceLink(c.source?.url)
   return <div>
-    {error && <p role="alert" className="form-error">{error} <button onClick={() => void refresh().catch(() => setError('The latest Challenge could not load. Please retry.'))}>Retry</button></p>}
+    {error && <p role="alert" className="form-error">{error} <button onClick={() => void refresh().catch(() => setError('The latest thread could not load. Please retry.'))}>Retry</button></p>}
     <header className="detail-header">
       <div className="detail-meta"><span>{gridRef(c.id)}</span><span className="type-pill">Started as {['idea', 'experiment'].includes(c.type) ? 'an' : 'a'} {TYPE_LABEL[c.type].toLowerCase()}</span>{(c.location || (c.lat != null && c.lng != null)) && <a className="detail-place-link" href="#location">{c.location || 'View location'} <span aria-hidden="true">↗</span></a>}</div>
       <h1>{c.emoji && <span className="challenge-emoji" aria-hidden="true">{c.emoji} </span>}{c.title}</h1>
@@ -88,7 +88,7 @@ export default function ChallengeDetail({ initial }: { initial?: Detail }) {
         <div><dt>Latest platform activity</dt><dd><time dateTime={dateISO(c.imported_at && c.imported_at > c.last_activity_at ? c.imported_at : c.last_activity_at)}>{formatDateTime(c.imported_at && c.imported_at > c.last_activity_at ? c.imported_at : c.last_activity_at)}</time></dd></div>
         {c.source && <div><dt>Source</dt><dd>{source ? <a href={source.href} target="_blank" rel="noopener noreferrer">{c.source.name ?? source.hostname} ↗</a> : c.source.name}</dd></div>}
       </dl>{c.imported_at && <p>The original record predates its addition here.</p>}</details>
-      <nav className="detail-jump" aria-label="On this Challenge"><a href="#discussion">Join the discussion</a><a href="#progress">Progress log</a></nav>
+      <nav className="detail-jump" aria-label="On this thread"><a href="#discussion">Join the discussion</a><a href="#progress">Progress log</a></nav>
     </header>
     <div className="stage-overview"><p><strong>Current stage: {STAGE_STAMP[c.stage]}</strong><span>{PROMPT[c.stage]}</span></p>
       <details className="stage-disclosure"><summary>View all stages</summary><ol className="challenge-lifecycle" aria-label="Lifecycle stages">
@@ -98,7 +98,7 @@ export default function ChallengeDetail({ initial }: { initial?: Detail }) {
     <div className="detail-grid">
       <div className="detail-story">
         {c.media.length > 0 && <div className="detail-media">{c.media.map((m) => m.kind === 'video' ? <video key={m.url} src={m.url} controls playsInline preload="metadata" /> : <img key={m.url} src={m.url} alt={m.alt ?? ''} width={m.w} height={m.h} />)}</div>}
-        {c.body && <section className="detail-section challenge-context"><h2>The Challenge</h2>{c.body.split(/\n\s*\n/).map((p, i) => <p key={i}>{p}</p>)}</section>}
+        {c.body && <section className="detail-section challenge-context"><h2>The thread</h2>{c.body.split(/\n\s*\n/).map((p, i) => <p key={i}>{p}</p>)}</section>}
         {c.source && <div className="challenge-source"><span>Source: </span>{source ? <a href={source.href} target="_blank" rel="noopener noreferrer">{c.source.name ?? source.hostname}</a> : <span>{c.source.name ?? c.source.url}</span>}{c.source.note && <details><summary>About this source</summary><p>{c.source.note}</p></details>}</div>}
         <Discussion key={c.slug} slug={c.slug} me={me} sessionReady={sessionReady} />
         <Progress key={`progress-${c.slug}`} challenge={c} updates={data.updates} me={me} refresh={refresh} />

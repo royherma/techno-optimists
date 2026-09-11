@@ -181,7 +181,7 @@ export default function CaptureForm({ paged = false }: { paged?: boolean } = {})
   if (me === null) {
     return (
       <div className="space-y-3">
-        <p className="text-(--color-ink-soft)">Sign in to post a Challenge.</p>
+        <p className="text-(--color-ink-soft)">Sign in to post a thread.</p>
         <a href="/signin?next=/post" className="feedback-control inline-block border border-(--color-rule) px-5 py-2.5 text-sm">
           Sign in
         </a>
@@ -191,7 +191,7 @@ export default function CaptureForm({ paged = false }: { paged?: boolean } = {})
 
   return (
     <form onSubmit={submit} className="space-y-8 np-capture" data-capture-step={paged ? step : undefined}>
-      {paged && <nav className="np-form-steps" aria-label="Share a Challenge steps">{['Notice', 'Describe', 'Place', 'Review'].map((label, index) => <button key={label} type="button" aria-current={step === index ? 'step' : undefined} onClick={() => setStep(index)}>{label}</button>)}</nav>}
+      {paged && <nav className="np-form-steps" aria-label="Share a thread steps">{['Notice', 'Describe', 'Place', 'Review'].map((label, index) => <button key={label} type="button" aria-current={step === index ? 'step' : undefined} onClick={() => setStep(index)}>{label}</button>)}</nav>}
       {/* The photo comes first because that is the order of the real act. */}
       <section className="space-y-3">
         <Legend n="01" label="What you saw" />
@@ -339,14 +339,14 @@ export default function CaptureForm({ paged = false }: { paged?: boolean } = {})
           disabled={!ready || submitting}
           className="feedback-control w-full border border-(--color-rule) bg-(--color-ink) py-3.5 text-sm text-(--color-paper) disabled:opacity-40"
         >
-          {submitting ? 'Posting...' : uploading ? 'Waiting for photos...' : 'Post this Challenge'}
+          {submitting ? 'Posting...' : uploading ? 'Waiting for photos...' : 'Post this thread'}
         </button>
         {error && <p className="text-sm text-(--color-problem)">{error}</p>}
         <p className="text-center text-xs text-(--color-ink-faint)">
           Posted as @{me.handle}
         </p>
       </div>
-      {paged && <nav className="np-step-nav" aria-label="Share a Challenge step controls"><button type="button" disabled={step === 0} onClick={() => setStep(step - 1)}>← Previous step</button><span>{step + 1} / 4</span><button type="button" disabled={step === 3} onClick={() => setStep(step + 1)}>Next step →</button></nav>}
+      {paged && <nav className="np-step-nav" aria-label="Share a thread step controls"><button type="button" disabled={step === 0} onClick={() => setStep(step - 1)}>← Previous step</button><span>{step + 1} / 4</span><button type="button" disabled={step === 3} onClick={() => setStep(step + 1)}>Next step →</button></nav>}
     </form>
   )
 }

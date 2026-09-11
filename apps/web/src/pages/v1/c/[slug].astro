@@ -14,9 +14,9 @@ const { slug } = Astro.params
 const initial = slug === '_shell' ? undefined : await getChallenge(slug!)
 const c = initial?.challenge
 ---
-<Base title={c ? `${c.title} - Techno Optimists` : 'Challenge - Techno Optimists'} description={c?.summary} noindex={!c}>
+<Base title={c ? `${c.title} - Techno Optimists` : 'Thread - Techno Optimists'} description={c?.summary} noindex={!c}>
   <Sheet>
-    <PageToolbar label="Challenge" />
+    <PageToolbar label="Thread" />
     <main class="challenge-detail"><ChallengeDetail client:load initial={initial} /></main>
   </Sheet>
 </Base>

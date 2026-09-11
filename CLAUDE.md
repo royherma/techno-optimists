@@ -20,8 +20,10 @@ Do not restate or re-derive it — link to it.
 
 ## Vocabulary (use these exact words)
 
-- **Challenge** — the core object. Not "post", not "project", not "issue".
-- A Challenge starts as one of: **Problem**, **Idea**, **Experiment**, **Build**.
+- **Thread** — the user-facing name for the core object (plural: **threads**). Use sentence case in copy: "Open thread", "Search threads", "Share a thread".
+- Internal `Challenge` types, API routes, database names, and `/c/` URLs stay unchanged; this is a naming change, not a data migration.
+- Naming decision (2026-09-11): a thread carries a problem, idea, experiment or build through discussion and progress. "Challenge" is no longer the public label.
+- A thread starts as one of: **Problem**, **Idea**, **Experiment**, **Build**.
 - Lifecycle labels: Noticing -> Understanding -> Ideating -> Building -> Testing -> Learning -> Improving.
   Stored stage keys remain spot, understand, ideas, build, test, learn, improve.
 - People roles: **Scout**, **Thinker**, **Researcher**, **Builder**, **Expert**, **Tester**.
@@ -51,7 +53,7 @@ stood here until then is lifted - Roy's call, same day.
 deploy costs a redeploy and nothing else. Iterate fast: build, deploy, verify,
 keep going. Do not stop to ask permission for `deploy:dev` or `deploy:prod`, and
 do not ask whether to check something - check it. This overrides the global
-deploy gate for this repo, and it expires the day real Challenges exist.
+deploy gate for this repo, and it expires the day real threads exist.
 
 **Push to prod generously.** Default is ship, not ask. A non-critical change goes
 straight to prod the moment it builds and verifies - copy, styling, layout, a new

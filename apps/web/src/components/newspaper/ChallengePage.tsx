@@ -33,7 +33,7 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
   async function refresh() {
     const slug = location.pathname.split('/').filter(Boolean).at(-1)!
     const response = await fetch(`/api/challenges/${encodeURIComponent(slug)}`, { cache: 'no-store' })
-    if (!response.ok) throw new Error('The latest Challenge could not load. Try again.')
+    if (!response.ok) throw new Error('The latest thread could not load. Try again.')
     const next: ChallengeData = await response.json()
     setData(previous => previous?.challenge.slug === next.challenge.slug
       ? { ...next, challenge: { ...next.challenge, views_count: Math.max(previous.challenge.views_count, next.challenge.views_count) } }
@@ -61,13 +61,13 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
         : previous)
     }).catch(() => {})
   }, [data?.challenge.slug])
-  if (!data) return <div className="np-empty"><h1>{error || 'Opening the Challenge…'}</h1>{error && <button onClick={() => void refresh().catch(e => setError(e.message))}>Try again</button>}</div>
+  if (!data) return <div className="np-empty"><h1>{error || 'Opening the thread…'}</h1>{error && <button onClick={() => void refresh().catch(e => setError(e.message))}>Try again</button>}</div>
   const c = data.challenge, image = c.media[Math.min(media, c.media.length - 1)]
   return <div className="np-challenge np-challenge-sheet" data-stage={c.stage}>
-    <div className="np-challenge-kicker"><a href="/">← All Challenges</a><span className={`type-${c.type}`}>{c.type} <span> / {c.location || 'Around the world'}</span></span><StageBadge stage={c.stage} /><span className="np-relative">{impactLabel(c.impact) ? `Impact: ${impactLabel(c.impact)}` : 'Impact not specified'}</span>{me?.is_admin && <button onClick={() => setEditing(true)}>Edit Challenge</button>}</div>
+    <div className="np-challenge-kicker"><a href="/">← All threads</a><span className={`type-${c.type}`}>{c.type} <span> / {c.location || 'Around the world'}</span></span><StageBadge stage={c.stage} /><span className="np-relative">{impactLabel(c.impact) ? `Impact: ${impactLabel(c.impact)}` : 'Impact not specified'}</span>{me?.is_admin && <button onClick={() => setEditing(true)}>Edit thread</button>}</div>
     {error && <p className="np-error" role="alert">{error} <button onClick={() => void refresh().catch(e => setError(e.message))}>Retry</button></p>}
     <div className="np-panel-grid">
-      <section className="np-panel np-panel-story" aria-label="Challenge story">
+      <section className="np-panel np-panel-story" aria-label="thread story">
         <div className="np-story-plate">
           {image?.kind === 'video' ? <video src={image.url} controls playsInline /> : image ? <img src={image.url} alt={image.alt || ''} /> : <p>Things can be better.</p>}
           {c.media.length > 1 && <div className="np-media-controls"><button aria-label="Previous image" disabled={media === 0} onClick={() => setMedia(media - 1)}>←</button><span>{media + 1} / {c.media.length}</span><button aria-label="Next image" disabled={media + 1 >= c.media.length} onClick={() => setMedia(media + 1)}>→</button></div>}
@@ -80,6 +80,6 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
       <Panel name="people" title="People"><PeopleLive slug={c.slug} initial={data.people} /></Panel>
       <SourcePlace challenge={c} />
     </div>
-    {me?.is_admin && <PanelDialog title="Edit Challenge" open={editing} onClose={() => setEditing(false)}><Editorial challenge={c} refresh={refresh} /></PanelDialog>}
+    {me?.is_admin && <PanelDialog title="Edit thread" open={editing} onClose={() => setEditing(false)}><Editorial challenge={c} refresh={refresh} /></PanelDialog>}
   </div>
 }

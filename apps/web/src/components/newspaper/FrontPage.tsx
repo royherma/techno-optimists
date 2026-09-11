@@ -24,7 +24,7 @@ export default function FrontPage({ initial }: { initial: Challenge[] }) {
   const stories = filtered.slice(current * size, (current + 1) * size)
   const pending = !measured || loading
   return <div className="np-front" ref={frame}>
-    <div className="np-front-tools"><h1>{type === 'all' ? 'Explore Challenges' : type.charAt(0).toUpperCase() + type.slice(1) + 's'}</h1><label><img src="/icons/magnifying-glass.svg" alt="" /><input type="search" placeholder="Search Challenges" aria-label="Search Challenges" value={query} onChange={e => { setQuery(e.target.value); setPage(0) }} /></label></div>
+    <div className="np-front-tools"><h1>{type === 'all' ? 'Explore threads' : type.charAt(0).toUpperCase() + type.slice(1) + 's'}</h1><label><img src="/icons/magnifying-glass.svg" alt="" /><input type="search" placeholder="Search threads" aria-label="Search threads" value={query} onChange={e => { setQuery(e.target.value); setPage(0) }} /></label></div>
     <div className={`np-news-grid ${pending ? '' : `np-news-count-${stories.length}`} ${pending ? 'np-loading-grid' : 'np-edition-ready'}`} aria-busy={pending}>
       {pending ? Array.from({ length: 5 }, (_, i) => <div key={i} className={`np-story np-skeleton ${i === 0 ? 'np-lead' : ''}`} aria-hidden="true">
         <div className="np-story-image np-skeleton-image" />
@@ -32,9 +32,9 @@ export default function FrontPage({ initial }: { initial: Challenge[] }) {
       </div>) : <>
 
       {stories.map((c, i) => <StoryTile key={c.id} challenge={c} lead={i === 0} brief={false} />)}
-      {!stories.length && <div className="np-empty"><h2>{query || type !== 'all' ? 'A different angle, perhaps?' : 'What could be better?'}</h2><p>{query || type !== 'all' ? 'No Challenges match your search. Try another search or return to all Challenges.' : 'A real problem. An unfinished idea. Something worth figuring out together.'}</p><a href="/">All Challenges →</a><a href="/post">Share a Challenge →</a></div>}
+      {!stories.length && <div className="np-empty"><h2>{query || type !== 'all' ? 'A different angle, perhaps?' : 'What could be better?'}</h2><p>{query || type !== 'all' ? 'No threads match your search. Try another search or return to all threads.' : 'A real problem. An unfinished idea. Something worth figuring out together.'}</p><a href="/">All threads →</a><a href="/post">Share a thread →</a></div>}
       </>}
     </div>
-    <footer className="np-page-controls"><span aria-live="polite">{pending ? 'Setting the edition…' : error ? (challenges.length ? 'Live refresh unavailable · showing saved Challenges' : 'Challenges unavailable · please reload') : `${filtered.length ? current * size + 1 : 0}–${Math.min((current + 1) * size, filtered.length)} of ${filtered.length} Challenges`}</span><div><button disabled={pending || current === 0} onClick={() => setPage(current - 1)}>← Previous</button><button disabled={pending || current + 1 >= pages} onClick={() => setPage(current + 1)}>More Challenges →</button></div></footer>
+    <footer className="np-page-controls"><span aria-live="polite">{pending ? 'Setting the edition…' : error ? (challenges.length ? 'Live refresh unavailable · showing saved threads' : 'Threads unavailable · please reload') : `${filtered.length ? current * size + 1 : 0}–${Math.min((current + 1) * size, filtered.length)} of ${filtered.length} threads`}</span><div><button disabled={pending || current === 0} onClick={() => setPage(current - 1)}>← Previous</button><button disabled={pending || current + 1 >= pages} onClick={() => setPage(current + 1)}>More threads →</button></div></footer>
   </div>
 }

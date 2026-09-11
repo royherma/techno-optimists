@@ -19,12 +19,12 @@ const unplaced = challenges.length - placed.length
 ---
 <Base
   title="Map - Techno Optimists"
-  description="Where the Challenges are. Every pin is a real place someone reported from."
+  description="Where the threads are. Every pin is a real place someone reported from."
 >
   <Sheet>
-    <BrowseFrame view="map" label="Challenge map" contentClass="map-page">
+    <BrowseFrame view="map" label="Thread map" contentClass="map-page">
       <h1 class="font-[family-name:var(--font-display)] text-[2rem] leading-[1.1] tracking-tight sm:text-[2.4rem]">
-        Where the Challenges are
+        Where the threads are
       </h1>
       <p class="mt-2 max-w-2xl text-(--color-ink-soft)">
         Every pin is somewhere a person reported from. Pin colour shows its current stage. Pin size does not represent impact.
@@ -46,11 +46,11 @@ const unplaced = challenges.length - placed.length
         />
       </div>
 
-      <section class="map-preview" aria-label="Challenge preview">
-        <p data-preview-hint>Hover over a pin, use Tab, or tap to preview a Challenge.</p>
+      <section class="map-preview" aria-label="thread preview">
+        <p data-preview-hint>Hover over a pin, use Tab, or tap to preview a thread.</p>
         {placed.map((c) => <a href={`/v1/c/${c.slug}`} data-map-preview={c.slug} hidden>
           {c.media[0] && <div class="map-preview-media"><MediaPlate media={c.media[0]} fit="cover" /></div>}
-          <span><small>{c.location} · {c.stage}</small><strong>{c.title}</strong><span>{c.summary}</span><b>Explore Challenge →</b></span>
+          <span><small>{c.location} · {c.stage}</small><strong>{c.title}</strong><span>{c.summary}</span><b>Explore thread →</b></span>
         </a>)}
       </section>
 
@@ -62,7 +62,7 @@ const unplaced = challenges.length - placed.length
       <p class="feed-status" aria-live="polite" data-feed-status></p>
       <div data-empty-index hidden={placed.length > 0}>
         <p class="mt-6 text-(--color-ink-soft)">
-          No matching Challenges on the map. Try another filter or post one with a place.
+          No matching threads on the map. Try another filter or post one with a place.
         </p>
       </div>
 

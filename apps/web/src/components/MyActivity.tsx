@@ -26,19 +26,19 @@ export default function MyActivity() {
   useEffect(() => { void load(0) }, [])
   const shown = items.filter((item) => filter === 'all' || item.kinds.includes(filter as ActionKind))
   return <section className="my-activity" aria-labelledby="activity-title">
-    <h2 id="activity-title">Your marked Challenges</h2>
-    <p>Pick up where you left off. Your responses and followed Challenges live here.</p>
-    {signedOut ? <a href="/signin?next=/settings%23activity">Sign in to see your Challenges</a> : <>
+    <h2 id="activity-title">Your marked threads</h2>
+    <p>Pick up where you left off. Your responses and followed threads live here.</p>
+    {signedOut ? <a href="/signin?next=/settings%23activity">Sign in to see your threads</a> : <>
       {items.length > 0 && <label className="activity-filter">Show
         <select value={filter} onChange={(e) => setFilter(e.target.value)}>
           <option value="all">All responses</option>
           {Object.entries(ACTION_LABEL).map(([kind, label]) => <option key={kind} value={kind}>{label}</option>)}
         </select>
       </label>}
-      <p role="status">{busy ? 'Loading your Challenges...' : error ? 'Your Challenges could not load.' : `${shown.length} ${shown.length === 1 ? 'Challenge' : 'Challenges'}${page !== null ? ' loaded' : ''}`}</p>
+      <p role="status">{busy ? 'Loading your threads...' : error ? 'Your threads could not load.' : `${shown.length} ${shown.length === 1 ? 'thread' : 'threads'}${page !== null ? ' loaded' : ''}`}</p>
       {error && <button type="button" onClick={() => void load(page ?? 0)}>Try again</button>}
-      {!busy && !error && !items.length && <p>See something interesting? Choose a response or Follow progress on a Challenge, and find it here. <a href="/">Explore Challenges →</a></p>}
-      {!busy && items.length > 0 && !shown.length && <p>No Challenges match this response. Choose another filter.</p>}
+      {!busy && !error && !items.length && <p>See something interesting? Choose a response or Follow progress on a thread, and find it here. <a href="/">Explore threads →</a></p>}
+      {!busy && items.length > 0 && !shown.length && <p>No threads match this response. Choose another filter.</p>}
       <ul>{shown.map((item) => <li key={item.slug}>
         <a className="activity-item" href={`/c/${item.slug}#contribute`}>
           {item.media[0]?.kind === 'image' && <img src={item.media[0].url} alt="" loading="lazy" />}
