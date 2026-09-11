@@ -1,29 +1,46 @@
 /**
- * Who is an admin, hardcoded.
+ * Who is an admin.
  *
- * This is a list in source on purpose, and it is temporary. It is not a secret:
- * it grants nothing by itself, it only names addresses that already have to pass
- * the magic-link flow to prove they own the mailbox. A leaked copy of this file
- * lets nobody in.
+ * The list is configuration, not source. It lives in the `ADMIN_EMAILS` secret as
+ * a comma-separated string, because this repo is public: an address in source is
+ * an address every scraper on GitHub gets, and it names the exact two mailboxes
+ * an attacker has to compromise to own the site. It grants nothing on its own -
+ * an admin still proves the mailbox through the magic-link flow - but there is no
+ * reason to publish the target.
  *
- * It is deliberately NOT a wrangler var or a secret - both put a deploy between
- * Roy and a one-line change, for a list that exists until real roles land.
+ * Changing it is `wrangler secret put ADMIN_EMAILS --env prod` and no deploy,
+ * which is fewer steps than the edit-and-deploy this replaced, not more.
  *
- * The rule: this list decides, `identities.is_admin` caches. Every session
- * resolve rewrites the column to agree with this array, so adding an address
- * promotes an existing account on its next request, and removing one demotes it.
- * There is no third place to check and no way for the two to drift apart.
+ * Unset means nobody is an admin. That is the right default for a fresh clone:
+ * a contributor running this locally gets a working site with no admin, never
+ * someone else's admin.
+ *
+ * The rule is unchanged: this list decides, `identities.is_admin` caches. Every
+ * session resolve rewrites the column to agree, so adding an address promotes an
+ * existing account on its next request and removing one demotes it. There is no
+ * third place to check.
  */
 
-/** Compared against the normalized (lowercased, trimmed) email. */
-export const ADMIN_EMAILS: readonly string[] = [
-  'royherma@gmail.com',
-  'techguyver1337@gmail.com',
-]
+export type AdminEnv = { ADMIN_EMAILS?: string }
+
+/**
+ * Parsed per call rather than cached in a module global. A Worker isolate
+ * outlives a single request, so a cached list would go stale against a
+ * `secret put` until the isolate recycled - the exact "no deploy needed"
+ * property this exists for. Splitting a short string per request costs nothing.
+ *
+ * Entries are normalized on read, so a stray capital or space in the secret
+ * still matches a real sign-in instead of silently never matching.
+ */
+export const adminEmails = (env: AdminEnv): string[] =>
+  (env.ADMIN_EMAILS ?? '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter((e) => e.length > 0)
 
 /**
  * Takes an already-normalized email. Callers must pass the output of
  * normalizeEmail(), never a raw address - otherwise 'Roy@Gmail.com ' misses.
  */
-export const isAdminEmail = (normalizedEmail: string): boolean =>
-  ADMIN_EMAILS.includes(normalizedEmail)
+export const isAdminEmail = (env: AdminEnv, normalizedEmail: string): boolean =>
+  normalizedEmail.length > 0 && adminEmails(env).includes(normalizedEmail)

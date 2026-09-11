@@ -4,7 +4,7 @@ import {
   handleFromEmail, handleProblem, hashToken, mintToken, nameFromEmail,
   normalizeEmail, normalizeHandle, readCookie, signalCookie,
 } from '../src/auth'
-import { ADMIN_EMAILS, isAdminEmail } from '../src/admin'
+import { adminEmails, isAdminEmail } from '../src/admin'
 
 describe('tokens', () => {
   it('mints a 64-char hex token', () => {
@@ -54,25 +54,43 @@ describe('email handling', () => {
 })
 
 describe('admin emails', () => {
+  const env = { ADMIN_EMAILS: 'ada@example.com,grace@example.com' }
+
   it('recognises every address in the list', () => {
-    for (const e of ADMIN_EMAILS) expect(isAdminEmail(e)).toBe(true)
+    for (const e of adminEmails(env)) expect(isAdminEmail(env, e)).toBe(true)
   })
 
   it('is not admin for an address that is not listed', () => {
-    expect(isAdminEmail('stranger@example.com')).toBe(false)
+    expect(isAdminEmail(env, 'stranger@example.com')).toBe(false)
   })
 
-  it('the list is stored normalized, so real signins match', () => {
-    // isAdminEmail takes normalizeEmail() output. An entry with capitals or
-    // whitespace could never match a real login, so the list itself must be
-    // clean - this catches a typo when someone adds a row.
-    for (const e of ADMIN_EMAILS) expect(e).toBe(normalizeEmail(e))
+  it('parses a comma-separated secret, trimming and lowercasing each entry', () => {
+    // The secret is typed by a human into a terminal, so entries arrive with
+    // stray spaces and capitals. Normalizing on read means a sloppy `secret put`
+    // still matches a real sign-in instead of silently never matching.
+    expect(adminEmails({ ADMIN_EMAILS: ' Ada@Example.com , grace@example.com ' }))
+      .toEqual(['ada@example.com', 'grace@example.com'])
+  })
+
+  it('nobody is an admin when the secret is unset or empty', () => {
+    // The fresh-clone case. A contributor gets a working site with no admin,
+    // never a site that trusts an address they do not control.
+    expect(adminEmails({})).toEqual([])
+    expect(isAdminEmail({}, 'ada@example.com')).toBe(false)
+    expect(isAdminEmail({ ADMIN_EMAILS: '' }, 'ada@example.com')).toBe(false)
+    expect(isAdminEmail({ ADMIN_EMAILS: '  ,  ' }, 'ada@example.com')).toBe(false)
+  })
+
+  it('an empty email never matches an empty list entry', () => {
+    // A trailing comma once produced an '' entry; an identity row with no email
+    // would then have matched it and become admin.
+    expect(isAdminEmail({ ADMIN_EMAILS: 'ada@example.com,' }, '')).toBe(false)
   })
 
   it('matches a real signin after normalization, not before', () => {
-    const typedByUser = '  RoyHerma@Gmail.com '
-    expect(isAdminEmail(normalizeEmail(typedByUser))).toBe(true)
-    expect(isAdminEmail(typedByUser)).toBe(false)
+    const typedByUser = '  Ada@Example.com '
+    expect(isAdminEmail(env, normalizeEmail(typedByUser))).toBe(true)
+    expect(isAdminEmail(env, typedByUser)).toBe(false)
   })
 })
 

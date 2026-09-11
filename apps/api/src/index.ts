@@ -38,6 +38,12 @@ type Env = {
   RESEND_API_KEY?: string
   /** From address for magic links. Falls back to the Resend sandbox sender. */
   MAIL_FROM?: string
+  /**
+   * Comma-separated admin addresses. A secret rather than a var so the list is
+   * not in this public repo, and so changing it needs no deploy. Unset means no
+   * admins, which is what a fresh clone should get. See src/admin.ts.
+   */
+  ADMIN_EMAILS?: string
 }
 
 const app = new Hono<{ Bindings: Env }>()
@@ -893,7 +899,7 @@ app.get('/api/auth/callback', async (c) => {
       c.env.DB.prepare('INSERT INTO people (id, handle, name) VALUES (?, ?, ?)')
         .bind(id, handle, nameFromEmail(email)),
       c.env.DB.prepare('INSERT INTO identities (person_id, email, is_admin) VALUES (?, ?, ?)')
-        .bind(id, email, isAdminEmail(email) ? 1 : 0),
+        .bind(id, email, isAdminEmail(c.env, email) ? 1 : 0),
     ])
     person = { id }
   }

@@ -1,0 +1,133 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "techno-optimists",
+  "main": "apps/api/src/index.ts",
+  "compatibility_date": "2026-06-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "account_id": "<your-cloudflare-account-id>",
+  "workers_dev": true,
+  "observability": { "enabled": true },
+
+  // A thrown error in a Worker reports the line number of the BUNDLE, which is
+  // one minified file and tells you nothing. This uploads the source map with
+  // the deploy so the stack trace in the dashboard names the .ts file and line.
+  "upload_source_maps": true,
+
+  // Astro builds static output here; the Worker serves /api/* and the assets
+  // handle everything else.
+  "assets": {
+    "directory": "apps/web/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "html_handling": "drop-trailing-slash",
+    // The asset worker answers BEFORE the script unless this is set, so a
+    // /api/* response could be served - and edge-cached - as a static asset.
+    // A cached 404.html against /api/auth/callback broke sign-in outright:
+    // cf-cache-status HIT, the Worker never ran, the token never redeemed.
+    "run_worker_first": ["/api/*"]
+  },
+
+  "d1_databases": [
+    { "binding": "DB", "database_name": "techno-optimists", "database_id": "<your-d1-id-techno-optimists>" },
+    // Split from day one - see docs/2026-09-10-stack.md. A telemetry burst must
+    // never be able to queue a feed read.
+    { "binding": "ANALYTICS_DB", "database_name": "to-analytics", "database_id": "<your-d1-id-to-analytics>" }
+  ],
+
+  "kv_namespaces": [
+    { "binding": "CACHE", "id": "<your-kv-id-cache>" }
+  ],
+
+  // Traffic goes here, not to the ANALYTICS_DB above. Analytics Engine is built
+  // for write-many/aggregate-later: no per-write row cost, no single-threaded
+  // queue in front of it, 3 months retention, read back over SQL at
+  // /accounts/{id}/analytics_engine/sql. Datasets are created on first write -
+  // there is nothing to provision before deploying.
+  "analytics_engine_datasets": [
+    { "binding": "ANALYTICS", "dataset": "to_events" }
+  ],
+
+  // Media earned its place: the capture path (photo/video of a real problem) is
+  // the product. Still absent until they earn theirs: images, ai, vectorize, queues.
+  "r2_buckets": [
+    { "binding": "MEDIA", "bucket_name": "techno-optimists-media" }
+  ],
+
+  // Two deployable environments. Binding NAMES are identical in both, so no
+  // code branches on environment - only the IDs behind them differ. Deploy with
+  // `npm run deploy:dev` / `npm run deploy:prod`; a bare `wrangler deploy` with
+  // no --env is intentionally not a script, so prod is never the accident.
+  //
+  //   dev   techno-optimists-dev.<subdomain>.workers.dev   throwaway data
+  //   prod  techno-optimists.<subdomain>.workers.dev       real data
+  "env": {
+    "dev": {
+      "name": "techno-optimists-dev",
+      "workers_dev": true,
+      "observability": { "enabled": true },
+      "vars": { "ENVIRONMENT": "dev" },
+      "assets": {
+        "directory": "apps/web/dist",
+        "binding": "ASSETS",
+        "not_found_handling": "404-page",
+        "html_handling": "drop-trailing-slash",
+        "run_worker_first": ["/api/*"]
+      },
+      "d1_databases": [
+        { "binding": "DB", "database_name": "techno-optimists-dev", "database_id": "<your-d1-id-techno-optimists-dev>" },
+        { "binding": "ANALYTICS_DB", "database_name": "to-analytics-dev", "database_id": "<your-d1-id-to-analytics-dev>" }
+      ],
+      "kv_namespaces": [
+        { "binding": "CACHE", "id": "<your-kv-id-cache-dev>" }
+      ],
+      // Bindings are NOT inherited by a named environment - every d1, kv and r2
+      // above is redeclared here for that reason, and this is no different. A
+      // separate dataset so dev traffic never lands in the prod numbers.
+      "analytics_engine_datasets": [
+        { "binding": "ANALYTICS", "dataset": "to_events_dev" }
+      ],
+      "r2_buckets": [
+        { "binding": "MEDIA", "bucket_name": "techno-optimists-media-dev" }
+      ]
+    },
+
+    // Live on <your-domain> (bought 2026-09-10, zone active on this
+    // account). The apex and www are custom domains, so `wrangler deploy`
+    // creates their DNS records itself - the OAuth token needs no DNS scope.
+    //
+    // `workers_dev: false` on purpose: two public addresses for one site
+    // splits links and lets the workers.dev one get bookmarked. The domain is
+    // the address now, so the subdomain is turned off rather than left as a
+    // quiet alias.
+    "prod": {
+      "name": "techno-optimists",
+      "workers_dev": false,
+      "routes": [
+        { "pattern": "<your-domain>", "custom_domain": true },
+        { "pattern": "www.<your-domain>", "custom_domain": true }
+      ],
+      "observability": { "enabled": true },
+      "vars": { "ENVIRONMENT": "prod" },
+      "assets": {
+        "directory": "apps/web/dist",
+        "binding": "ASSETS",
+        "not_found_handling": "404-page",
+        "html_handling": "drop-trailing-slash",
+        "run_worker_first": ["/api/*"]
+      },
+      "d1_databases": [
+        { "binding": "DB", "database_name": "techno-optimists", "database_id": "<your-d1-id-techno-optimists>" },
+        { "binding": "ANALYTICS_DB", "database_name": "to-analytics", "database_id": "<your-d1-id-to-analytics>" }
+      ],
+      "kv_namespaces": [
+        { "binding": "CACHE", "id": "<your-kv-id-cache>" }
+      ],
+      "analytics_engine_datasets": [
+        { "binding": "ANALYTICS", "dataset": "to_events" }
+      ],
+      "r2_buckets": [
+        { "binding": "MEDIA", "bucket_name": "techno-optimists-media" }
+      ]
+    }
+  }
+}
