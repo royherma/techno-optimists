@@ -110,3 +110,5 @@
   .newspaper .np-account .account-settings-form>section:first-child>label,
   .newspaper .np-account .account-settings-form>section:first-child>.form-section-heading { margin:0; }
 }
+
+.newspaper .np-discussion .kind-label select:not([multiple]) { min-height:42px; padding:10px 38px 10px 12px; font-size:14px; }
