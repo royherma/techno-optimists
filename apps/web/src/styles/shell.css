@@ -99,7 +99,9 @@
   background: var(--color-paper);
   border-radius: 16px;
   padding: 10px;
-  min-height: 730px;
+  /* Height comes from the links, not a number tuned to a link count. This was
+     730px, sized when the rail held five items; with two it drew a tall empty
+     card. Desktop (>=1024px) stretches the rail in viewport.css instead. */
 }
 .side-links {
   display: flex;
@@ -404,7 +406,6 @@
   }
   .side-nav {
     margin-top: 84px;
-    min-height: 850px;
   }
   .side-links {
     gap: 16px;
