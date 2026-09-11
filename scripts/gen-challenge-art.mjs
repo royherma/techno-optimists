@@ -34,7 +34,7 @@ import { join } from 'node:path'
 
 const GEN = join(homedir(), '.claude/skills/gen-image/gen_image.sh')
 const SLICE = join(homedir(), '.claude/skills/slice-grid-image/bin/slice.py')
-const SEED_DIR = 'apps/web/public/seed'
+const SEED_DIR = process.env.SCOUT_ART_DIR ?? 'apps/web/public/seed'
 const CELLS = 4 // 2x2, paid backend only
 
 // The card is aspect-[4/3] with object-cover (ChallengeCard.astro:15), so the

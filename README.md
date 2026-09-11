@@ -162,61 +162,74 @@ reporting. Details in [CONTRIBUTING.md](CONTRIBUTING.md#reporting-a-security-iss
 MIT — see [LICENSE](LICENSE). Use it, fork it, ship it commercially, no permission
 needed. Copyright 2026 Techguyver Labs, LLC.
 
-## Challenge discovery
+## Scheduled Challenge discovery
 
-Scout reads specific source URLs, RSS/Atom feeds, Reddit JSON searches, and optional
-Brave web searches, then asks a local Ollama model to draft Challenges and classify
-reach, severity and lifecycle. It writes review files; it does not publish.
+Run one bounded enrichment job from cron, a system timer, or a task runner:
 
 ```sh
 npm ci --prefix scripts/scout
-npm run scout -- --sources-only --limit 9 --out outputs/scout
-npm run test:scout
+npm run scout:cron -- --write --env-file .env
 ```
 
-The example configuration is `scripts/scout/themes.yaml` (JSON is valid YAML).
-Edit its sources, themes, places, feeds and Reddit communities for the next batch.
-Omit `--sources-only` to enable discovery. Web search needs
-`BRAVE_SEARCH_API_KEY`; sources and feeds work without it. `max_queries` bounds
-search requests and `--limit` bounds successfully fetched source pages, not accepted
-Challenges. Failed candidates are logged. `--fetch-only` tests fetching without a
-model. The default model is `qwen3.5:9b` on Ollama at localhost:11434; override with
-`SCOUT_MODEL` and `SCOUT_MODEL_BASE`. Models must already be installed.
+The job reads news feeds and optional web searches, drafts Challenges, classifies
+impact and severity, runs mechanical evidence checks plus a separate content audit,
+generates local illustrations, uploads them to R2 through the API, and inserts
+eligible Challenges. There is no approval-file step. Uncertain drafts are saved
+for inspection and skipped; one unsuitable article does not stop the batch.
+Omit `--write` for a complete discovery dry run with no database or image writes.
 
-Outputs include `cards.json` (passed mechanical checks, still needs human review),
-`review_queue.json`, `rejected.json`, `sources.json` and
-`approvals.template.json`. Cache files contain source text and model responses;
-keep `outputs/` private and untracked. Each run refreshes sources daily and reuses
-identical model inputs. Use separate output directories for simultaneous runs.
-Only HTML sources are supported; PDFs and blocked pages go to review.
+Configure `scripts/scout/cron.yaml`: API base, existing author handle, RSS feeds,
+themes, places, source-page limit and publication limit. Defaults process up to 12
+pages and publish at most 5 Challenges per run. Feeds work without a search key;
+`BRAVE_SEARCH_API_KEY` adds rotating web queries. Sources and feeds come from trusted
+operator configuration, never from model instructions. PDFs are queued as unsupported.
 
-Impact rings follow the app: personal, neighbourhood, town, region, global.
-`severity` is separate. A model's explanation is an inference, not evidence of
-population size. Source measurements require an exact short quote, and unclear
-or stale dates, ambiguous locations and missing solution checks are flagged.
-Search results are recorded as follow-up leads: a reviewer must read them before
-concluding whether the situation has changed. Local models can still misread a
-source even when these mechanical checks pass.
+The runner needs Node 22.13+, Python 3, a running Ollama model (default
+`qwen3.5:9b`), and the local image service on port 4750. `SCOUT_MODEL`,
+`SCOUT_VERIFY_MODEL` and `SCOUT_MODEL_BASE` override model configuration. The audit
+is a separate inference, not a claim of independent human verification. Automatic
+publication requires matching source-date metadata from the past 90 days, an exact
+short measurement quote, a resolved location, and all audit checks passing. Reports
+are explicitly dated to their source; they do not claim the situation is unchanged
+today. Impact rings measure reach; severity is retained separately in provenance.
 
-Review and correct the JSON against the source. Copy the approval template to a
-separate file, fill in reviewer and checks, and accept only reviewed records.
-Approval `revision` is SHA-256 of `JSON.stringify(card)`; after editing a card,
-recompute it using `hash` from `scripts/scout/core.mjs`. Stale approvals fail.
+Put `TO_SESSION` in a gitignored `.env`, using an existing admin session for the
+configured API. The job checks it before discovery and fails with a nonzero exit
+when missing, expired, or not an admin. Existing sessions expire after 60 days, so
+this credential must be renewed. No new auth mechanism is provisioned by Scout.
+The append-only API must be deployed before the job's first write; the runner
+refuses a server that does not explicitly confirm `create_only` support.
+
+For example, a scheduler can invoke the same command every six hours. Set its
+working directory to this checkout and provide a PATH containing Node, npm and
+Python, or use their absolute paths. No schedule is installed by the repo.
+
+The default durable state is `outputs/scout-job/state.json`. Keep it across runs
+and use a separate state directory per database. Each run also saves its JSON
+summary, rejected reasons and evidence under `outputs/scout-job/runs/`; latest
+status is `outputs/scout-job/last-run.json`. These files are private and gitignored.
+Failures retain queued cards and retry with exponential backoff. Published sources
+are deduplicated against both saved state and the live feed. Stable place/problem
+slugs plus an atomic insert-only database operation protect retries, concurrent
+runs and community edits. Semantic duplicates with different descriptions can
+still need editorial cleanup. The shared process lock returns exit code 75 when
+another coordinated operation is running; the scheduler can retry later.
+
+Images upload through `/api/uploads`, so new Challenges need no static asset deploy.
+Set `images: false` for text-only ingestion. Failed image or API operations remain
+pending rather than creating a Challenge with a broken image. Existing Challenges
+are never overwritten by this job; it grows the database with new sourced material.
 
 ```sh
-npm run scout -- --out outputs/scout --approve outputs/scout/approvals.json
-node scripts/gen-challenge-art.mjs outputs/scout/import.json
-node scripts/gen-challenge-art.mjs outputs/scout/import.json --write
-node scripts/import-challenges.mjs outputs/scout/import.json --base https://technooptimists.org
+npm run test:scout
+npm run scout:cron -- --help
 ```
 
-The illustration script accepts Scout's `image_subject`, uses the existing locked
-style and local generator, and attaches media to the import batch. Its default
-art dimensions remain 688x512 to match the existing site pipeline. Generation needs
-the local image service on port 4750. The importer requires `TO_SESSION` and is a
-dry run until explicitly called with `--write`. Images must be deployed with the
-site before importing their URLs. Nothing in Scout changes the database or deploys
-the site. There is no automatic recurring schedule.
+For manual research, the original CLI remains available:
+`npm run scout -- --sources-only --limit 9 --out outputs/scout`.
+Its example sources are in `scripts/scout/themes.yaml`. Manual runs write
+`cards.json`, `review_queue.json` and an optional approval template; the scheduled
+job does not use that approval workflow.
 
 Provider references: [Ollama chat](https://docs.ollama.com/api/chat),
 [Brave web search](https://api-dashboard.search.brave.com/api-reference/web/search/get).
