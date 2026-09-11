@@ -111,3 +111,24 @@ describe('single emoji', () => {
   it.each(['🐟', '👩🏽‍🔬', '🇯🇵', '1️⃣', '', null])('accepts %s', (value) => expect(emojiValue.safeParse(value).success).toBe(true))
   it.each(['hello', '🐟🌱', '<script>', '12'])('rejects %s', (value) => expect(emojiValue.safeParse(value).success).toBe(false))
 })
+
+describe('public contribution profiles', () => {
+  it('returns only authored public work and excludes private account and action data', async () => {
+    await request('one/comments', 'POST', comment())
+    sqlite.exec("UPDATE people SET name='Private Name', location='Private Location' WHERE id='p1'; INSERT INTO challenge_actions(person_id,challenge_id,kind) VALUES ('p1','c2','follow'); INSERT INTO updates(id,challenge_id,author_id,body) VALUES ('up1','c1','p1','A public result')")
+    const response = await app.request('https://site.test/api/people/reader/contributions', {}, { DB })
+    expect(response.status).toBe(200)
+    const result = await response.json()
+    expect(result.person).toEqual({ handle: 'reader' })
+    expect(result.contributions.map((x: {kind: string}) => x.kind).sort()).toEqual(['comment', 'update'])
+    expect(result.contributions.every((x: {slug: string}) => x.slug === 'one')).toBe(true)
+    for (const secret of ['Private Name','Private Location','reader@example.com','token_hash','is_admin','follow']) expect(JSON.stringify(result)).not.toContain(secret)
+  })
+  it('distinguishes missing profiles and pages public Challenges deterministically', async () => {
+    expect((await app.request('https://site.test/api/people/absent/contributions', {}, { DB })).status).toBe(404)
+    const result = await (await app.request('https://site.test/api/people/owner/contributions?offset=1', {}, { DB })).json()
+    expect(result.contributions).toHaveLength(1)
+    expect(result.next_offset).toBeNull()
+    expect(result.contributions[0].kind).toBe('challenge')
+  })
+})

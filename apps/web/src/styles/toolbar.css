@@ -14,3 +14,12 @@
 */
 @media (min-width:761px) and (max-width:1350px) { .site-shell .sheet-content > .app-toolbar { flex-wrap:wrap;gap:4px 20px; } .app-toolbar .view-tabs { order:1; } .app-toolbar .toolbar-actions { order:2;margin-left:auto; } .app-toolbar .type-tabs { order:3;flex-basis:100%;margin:0;justify-content:center; } .app-toolbar .toolbar-context { order:3;flex-basis:100%;text-align:center;border-bottom:0;padding:7px; } }
 @media (max-width:760px) { .site-shell .sheet-content > .app-toolbar { height:auto;min-height:0;flex:auto;flex-wrap:wrap;gap:8px;padding:10px; } .app-toolbar .view-tabs { width:100%; } .app-toolbar .view-tabs a { flex:1;justify-content:center;padding:12px; } .app-toolbar .toolbar-actions { order:1;width:100%;justify-content:space-between; } .app-toolbar .toolbar-context { order:2;text-align:center;margin:auto;padding:8px; } }
+/* Detail pages have one short context label, so keep it on the same row. */
+@media(min-width:761px){
+.site-shell:has(.toolbar-context){--toolbar-height:76px}
+.site-shell .sheet-content > .app-toolbar:has(.toolbar-context){flex-wrap:nowrap;height:76px;min-height:76px;flex-basis:76px}
+.app-toolbar:has(.toolbar-context) .toolbar-context{order:1;flex-basis:auto;padding:0;border:0;margin:auto;text-align:center}
+.app-toolbar:has(.toolbar-context) .toolbar-actions{order:2}
+.app-toolbar:has(.toolbar-context) .view-tabs{order:0}
+}
+@media(max-width:760px){.app-toolbar:has(.toolbar-context) .toolbar-context{order:0;margin-left:0;padding:0}.app-toolbar:has(.toolbar-context) .toolbar-actions{width:auto;margin-left:auto}.app-toolbar:has(.toolbar-context) .view-tabs{width:100%}}

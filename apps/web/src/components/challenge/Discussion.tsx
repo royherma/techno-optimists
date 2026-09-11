@@ -108,7 +108,7 @@ export default function Discussion({ slug, me, sessionReady }: { slug: string; m
     <ol className="discussion-list">{comments.map((comment) => {
       const repliedTo = comments.find((c) => c.id === comment.parent_id)
       return <li id={`response-${comment.id}`} key={comment.id} className={comment.parent_id ? 'is-reply' : ''}>
-        <div className="update-byline"><strong>@{comment.author.handle}</strong>
+        <div className="update-byline"><a href={`/people?handle=${encodeURIComponent(comment.author.handle)}`}><strong>@{comment.author.handle}</strong></a>
           {comment.kind !== 'comment' && <span className="response-kind">{LABEL[comment.kind]}</span>}
           <time dateTime={comment.created_at.replace(' ', 'T') + 'Z'}>{ago(comment.created_at)}</time></div>
         {comment.parent_id && <p className="reply-context">Replying to {repliedTo ? <a href={`#response-${repliedTo.id}`}>@{repliedTo.author.handle}</a> : 'an earlier response'}</p>}

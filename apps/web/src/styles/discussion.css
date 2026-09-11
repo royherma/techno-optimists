@@ -58,3 +58,4 @@
   .stage-overview > p > span { display: block; margin-top: 6px; }
   .stage-disclosure .stage-description { display: block; font-size: 10px; }
 }
+.detail-byline a,.update-byline a,.people-panel h3 a{color:var(--color-accent);text-decoration:underline;text-underline-offset:3px}.challenge-history{font-size:13px;color:var(--color-ink-soft);margin-top:16px}.challenge-history summary{cursor:pointer;width:fit-content;color:var(--color-accent)}.challenge-history p{line-height:1.6;margin:8px 0}
