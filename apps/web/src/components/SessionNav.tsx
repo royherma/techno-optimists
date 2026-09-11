@@ -4,9 +4,12 @@ import { getMe, type Me } from "../lib/session";
 export default function SessionNav() {
   const [me, setMe] = useState<Me | null | undefined>(undefined);
   useEffect(() => {
-    getMe()
+    const refresh = () => { getMe()
       .then(setMe)
-      .catch(() => setMe(null));
+      .catch(() => setMe(null)); };
+    refresh();
+    window.addEventListener("profile-updated", refresh);
+    return () => window.removeEventListener("profile-updated", refresh);
   }, []);
   return (
     <span className="session-nav">

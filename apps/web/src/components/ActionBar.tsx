@@ -117,7 +117,7 @@ export default function ActionBar({ slug, type, actions }: {
 
   // Showing the shell's actions for a moment would be showing the wrong facts.
   if (!ready) return <div className="action-status" role="status">{status}
-    {error && <button type="button" onClick={() => setRetry((n) => n + 1)}>Try again</button>}
+    {error && <button className="feedback-control" type="button" onClick={() => setRetry((n) => n + 1)}>Try again</button>}
   </div>
 
   return (

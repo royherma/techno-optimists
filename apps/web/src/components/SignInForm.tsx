@@ -105,7 +105,7 @@ export default function SignInForm() {
       <button
         type="submit"
         disabled={state === 'sending'}
-        className="w-full border border-(--color-rule) bg-(--color-ink) py-3 text-sm text-(--color-paper) transition-opacity disabled:opacity-50"
+        className="feedback-control w-full border border-(--color-rule) bg-(--color-ink) py-3 text-sm text-(--color-paper) transition-opacity disabled:opacity-50"
       >
         {state === 'sending' ? 'Sending...' : 'Send me a sign-in link'}
       </button>
