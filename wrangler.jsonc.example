@@ -91,9 +91,10 @@
       ]
     },
 
-    // Live on <your-domain> (bought 2026-09-10, zone active on this
-    // account). The apex and www are custom domains, so `wrangler deploy`
-    // creates their DNS records itself - the OAuth token needs no DNS scope.
+    // Replace <your-domain> with a domain whose zone is active on this account,
+    // or delete the `routes` block to deploy to workers.dev instead. The apex
+    // and www are custom domains, so `wrangler deploy` creates their DNS records
+    // itself - the OAuth token needs no DNS scope.
     //
     // `workers_dev: false` on purpose: two public addresses for one site
     // splits links and lets the workers.dev one get bookmarked. The domain is
