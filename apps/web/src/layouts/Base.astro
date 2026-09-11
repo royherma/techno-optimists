@@ -111,8 +111,12 @@ const gscToken = import.meta.env.GSC_VERIFICATION ?? process.env.GSC_VERIFICATIO
     if (edition === '1') sessionStorage.setItem('design-edition', '1')
     else if (isV2 || edition === '2') sessionStorage.setItem('design-edition', '2')
     if (edition === '1' && isV2) { url.pathname = classicPath(url.pathname); location.replace(url.href) }
-    else if (!isV2 && !url.pathname.startsWith('/api/') && (edition === '2' || (edition !== '1' && sessionStorage.getItem('design-edition') === '2'))) {
+    else if (!isV2 && !url.pathname.startsWith('/api/') && (edition === '2' || (edition !== '1' && sessionStorage.getItem('design-edition') !== '1'))) {
       url.pathname = editionPath(url.pathname); url.searchParams.delete('v'); location.replace(url.href)
     }
-  } catch { if (edition === '2' && !isV2) { url.pathname = editionPath(url.pathname); location.replace(url.href) } }
+  } catch {
+    // Storage can be disabled. Explicit URL choices still win; V2 is the default.
+    if (edition === '1' && isV2) { url.pathname = classicPath(url.pathname); location.replace(url.href) }
+    else if (edition !== '1' && !isV2) { url.pathname = editionPath(url.pathname); url.searchParams.delete('v'); location.replace(url.href) }
+  }
 </script>
