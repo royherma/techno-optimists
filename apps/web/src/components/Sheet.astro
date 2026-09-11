@@ -1,6 +1,5 @@
 ---
 import TitleBlock from './TitleBlock.astro'
-import SideNav from './SideNav.astro'
 import '../styles/shell.css'
 import '../styles/viewport.css'
 import '../styles/interactions.css'
@@ -8,5 +7,5 @@ import '../styles/interactions.css'
 <div class="site-shell">
   <a class="skip-link" href="#main-content">Skip to content</a>
   <TitleBlock />
-  <div class="workspace"><SideNav /><div class="sheet-content" id="main-content"><slot /></div></div>
+  <div class="workspace"><div class="sheet-content" id="main-content"><slot /></div></div>
 </div>
