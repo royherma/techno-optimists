@@ -15,7 +15,7 @@ export default defineConfig({
     react(),
     // /404 is noindex (see Base.astro), so listing it here would contradict
     // the page's own meta.
-    sitemap({ filter: (page) => !page.includes('/404') && !page.includes('/c/_shell') }),
+    sitemap({ filter: (page) => !page.includes('/404') && !page.includes('/c/_shell') && !page.includes('/people') }),
   ],
   // Static output: the Worker serves /api/*, the assets binding serves the rest.
   output: 'static',
