@@ -112,3 +112,9 @@
 .np-place-map svg { width:100%; max-height:100px; }
 .np-challenge-kicker { flex-wrap:wrap; }
 .newspaper .np-panel-discussion .np-panel-write { margin-bottom:6px; }
+
+.np-place-content { display:flex; flex-direction:column; flex:1; min-height:0; gap:5px; font:13px/1.3 Georgia,serif; }
+.np-place-content p { margin:0; flex-shrink:0; }
+.np-place-content .np-place-map { flex:1; min-height:28px; margin:0; }
+.np-place-content .np-place-map svg { display:block; width:100%; height:100%; max-height:120px; }
+.np-place-content p:last-child a { font:11px/1.3 system-ui,sans-serif; text-decoration:underline; text-underline-offset:3px; }
