@@ -116,6 +116,17 @@ await check('security headers are on every page', async () => {
   return { ok: missing.length === 0, detail: missing.length ? `missing: ${missing.join(', ')}` : 'CSP, HSTS, nosniff, Referrer-Policy' }
 })
 
+await check('page CSP permits data-driven styles', async () => {
+  const html = await (await fetch(BASE)).text()
+  const policy = html.match(/<meta[^>]+http-equiv="content-security-policy"[^>]+content="([^"]+)"/i)?.[1] ?? ''
+  const attr = /(?:^|;)\s*style-src-attr\s+([^;]+)/.exec(policy)?.[1] ?? ''
+  const script = /(?:^|;)\s*script-src\s+([^;]+)/.exec(policy)?.[1] ?? ''
+  return {
+    ok: attr.includes("'unsafe-inline'") && script.includes("'sha256-") && !script.includes("'unsafe-inline'"),
+    detail: 'inline style attributes allowed; scripts still require hashes',
+  }
+})
+
 await check('page CSP carries script hashes', async () => {
   // Astro computes a sha256 per inline script at build time and emits them in a
   // <meta> CSP. If this is absent the page still renders - which is why it
