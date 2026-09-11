@@ -299,3 +299,13 @@
   .site-shell .sheet-legend section:last-child li { min-height: 22px; padding: 0; }
   .site-shell .sheet-legend section:last-child svg { width: 18px; height: 18px; }
 }
+
+/* Give real Challenge titles the reading width they need on smaller laptops. */
+@media (min-width: 1024px) and (max-width: 1350px) {
+  .site-shell .index-columns,
+  .site-shell .challenge-row { grid-template-columns: 2.5rem 6rem minmax(0, 1fr) 3rem 6rem !important; }
+  .site-shell .challenge-row > div:nth-child(4) > div { flex-direction: column; gap: 12px; }
+  .site-shell .challenge-row > div:nth-child(4) > div > a { width: 80px; }
+  .site-shell .challenge-row h2 { font-size: 21px; line-height: 1.25; }
+  .site-shell .challenge-row > div:last-child span { font-size: 10px; }
+}
