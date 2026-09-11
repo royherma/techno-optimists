@@ -113,7 +113,7 @@ import { DEPTH_LABEL, LEGEND_ACTIONS, LEGEND_ACTION_LABEL, STAGE_MEANING, STAGE_
   }
 </style>
 
-<script is:inline>
+<script>
   /*
    * The element ships `open` so it is complete without JavaScript and in the
    * sidebar, where there is room for it. Only the phone needs it shut, and no
@@ -123,12 +123,12 @@ import { DEPTH_LABEL, LEGEND_ACTIONS, LEGEND_ACTION_LABEL, STAGE_MEANING, STAGE_
   ;(() => {
     const mq = window.matchMedia('(min-width: 64rem)')
     const sync = () => {
-      for (const el of document.querySelectorAll('.sheet-legend')) {
+      for (const el of document.querySelectorAll<HTMLDetailsElement>('.sheet-legend')) {
         if (!mq.matches && !el.dataset.touched) el.open = false
         if (mq.matches) el.open = true
       }
     }
-    for (const el of document.querySelectorAll('.sheet-legend')) {
+    for (const el of document.querySelectorAll<HTMLDetailsElement>('.sheet-legend')) {
       el.querySelector('summary')?.addEventListener('click', () => { el.dataset.touched = '1' })
     }
     sync()
