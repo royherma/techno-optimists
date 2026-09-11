@@ -1,12 +1,25 @@
 ---
 import Icon from './Icon.astro'
 const path = Astro.url.pathname.replace(/\/$/, '') || '/'
+/*
+ * Places, not filters. The rail used to carry Ideas/Experiments/Build as
+ * `/?type=...` links, which put the same four type filters on screen twice -
+ * beside a toolbar row that already offers all four plus Problem. Two controls
+ * for one piece of state is confusing on its own; these two also disagreed.
+ * The rail's Ideas link is `/?type=idea`, so opening it from the map silently
+ * threw away the map view, and on `/map?type=idea` the toolbar tab read as
+ * current while the rail's Ideas did not.
+ *
+ * The rail omitted Problem as well, so the largest type in the feed was the
+ * one type the rail could not reach. A subset of a filter set is not a
+ * shortcut, it is a second answer to "what are my options".
+ *
+ * So the rail answers only "where am I": the index, or the map. Type lives in
+ * the toolbar, which is the one place that has always held all four.
+ */
 const links = [
   { label: 'Home', icon: 'house', href: '/' },
   { label: 'Map', icon: 'globe', href: '/map' },
-  { label: 'Ideas', icon: 'lightbulb', href: '/?type=idea' },
-  { label: 'Experiments', icon: 'flask', href: '/?type=experiment' },
-  { label: 'Build', icon: 'rocket', href: '/?type=build' },
 ]
 ---
 <nav class="side-nav" aria-label="Main navigation">

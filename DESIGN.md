@@ -33,11 +33,13 @@ Hover/focus responses are short (120ms); respect reduced motion. Active navigati
 
 ## Intentional scope
 
-The reference’s People and Impact destinations are not existing standalone screens. The rail links to working Home, Map, Ideas, Experiments and Build destinations. People and impact remain first-class content in Challenge details and the legend. Do not add dead navigation links just to imitate a screenshot.
+The reference’s People and Impact destinations are not existing standalone screens. The rail links to the two places that exist: Home and Map. People and impact remain first-class content in Challenge details and the legend. Do not add dead navigation links just to imitate a screenshot.
+
+One control per piece of state. The rail answers "where am I" (index or map); the toolbar type tabs answer "what am I looking at". The rail previously also carried Ideas, Experiments and Build as `/?type=` links, putting the type filter on screen twice - as a subset that omitted Problem, and pointing at the index even while the reader was on the map. Never reintroduce a navigation item whose job a toolbar filter already does.
 
 ## Desktop viewport contract
 
 Every screen using Sheet is a viewport-height application frame at desktop widths (1024px and up), governed by styles/viewport.css. Header, toolbar height and navigation rail bounds must match across index, map, challenge details, sign-in, post and settings. Masthead, toolbar, navigation rail and the complete legend stay visible. Only the central Challenge pane scrolls; its column headers stay at the top of that pane. Compact vertical spacing at laptop heights must preserve every legend row and action. On phones, use normal page scrolling and the fixed bottom navigation. Verify both overflow behavior and visibility of the last legend action, not just a full-page screenshot.
 
 
-Index and Map are two views of one browsing surface. Both must render BrowseFrame (shared BrowseToolbar, content island and SheetLegend); Map must never substitute a breadcrumb toolbar. The active view is blue in both the view tabs and rail. Type and search filters apply to both map pins and the readable list. Keep page-specific map content separate from the shared frame.
+Index and Map are two views of one browsing surface. Both must render BrowseFrame (shared BrowseToolbar, content island and SheetLegend); Map must never substitute a breadcrumb toolbar. The active view is blue in both the view tabs and rail - the one duplication that earns its place, because the rail is the phone's bottom navigation and the view tabs are not. Type and search filters apply to both map pins and the readable list. Keep page-specific map content separate from the shared frame.
