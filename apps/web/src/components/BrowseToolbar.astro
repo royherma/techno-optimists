@@ -1,20 +1,15 @@
 ---
 import Icon from './Icon.astro'
+import AppToolbar from './AppToolbar.astro'
 import SessionNav from './SessionNav'
 import { CHALLENGE_TYPES } from '../../../../packages/types/index'
 import { TYPE_LABEL } from '../lib/vocab'
 const { view = 'index' } = Astro.props
 const base = view === 'map' ? '/map' : '/'
 ---
-<div class="index-toolbar">
-  <nav class="view-tabs" aria-label="View"><a href="/" aria-current={view === 'index' ? 'page' : undefined}><Icon name="map-trifold" />Index</a><a href="/map" aria-current={view === 'map' ? 'page' : undefined}><Icon name="map-pin" />Map</a></nav>
-  <!--
-    "Everything" clears the type filter, so its href is the current view with
-    no query - which on the map is `/map`, the exact href of the Map view tab
-    beside it. Two controls, same address, different words. The filter is not a
-    destination, so it carries no href at all and says what it does: reset.
-  -->
+<AppToolbar view={view}>
   <nav class="type-tabs" aria-label="Filter by type"><a href={base} data-type-filter="" aria-current="page">All types</a>{CHALLENGE_TYPES.map(t => <a href={`${base}?type=${t}`} data-type-filter={t}>{TYPE_LABEL[t]}</a>)}</nav>
-  <div class="toolbar-actions"><button class="search-toggle" aria-label="Search Challenges" aria-expanded="false" aria-controls="feed-search"><Icon name="magnifying-glass" /></button><SessionNav client:load /></div>
-</div>
+  <Fragment slot="actions"><button class="search-toggle" aria-label="Search Challenges" aria-expanded="false" aria-controls="feed-search"><Icon name="magnifying-glass" /></button><SessionNav client:load /></Fragment>
+</AppToolbar>
+
 <form id="feed-search" class="feed-search" role="search" hidden><label for="challenge-search">Search Challenges</label><input id="challenge-search" type="search" placeholder="Search by title, place or idea…" autocomplete="off" /><button type="reset">Clear</button></form>

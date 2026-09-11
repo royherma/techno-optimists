@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ROLES, type Role } from '../../../../packages/types/index'
-import { getMe, signOut, type Me } from '../lib/session'
+import { signOut, type Me } from '../lib/session'
 import { snack } from '../lib/snack'
 
 /**
@@ -31,7 +31,7 @@ const ROLE_LABEL: Record<Role, string> = {
   builder: 'Builder', expert: 'Expert', tester: 'Tester',
 }
 
-export default function SettingsForm() {
+export default function SettingsForm({ person, section }: { person: Me; section: string }) {
   const [me, setMe] = useState<Me | null | undefined>(undefined)
   const [handle, setHandle] = useState('')
   const [name, setName] = useState('')
@@ -42,7 +42,7 @@ export default function SettingsForm() {
   const [handleError, setHandleError] = useState<string | null>(null)
 
   useEffect(() => {
-    getMe().then((m) => {
+    Promise.resolve(person).then((m) => {
       setMe(m)
       if (!m) return
       setHandle(m.handle)
@@ -51,7 +51,7 @@ export default function SettingsForm() {
       setSkills((m.skills ?? []).join(', '))
       setRoles(m.roles ?? [])
     })
-  }, [])
+  }, [person])
 
   const toggleRole = (r: Role) =>
     setRoles((rs) => (rs.includes(r) ? rs.filter((x) => x !== r) : [...rs, r]))
@@ -67,11 +67,11 @@ export default function SettingsForm() {
         headers: { 'content-type': 'application/json' },
         credentials: 'same-origin',
         body: JSON.stringify({
-          handle: handle.trim(),
+          ...(section === 'profile' ? { handle: handle.trim(),
           name: name.trim(),
-          location: location.trim(),
+          location: location.trim() } : { 
           skills: skills.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 12),
-          roles,
+          roles }),
         }),
       })
 
@@ -102,7 +102,8 @@ export default function SettingsForm() {
 
       if (data?.person) {
         setMe(data.person)
-        setHandle(data.person.handle)
+        if (section === 'profile') setHandle(data.person.handle)
+        window.dispatchEvent(new CustomEvent('profile-updated'))
       }
       snack('Saved.')
     } catch {
@@ -127,7 +128,7 @@ export default function SettingsForm() {
 
   return (
     <form onSubmit={save} className="space-y-8">
-      <section className="space-y-5">
+      <section hidden={section !== "profile"} className="space-y-5">
         <Legend n="01" label="Who you are here" />
 
         <label className="block">
@@ -177,9 +178,9 @@ export default function SettingsForm() {
         />
       </section>
 
-      <section className="space-y-3">
+      <section hidden={section !== "skills"} className="space-y-3">
         <Legend n="02" label="What you do" />
-        <div className="flex flex-wrap gap-2">
+        <div className="account-roles">
           {ROLES.map((r) => (
             <button
               key={r}
@@ -193,7 +194,7 @@ export default function SettingsForm() {
                   : 'border-(--color-rule-soft) text-(--color-ink-soft) hover:border-(--color-rule)'
               }`}
             >
-              {ROLE_LABEL[r]}
+              <strong>{ROLE_LABEL[r]}</strong><small>{ROLE_HINT[r]}</small>
             </button>
           ))}
         </div>
@@ -202,7 +203,7 @@ export default function SettingsForm() {
         </p>
       </section>
 
-      <section className="space-y-5">
+      <section hidden={section !== "skills"} className="space-y-5">
         <Legend n="03" label="What you are good at" />
         <Field
           name="skills"
@@ -215,7 +216,7 @@ export default function SettingsForm() {
         />
       </section>
 
-      <section className="space-y-3">
+      <section hidden={section !== "signin"} className="space-y-3">
         <Legend n="04" label="Sign-in" />
         <p className="text-sm text-(--color-ink-soft)">
           You sign in with{' '}
@@ -227,8 +228,8 @@ export default function SettingsForm() {
         <button
           type="button"
           onClick={async () => {
-            await signOut()
-            window.location.href = '/'
+            try { await signOut(); window.location.href = '/' }
+            catch { snack('Could not sign out. Try again.', 'problem') }
           }}
           className="mt-2 border border-(--color-rule-soft) px-5 py-2.5 text-sm text-(--color-ink-soft) hover:border-(--color-rule) hover:text-(--color-ink)"
         >
@@ -236,13 +237,13 @@ export default function SettingsForm() {
         </button>
       </section>
 
-      <div className="space-y-3 border-t border-(--color-rule-soft) pt-6">
+      <div hidden={section === "signin"} className="account-save space-y-3 border-t border-(--color-rule-soft) pt-6">
         <button
           type="submit"
           disabled={saving}
           className="w-full border border-(--color-rule) bg-(--color-ink) py-3.5 text-sm text-(--color-paper) disabled:opacity-40"
         >
-          {saving ? 'Saving...' : 'Save'}
+          {saving ? 'Saving...' : section === 'profile' ? 'Save profile' : 'Save skills & roles'}
         </button>
         <p className="text-center text-xs text-(--color-ink-faint)">
           Posting as @{me.handle}
