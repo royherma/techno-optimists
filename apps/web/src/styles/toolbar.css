@@ -4,5 +4,13 @@
 .app-toolbar .view-tabs a[aria-current="page"] { background:var(--color-accent-soft,#e4f3ff);color:var(--color-accent); }
 .app-toolbar .toolbar-actions { display:flex;align-items:center;gap:18px;margin-left:auto; }
 .app-toolbar .toolbar-context { margin:auto;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;border-bottom:2px solid var(--color-ink);padding:12px 0; }
-@media (min-width:761px) and (max-width:1350px) { .site-shell .sheet-content > .app-toolbar { flex-wrap:wrap;gap:4px 20px; } .app-toolbar .toolbar-context { order:3;flex-basis:100%;text-align:center;border-bottom:0;padding:7px; } }
+/*
+  In this band the toolbar wraps, and index.css already gives the filters their
+  own second row (order:3, flex:1, with a divider above them). Let that stand:
+  once the filters are on a row of their own, the session actions end row one
+  and cannot come between the view links and the filters. Pulling the filters
+  back up beside the view links is what put SIGN IN and POST in the middle and
+  left that divider cutting across the middle of a shared row.
+*/
+@media (min-width:761px) and (max-width:1350px) { .site-shell .sheet-content > .app-toolbar { flex-wrap:wrap;gap:4px 20px; } .app-toolbar .view-tabs { order:1; } .app-toolbar .toolbar-actions { order:2;margin-left:auto; } .app-toolbar .type-tabs { order:3;flex-basis:100%;margin:0;justify-content:center; } .app-toolbar .toolbar-context { order:3;flex-basis:100%;text-align:center;border-bottom:0;padding:7px; } }
 @media (max-width:760px) { .site-shell .sheet-content > .app-toolbar { height:auto;min-height:0;flex:auto;flex-wrap:wrap;gap:8px;padding:10px; } .app-toolbar .view-tabs { width:100%; } .app-toolbar .view-tabs a { flex:1;justify-content:center;padding:12px; } .app-toolbar .toolbar-actions { order:1;width:100%;justify-content:space-between; } .app-toolbar .toolbar-context { order:2;text-align:center;margin:auto;padding:8px; } }

@@ -44,23 +44,11 @@ export function initFeedFilters() {
           link.setAttribute("aria-current", "page");
         else link.removeAttribute("aria-current");
       });
-    // The rail is places, so only the path decides which one you are in. This
-    // used to also require the link's own `?type=` to equal the active type,
-    // which was right when the rail carried Ideas/Experiments/Build - and left
-    // the whole rail unlit once those links went away, because Home is `/` and
-    // never carries a type. Filtering the index does not move you off Home.
-    document
-      .querySelectorAll<HTMLAnchorElement>("[data-side-link]")
-      .forEach((link) => {
-        const path = new URL(link.href).pathname.replace(/\/$/, "") || "/";
-        if (path === base) link.setAttribute("aria-current", "page");
-        else link.removeAttribute("aria-current");
-      });
     window.dispatchEvent(new Event('feed-filtered'));
   }
   document.addEventListener("click", (event) => {
     const link = (event.target as Element).closest<HTMLAnchorElement>(
-      "a[data-type-filter],a[data-side-link],.discovery-link",
+      "a[data-type-filter],.discovery-link",
     );
     if (
       !link ||
