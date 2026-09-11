@@ -2,7 +2,7 @@
 @media(max-height:850px){.edition{gap:8px;padding-top:10px}.edition-brand{font-size:clamp(30px,5vw,72px)}.edition-aside{gap:12px}.edition-aside blockquote{font-size:20px}.edition-summary{-webkit-line-clamp:2}.edition h1{font-size:clamp(24px,2.6vw,40px)}}
 @media(max-width:1100px){.edition-body{grid-template-columns:1fr}.edition-aside{display:none}.edition-masthead{grid-template-columns:1fr}.edition-masthead>p,.edition-masthead blockquote{display:none}.edition-stories{grid-template-rows:1.2fr 1fr}.edition-nav{gap:2px}.edition h2{font-size:22px}}
 @media(max-width:699px),(max-height:599px){.edition{padding:10px 14px;gap:8px}.edition-masthead div p{font-size:9px;letter-spacing:.08em;margin-top:6px}.edition-brand{font-size:clamp(25px,6.5vw,42px)}.edition-nav{font-size:11px;gap:0;flex-wrap:wrap}.edition-nav a{padding:5px 6px}.edition-tools{flex-direction:column;gap:5px}.edition-tools>div{display:flex;justify-content:space-between}.edition-tools button{padding:6px 3px;font-size:11px}.edition-tools input{max-width:none;width:100%;padding:5px 8px}.edition-stories{grid-template-rows:1fr}.edition-story.lead{flex-direction:column;gap:10px}.lead .edition-image{flex-basis:38%;max-height:38%}.edition h1{font-size:clamp(24px,5.7vw,36px)}.edition-summary{font-size:15px;-webkit-line-clamp:2}.edition-story-footer{font-size:11px}.edition-pagination{font-size:10px}.edition-pagination button{padding:8px 5px}.edition-pagination div{gap:5px}}
-@media(max-height:800px){.edition-aside blockquote,.edition-invite{display:none}}
+@media(max-height:999px){.edition-aside blockquote,.edition-invite{display:none}}
 .edition-stage:nth-of-type(1) meter::-webkit-meter-optimum-value{background:var(--color-spot)}
 .edition-stage:nth-of-type(2) meter::-webkit-meter-optimum-value{background:var(--color-understand)}
 .edition-stage:nth-of-type(3) meter::-webkit-meter-optimum-value{background:var(--color-ideas)}
@@ -10,3 +10,5 @@
 .edition-stage:nth-of-type(5) meter::-webkit-meter-optimum-value{background:var(--color-test)}
 .edition-stage:nth-of-type(6) meter::-webkit-meter-optimum-value{background:var(--color-learn)}
 .edition-stage:nth-of-type(7) meter::-webkit-meter-optimum-value{background:var(--color-improve)}
+
+.edition-meta,.edition-story-footer{flex-shrink:0}.edition-story:not(.lead) .edition-summary{-webkit-line-clamp:2}.edition-aside section{flex-shrink:0}
