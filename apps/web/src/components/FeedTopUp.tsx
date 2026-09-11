@@ -16,7 +16,7 @@ export default function FeedTopUp({ known }: { known: string[] }) {
   useEffect(() => {
     let cancelled = false
     const seen = new Set(known)
-    fetch('/api/challenges?limit=50', { credentials: 'same-origin' })
+    const refresh = () => fetch('/api/challenges?limit=50', { credentials: 'same-origin', cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (cancelled || !d) return
@@ -35,7 +35,10 @@ export default function FeedTopUp({ known }: { known: string[] }) {
         setFresh(d.challenges.filter((c: Challenge) => !seen.has(c.slug)))
       })
       .catch(() => {})
-    return () => { cancelled = true }
+    void refresh()
+    window.addEventListener('pageshow', refresh)
+    window.addEventListener('focus', refresh)
+    return () => { cancelled = true; window.removeEventListener('pageshow', refresh); window.removeEventListener('focus', refresh) }
   }, [])
 
   useEffect(() => { window.dispatchEvent(new Event('feed-updated')) }, [fresh])
