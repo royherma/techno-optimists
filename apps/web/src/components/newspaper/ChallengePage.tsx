@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { Challenge, Update } from '../../../../../packages/types'
 import type { DetailPerson } from '../../lib/api'
 import { getMe, type Me } from '../../lib/session'
-import { STAGE_MEANING, STAGE_STAMP } from '../../lib/vocab'
+import { STAGE_MEANING, STAGE_STAMP, impactLabel } from '../../lib/vocab'
 import { formatDate } from '../../lib/dates'
 import PagedContent from './PagedContent'
 import StageBadge from './StageBadge'
@@ -64,7 +64,7 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
   if (!data) return <div className="np-empty"><h1>{error || 'Opening the Challenge…'}</h1>{error && <button onClick={() => void refresh().catch(e => setError(e.message))}>Try again</button>}</div>
   const c = data.challenge, image = c.media[Math.min(media, c.media.length - 1)]
   return <div className="np-challenge np-challenge-sheet" data-stage={c.stage}>
-    <div className="np-challenge-kicker"><a href="/">← All Challenges</a><span className={`type-${c.type}`}>{c.type} <span> / {c.location || 'Around the world'}</span></span><StageBadge stage={c.stage} /><span className="np-relative">Impact not specified</span>{me?.is_admin && <button onClick={() => setEditing(true)}>Edit Challenge</button>}</div>
+    <div className="np-challenge-kicker"><a href="/">← All Challenges</a><span className={`type-${c.type}`}>{c.type} <span> / {c.location || 'Around the world'}</span></span><StageBadge stage={c.stage} /><span className="np-relative">{impactLabel(c.impact) ? `Impact: ${impactLabel(c.impact)}` : 'Impact not specified'}</span>{me?.is_admin && <button onClick={() => setEditing(true)}>Edit Challenge</button>}</div>
     {error && <p className="np-error" role="alert">{error} <button onClick={() => void refresh().catch(e => setError(e.message))}>Retry</button></p>}
     <div className="np-panel-grid">
       <section className="np-panel np-panel-story" aria-label="Challenge story">

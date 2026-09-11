@@ -27,7 +27,7 @@ const title = detail?.challenge.title || titles[path] || 'Challenge'
 const articles: Record<string,string> = { privacy, terms, contribute }
 ---
 <Base title={`${title} - Techno Optimists`} description={detail?.challenge.summary} noindex={['settings','signin','people','404','c/_shell'].includes(path)}>
-  <NewspaperShell section={titles[path] || 'Challenge'} challenges={challenges}>
+  <NewspaperShell section={titles[path] || 'Challenge'} challenges={challenges} impact={detail?.challenge.impact ?? null}>
     {path.startsWith('c/') && <ChallengePage client:load initial={detail} />}
     {path === 'map' && <MapPage client:load initial={challenges} />}
     {path === 'settings' && <AccountPage client:load />}

@@ -7,8 +7,12 @@ import '../../styles/newspaper/controls.css'
 import DelightText from '../DelightText.astro'
 import HitCounter from '../HitCounter'
 import { getSiteViews } from '../../lib/api'
-interface Props { challenges?: Challenge[]; section?: string }
-const { challenges = [], section = 'Front page' } = Astro.props
+// `impact` is the open Challenge's tier, or null on every page that is not one
+// Challenge. The legend cannot infer it from `challenges`: the shell is handed
+// the whole feed on a detail page too, so the array says nothing about which
+// Challenge the reader is looking at.
+interface Props { challenges?: Challenge[]; section?: string; impact?: number | null }
+const { challenges = [], section = 'Front page', impact = null } = Astro.props
 // Baked in at build time so the wheels open on the last known total rather
 // than six zeros; the island rolls them up to the live figure on load.
 const initialViews = await getSiteViews()
