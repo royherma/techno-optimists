@@ -73,5 +73,9 @@ const shown = ([demand, 'can_help', 'have_idea'] as const)
       <span><strong class="font-semibold tabular-nums">{count(n)}</strong>
         <span class="text-(--color-ink-faint)"> {ACTION_SHORT[k]}</span></span>
     ))}
+    {c.views_count > 0 && (
+      <span><strong class="font-semibold tabular-nums">{count(c.views_count)}</strong>
+        <span class="text-(--color-ink-faint)"> viewed</span></span>
+    )}
   </div>
 </article>
