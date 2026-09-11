@@ -35,6 +35,8 @@
     "ship": "python3 scripts/coordinate.py run ship 'npm run typecheck && npm test && npm run db:migrate:prod && npm run deploy:prod && npm run verify'",
     "ship:dev": "python3 scripts/coordinate.py run ship:dev 'npm run typecheck && npm test && npm run db:migrate:dev && npm run deploy:dev && npm run verify:dev'",
 
+    "scout": "node scripts/scout/scout.mjs",
+    "test:scout": "node --test scripts/scout/scout.test.mjs",
     "agents:status": "python3 scripts/coordinate.py status",
     "test:coordination": "python3 scripts/test-coordinate.py",
     "db:migrate:local": "python3 scripts/coordinate.py run db:migrate:local 'node scripts/migrate-community.mjs local'",

@@ -1,0 +1,1 @@
+{"name":"challenge-scout","private":true,"type":"module","scripts":{"test":"node --test scout.test.mjs"},"dependencies":{"cheerio":"^1.1.2","mgrs":"^2.1.0","yaml":"^2.8.1"}}
