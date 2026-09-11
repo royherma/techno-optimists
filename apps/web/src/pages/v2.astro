@@ -1,0 +1,8 @@
+---
+import Base from '../layouts/Base.astro'
+import EditorialFeed from '../components/EditorialFeed'
+import { getFeed } from '../lib/api'
+import '../styles/editorial.css'
+const { challenges } = await getFeed('?limit=50')
+---
+<Base title="Front page - Techno Optimists"><EditorialFeed initial={challenges} client:load /></Base>
