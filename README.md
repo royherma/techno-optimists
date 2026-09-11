@@ -17,7 +17,7 @@ and converges on one lifecycle: Spot -> Understand -> Ideas -> Build -> Test -> 
 ## Layout
 
 ```
-apps/web        Astro static site: index, Challenge, post, sign-in + 6 React islands
+apps/web        Astro static site: index, Challenge, post, sign-in + React islands
 apps/api        Hono API on Workers
 packages/types  the vocabulary lock - Challenge types, stages, the 7 actions
 packages/db     D1 schema + generated seed
@@ -43,7 +43,7 @@ behind it, D1/R2/KV for data. Full table + why: [`docs/2026-09-10-stack.md`](doc
 | `make dev` | API on :8791 and the site on :4321, together |
 | `make reset` | rebuild local D1 and load the seed fixtures |
 | `make check` | typecheck + tests |
-| `make ship` | typecheck, empty local D1, deploy prod, verify |
+| `make ship` | typecheck, test, migrate additively, deploy prod, verify |
 | `make ship-dev` | same for the dev worker, seeds and all |
 | `make verify` | probe the live site end to end |
 | `make logs` | tail prod |
@@ -61,9 +61,9 @@ Every target delegates to an npm script, so `npm run ship` works the same.
 Binding **names** are identical in both, so no code branches on environment - only
 the IDs behind them differ.
 
-**The build prerenders from local D1.** Whatever rows are in it get baked into the
-static pages, so `make ship` empties local D1 first. Seeds are a dev fixture; they
-do not belong on the domain.
+**Production builds read the production API.** Development builds read local D1.
+`ship` applies additive migrations before deploying; it never resets existing data.
+`schema.sql` is a destructive reset fixture for a new local database, not a migration.
 
 ## Docs
 
@@ -104,3 +104,25 @@ operation when idle. Use `AGENT_NAME=my-task npm run ship:dev` to identify your 
 Root build, database and deployment scripts serialize automatically across local
 Git worktrees; a busy command exits with code 75 so you can retry later. Python 3
 is required. See [AGENTS.md](AGENTS.md) for scope and simultaneous-edit rules.
+
+## Challenge discussion and editorial tools
+
+`ChallengeDetail` owns the live detail page, with separate discussion and progress
+composers. Comments have optional labels and replies; progress updates may change
+stage only when published by the Challenge author or an admin.
+
+An admin sees **Edit Challenge** on each detail page, including a single optional
+emoji. Topic tags remain stored but are not displayed in the feed.
+
+- `npm run db:migrate:local` / `db:migrate:dev` / `db:migrate:prod`: repeatable,
+  additive community schema migration, under the shared operation lock.
+- `npm run test:community:local`: real HTTP checks on localhost:8795, including
+  local-only sign-in, imports, comments, replies and admin editing. Start
+  `npm run dev -- --port 8795` first. The test refuses remote hosts.
+- `packages/db/editorial-2026-09-11.sql`: one-time curated emojis and the sourced
+  Tokyo copy correction. Run via `db:editorial:local` or `db:editorial:prod`; it is
+  not part of recurring deployment, so removing an emoji stays an admin choice.
+
+The private `/c/_shell` asset is always built and excluded from the sitemap.
+`/c/*` runs through the Worker so a new Challenge gets a working page immediately,
+without borrowing another Challenge's content or injecting unhashed scripts.

@@ -13,14 +13,14 @@ The homepage is the visual reference for the whole product. Use Roy’s [selecte
 
 ## Shared architecture
 
-`Sheet`, `TitleBlock`, `SideNav`, `PageToolbar`, `SessionNav`, and `Icon` own the shell. `global.css` owns semantic tokens; `shell.css` owns the masthead/navigation. Each surface has a separate stylesheet. `FormPage` owns common form structure. Challenge details are composed from `ChallengeHeader`, `Lifecycle`, `ProgressLog`, and `PeoplePanel`.
+`Sheet`, `TitleBlock`, `SideNav`, `PageToolbar`, `SessionNav`, and `Icon` own the shell. `global.css` owns semantic tokens; `shell.css` owns the masthead/navigation. Each surface has a separate stylesheet. `FormPage` owns common form structure. Challenge details use the live `ChallengeDetail` component, with `Discussion`, `Progress`, `Editorial`, `ActionBar`, and `PeopleLive`.
 
 Keep routes focused on data loading and composition. Prefer reusing a component over copying a whole page. Preserve live Challenge markers, client islands, forms, auth redirects, real API data and typed social actions.
 
 ## Screen patterns
 
 - **Index:** index/map switch, type tabs, expandable search, quiet five-column table, legend on the right. Empty state: shallow panorama, large serif heading, three practical discovery links, philosophy line. Live additions obey the same filters and empty-state rules.
-- **Challenge:** shared view toolbar, title and human attribution, contour impact, seven-stage progression, media/story/progress in the reading column, participation and people in the supporting column. Describe facts; never invent progress or contributors. Missing updates receive a calm explanatory state.
+- **Challenge:** shared view toolbar, title and human attribution, contour impact, a current-stage summary with the full lifecycle expandable, media/context/discussion/progress in the reading column, participation and people in the supporting column. Describe facts; never invent progress or contributors. Missing updates receive a calm explanatory state.
 - **Map:** the same toolbar, editorial heading and caption, soft map frame, semantic pins and readable Challenge links.
 - **Post/sign-in:** shared icon-led header, comfortable reading width, labeled inputs, obvious selected options, navy primary action, visible focus and error states. Posting and account actions retain their sign-in gates.
 - **Not found:** the same shell and form-scale content, clear recovery link and real recent Challenges.
@@ -55,3 +55,14 @@ Before shipping account changes, inspect populated and signed-out states at desk
 
 
 Do not render a side or bottom navigation rail. Index and Map already live in AppToolbar on every route. The workspace has one full-width column; do not reserve an empty rail gutter or bottom-navigation padding.
+
+## Discussion and editorial controls
+
+One optional admin-curated emoji sits beside a Challenge title; tags stay out of
+the visible feed. The title's type says how the Challenge started; the current
+stage explains what a reader can contribute now. Show provenance next to context.
+The reading column includes a visible response composer and replies, followed by
+a separate progress log. Keep author/admin stage changes in the progress form.
+The sidebar's “I have an idea” focuses the composer; publishing an idea records
+the corresponding participation signal. Admin text and emoji editing stays
+inside a collapsed disclosure. Preserve drafts through sign-in in the same tab.
