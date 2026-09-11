@@ -19,13 +19,21 @@ two people editing one checkout cannot run them at once.
 
 ```sh
 npm install
+
+# Both configs are gitignored - they carry account-specific ids. The templates
+# have working local defaults, so copy them as-is; nothing needs filling in
+# until you deploy, and contributing does not require deploying.
+cp wrangler.jsonc.example wrangler.jsonc
+cp wrangler.build.jsonc.example wrangler.build.jsonc
+
 npm run db:reset:local     # local D1: schema + seed Challenges
 npm run build:web          # starts its own API on 8792, builds, stops it
 npm run dev                # http://127.0.0.1:8791
 ```
 
-`make` on its own lists every target. `make check` is typecheck + tests and is what CI
-would run. Local work needs no Cloudflare account and no secrets.
+`make` on its own lists every target. `make check` is typecheck + tests, and is what CI
+runs on every pull request. Local work needs no Cloudflare account and no secrets -
+`npm test` and `npm run typecheck` both pass on a bare clone with no config at all.
 
 ## Deploying is not part of contributing
 
