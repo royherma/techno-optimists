@@ -103,7 +103,7 @@ await check('a real Challenge page renders', async () => {
   const title = html.match(/<title>([^<]*)<\/title>/)?.[1] ?? '(no title)'
   // Either path is correct: a prerendered page, or the live shell that fills
   // itself from the API. Both must answer 200 and carry the challenge sheet.
-  const isSheet = /challenge-detail/.test(html)
+  const isSheet = /class="[^"]*\b(?:challenge-detail|np-challenge-sheet)\b/.test(html)
   return {
     ok: r.status === 200 && isSheet,
     detail: `${r.status} /c/${c0.slug} "${title}"${isSheet ? '' : ' (no challenge sheet in HTML)'}`,
