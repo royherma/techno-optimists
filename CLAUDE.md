@@ -22,7 +22,8 @@ Do not restate or re-derive it — link to it.
 
 - **Challenge** — the core object. Not "post", not "project", not "issue".
 - A Challenge starts as one of: **Problem**, **Idea**, **Experiment**, **Build**.
-- Lifecycle: Spot -> Understand -> Ideas -> Build -> Test -> Learn -> Improve.
+- Lifecycle labels: Noticing -> Understanding -> Ideating -> Building -> Testing -> Learning -> Improving.
+  Stored stage keys remain spot, understand, ideas, build, test, learn, improve.
 - People roles: **Scout**, **Thinker**, **Researcher**, **Builder**, **Expert**, **Tester**.
 - Social actions are typed, never a generic Like:
   I have this problem / I want this / I have an idea / I can help / I'll test this /
