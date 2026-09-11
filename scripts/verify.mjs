@@ -114,7 +114,7 @@ await check('sign-in accepts a request', async () => {
   const r = await fetch(`${BASE}/api/auth/request`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ email: 'claude-e2e-probe@example.com' }),
+    body: JSON.stringify({ email: `deploy-probe-${Date.now()}@example.com` }),
   })
   const d = await r.json()
   // dev_link in a prod response would mean anyone POSTing a stranger's address
