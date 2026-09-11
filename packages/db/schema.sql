@@ -198,4 +198,16 @@ CREATE TABLE IF NOT EXISTS challenge_comments (
   UNIQUE(author_id, request_id)
 );
 CREATE INDEX IF NOT EXISTS comments_challenge ON challenge_comments(challenge_id);
+
+-- Mirrored from community.sql, like challenge_comments above: a database built
+-- fresh from this file must have every table the API selects from, or the feed
+-- and detail routes fail on the missing relation.
+CREATE TABLE IF NOT EXISTS challenge_views (
+  challenge_id TEXT NOT NULL REFERENCES challenges(id) ON DELETE CASCADE,
+  viewer_key   TEXT NOT NULL,
+  viewed_on    TEXT NOT NULL,
+  created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (challenge_id, viewer_key, viewed_on)
+);
+CREATE INDEX IF NOT EXISTS views_challenge ON challenge_views(challenge_id);
 CREATE INDEX IF NOT EXISTS comments_author_time ON challenge_comments(author_id, created_at);

@@ -1,9 +1,9 @@
 import { formatDate, formatDateTime, dateISO } from '../../lib/dates'
-import { useCallback, useEffect, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import type { Challenge, Update, Stage } from '../../../../../packages/types/index'
 import type { DetailPerson } from '../../lib/api'
 import { getMe, type Me } from '../../lib/session'
-import { TYPE_LABEL, STAGE_ORDER, STAGE_STAMP, STAGE_MEANING, ago, gridRef } from '../../lib/vocab'
+import { TYPE_LABEL, STAGE_ORDER, STAGE_STAMP, STAGE_MEANING, ago, count, gridRef } from '../../lib/vocab'
 import ActionBar from '../ActionBar'
 import PeopleLive from '../PeopleLive'
 import Discussion from './Discussion'
@@ -45,6 +45,28 @@ export default function ChallengeDetail({ initial }: { initial?: Detail }) {
     void getMe().then((person) => { setMe(person); setSessionReady(true) })
   }, [refresh])
 
+  // Counted from the page, not from the `/c/:slug` handler: the popular
+  // Challenges are prerendered, so that handler never runs for them and a count
+  // there would have missed exactly the ones worth counting. The server
+  // deduplicates per viewer per day, so firing once per mount is enough.
+  const viewed = useRef('')
+  useEffect(() => {
+    const slug = data?.challenge.slug
+    if (!slug || viewed.current === slug) return
+    viewed.current = slug
+    // Fire and forget. A failed count must never disturb the page.
+    void fetch(`/api/challenges/${encodeURIComponent(slug)}/view`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+    }).then(async (r) => {
+      if (!r.ok) return
+      const { views_count } = await r.json() as { views_count: number }
+      setData((prev) => prev && prev.challenge.slug === slug
+        ? { ...prev, challenge: { ...prev.challenge, views_count } }
+        : prev)
+    }).catch(() => {})
+  }, [data?.challenge.slug])
+
   const c = data?.challenge
   if (!c || !data || actual !== c.slug) return <div><p role="status">{error || 'Loading Challenge…'}</p>{error && <button onClick={() => void refresh().catch(() => setError('The latest Challenge could not load. Please retry.'))}>Try again</button>}</div>
   const reached = STAGE_ORDER.indexOf(c.stage)
@@ -55,7 +77,7 @@ export default function ChallengeDetail({ initial }: { initial?: Detail }) {
       <div className="detail-meta"><span>{gridRef(c.id)}</span><span className="type-pill">Started as {['idea', 'experiment'].includes(c.type) ? 'an' : 'a'} {TYPE_LABEL[c.type].toLowerCase()}</span>{(c.location || (c.lat != null && c.lng != null)) && <a className="detail-place-link" href="#location">{c.location || 'View location'} <span aria-hidden="true">↗</span></a>}</div>
       <h1>{c.emoji && <span className="challenge-emoji" aria-hidden="true">{c.emoji} </span>}{c.title}</h1>
       <p className="detail-summary">{c.summary}</p>
-      <div className="detail-byline"><a className="author-avatar" href={`/people?handle=${encodeURIComponent(c.author.handle)}`} aria-label={`View @${c.author.handle} contributions`}>{c.author.handle.slice(0, 1).toUpperCase()}</a><span>{c.source ? 'Shared' : 'Spotted'} by <a href={`/people?handle=${encodeURIComponent(c.author.handle)}`}><strong>@{c.author.handle}</strong></a><span> · Active {ago(c.imported_at && c.imported_at > c.last_activity_at ? c.imported_at : c.last_activity_at)}</span></span></div>
+      <div className="detail-byline"><a className="author-avatar" href={`/people?handle=${encodeURIComponent(c.author.handle)}`} aria-label={`View @${c.author.handle} contributions`}>{c.author.handle.slice(0, 1).toUpperCase()}</a><span>{c.source ? 'Shared' : 'Spotted'} by <a href={`/people?handle=${encodeURIComponent(c.author.handle)}`}><strong>@{c.author.handle}</strong></a><span> · Active {ago(c.imported_at && c.imported_at > c.last_activity_at ? c.imported_at : c.last_activity_at)}</span>{c.views_count > 0 && <span title="Distinct viewers, counted once per person per day"> · {count(c.views_count)} viewed</span>}</span></div>
       <div className="detail-impact"><span>Impact</span><small>Not specified</small></div>
       <details className="challenge-history"><summary><img src="/icons/chart-line.svg" width="18" height="18" alt="" />Dates and source</summary><dl>
         <div><dt>Added here</dt><dd><time dateTime={dateISO(c.imported_at ?? c.created_at)}>{formatDateTime(c.imported_at ?? c.created_at)}</time></dd></div>
