@@ -14,7 +14,7 @@ The frame fits the viewport, with no document or inner scrolling required to bro
 
 ## Routing and switching
 
-All screens live under `/v2`: `/v2/c/<slug>`, `/v2/map`, `/v2/people`, `/v2/settings`, `/v2/post`, `/v2/signin`, `/v2/contribute`, `/v2/privacy`, `/v2/terms`. Existing pages also accept `?v=2`. A tab remembers the edition, including after sign-in and programmatic redirects. Classic returns to the same screen with `?v=1`. Query parameters and profile handles are preserved. Canonical links point to the unversioned content.
+All screens live under `/v2`: `/v2/c/<slug>`, `/v2/map`, `/v2/people`, `/v2/settings`, `/v2/post`, `/v2/signin`, `/v2/contribute`, `/v2/privacy`, `/v2/terms`. Unversioned pages default to V2 when the tab has no saved choice. Existing pages also accept `?v=2`; `?v=1` explicitly selects the original design. A tab remembers the edition, including after sign-in and programmatic redirects. If browser storage is unavailable, the URL choice still wins and V2 remains the default. Classic returns to the same screen with `?v=1`. Query parameters and profile handles are preserved. Canonical links point to the unversioned content.
 
 V2 Challenge routes share the existing Worker fallback for newly published Challenges. `/v2/*` belongs in `assets.run_worker_first` in each target; missing V2 pages return the newspaper recovery screen with status 404. The example config records this requirement.
 
