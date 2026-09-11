@@ -162,14 +162,7 @@ export const gridRef = (id: string) => {
 export const count = (n: number) =>
   n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1).replace('.0', '')}k` : String(n)
 
-export const ago = (iso: string) => {
-  const d = Math.floor((Date.now() - new Date(iso.replace(' ', 'T') + 'Z').getTime()) / 864e5)
-  if (d <= 0) return 'today'
-  if (d === 1) return 'yesterday'
-  if (d < 30) return `${d}d ago`
-  if (d < 365) return `${Math.floor(d / 30)}mo ago`
-  return `${Math.floor(d / 365)}y ago`
-}
+export { relativeDate as ago } from './dates'
 
 /** Row number in the index column: 01, 02, ... as printed on the sheet. */
 export const rowNo = (i: number) => String(i + 1).padStart(2, '0')

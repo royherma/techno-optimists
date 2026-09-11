@@ -1,8 +1,9 @@
+import { formatDate, formatDateTime, dateISO } from '../../lib/dates'
 import { useCallback, useEffect, useState, type CSSProperties } from 'react'
 import type { Challenge, Update, Stage } from '../../../../../packages/types/index'
 import type { DetailPerson } from '../../lib/api'
 import { getMe, type Me } from '../../lib/session'
-import { TYPE_LABEL, STAGE_ORDER, STAGE_STAMP, STAGE_MEANING, ago, depthLabel, gridRef } from '../../lib/vocab'
+import { TYPE_LABEL, STAGE_ORDER, STAGE_STAMP, STAGE_MEANING, ago, gridRef } from '../../lib/vocab'
 import ActionBar from '../ActionBar'
 import PeopleLive from '../PeopleLive'
 import Discussion from './Discussion'
@@ -54,9 +55,14 @@ export default function ChallengeDetail({ initial, rings }: { initial?: Detail; 
       <div className="detail-meta"><span>{gridRef(c.id)}</span><span className="type-pill">Started as {['idea', 'experiment'].includes(c.type) ? 'an' : 'a'} {TYPE_LABEL[c.type].toLowerCase()}</span>{c.location && <span>{c.location}</span>}</div>
       <h1>{c.emoji && <span className="challenge-emoji" aria-hidden="true">{c.emoji} </span>}{c.title}</h1>
       <p className="detail-summary">{c.summary}</p>
-      <div className="detail-byline"><a className="author-avatar" href={`/people?handle=${encodeURIComponent(c.author.handle)}`} aria-label={`View @${c.author.handle} contributions`}>{c.author.handle.slice(0, 1).toUpperCase()}</a><span>{c.source ? 'Shared' : 'Spotted'} by <a href={`/people?handle=${encodeURIComponent(c.author.handle)}`}><strong>@{c.author.handle}</strong></a><span> · Active {ago(c.last_activity_at)}</span></span></div>
-      <div className="detail-impact"><svg width="52" height="52" viewBox="0 0 52 52" role="img" aria-label={`Impact: ${depthLabel(n)}`} style={{ color: `var(--color-${c.stage})` }}>{Array.from({ length: n }, (_, i) => <circle key={i} cx="26" cy="26" r={24 * (i + 1) / n} fill="none" stroke="currentColor" strokeWidth="1.5" />)}</svg><span>{depthLabel(n).split(' - ')[0]} impact</span></div>
-      <details className="challenge-history"><summary>Dates and provenance</summary><p>Added to the platform: {c.imported_at ?? c.created_at} UTC</p>{c.imported_at && <p>Original record date: {c.created_at} UTC. Imported records can predate their addition to this platform.</p>}<p>Latest recorded activity: {c.last_activity_at} UTC</p>{c.source && <p>Shared from an external source. See the source and its notes below.</p>}</details>
+      <div className="detail-byline"><a className="author-avatar" href={`/people?handle=${encodeURIComponent(c.author.handle)}`} aria-label={`View @${c.author.handle} contributions`}>{c.author.handle.slice(0, 1).toUpperCase()}</a><span>{c.source ? 'Shared' : 'Spotted'} by <a href={`/people?handle=${encodeURIComponent(c.author.handle)}`}><strong>@{c.author.handle}</strong></a><span> · Active {ago(c.imported_at && c.imported_at > c.last_activity_at ? c.imported_at : c.last_activity_at)}</span></span></div>
+      <div className="detail-impact" title="Relative participation compared with other Challenges in this index. Not a measure of real-world impact."><span className="participation-label"><img src="/icons/users.svg" width="18" height="18" alt="" />Participation</span><div className="participation-meter" role="img" aria-label={`Participation level ${n} of 5`}>{Array.from({length: 5}, (_, i) => <span key={i} className={i < n ? 'is-filled' : ''} />)}</div><span>Level {n} of 5</span><small>Relative activity</small></div>
+      <details className="challenge-history"><summary><img src="/icons/chart-line.svg" width="18" height="18" alt="" />Dates and source</summary><dl>
+        <div><dt>Added here</dt><dd><time dateTime={dateISO(c.imported_at ?? c.created_at)}>{formatDateTime(c.imported_at ?? c.created_at)}</time></dd></div>
+        {c.imported_at && <div><dt>Original record</dt><dd><time dateTime={dateISO(c.created_at)}>{formatDate(c.created_at)}</time></dd></div>}
+        <div><dt>Latest platform activity</dt><dd><time dateTime={dateISO(c.imported_at && c.imported_at > c.last_activity_at ? c.imported_at : c.last_activity_at)}>{formatDateTime(c.imported_at && c.imported_at > c.last_activity_at ? c.imported_at : c.last_activity_at)}</time></dd></div>
+        {c.source && <div><dt>Source</dt><dd>{source ? <a href={source.href} target="_blank" rel="noopener noreferrer">{c.source.name ?? source.hostname} ↗</a> : c.source.name}</dd></div>}
+      </dl>{c.imported_at && <p>The original record predates its addition here.</p>}</details>
       <nav className="detail-jump" aria-label="On this Challenge"><a href="#discussion">Join the discussion</a><a href="#progress">Progress log</a></nav>
     </header>
     <div className="stage-overview"><p><strong>Current stage: {STAGE_STAMP[c.stage]}</strong><span>{PROMPT[c.stage]}</span></p>
