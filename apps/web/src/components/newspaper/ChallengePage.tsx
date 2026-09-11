@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { Challenge, Update } from '../../../../../packages/types'
 import type { DetailPerson } from '../../lib/api'
 import { getMe, type Me } from '../../lib/session'
@@ -6,6 +6,7 @@ import { STAGE_MEANING, STAGE_STAMP } from '../../lib/vocab'
 import { formatDate } from '../../lib/dates'
 import PagedContent from './PagedContent'
 import PanelDialog from './PanelDialog'
+import ViewsCount from './ViewsCount'
 import ActionBar from '../ActionBar'
 import Discussion from '../challenge/Discussion'
 import Progress from '../challenge/Progress'
@@ -32,12 +33,32 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
     const response = await fetch(`/api/challenges/${encodeURIComponent(slug)}`, { cache: 'no-store' })
     if (!response.ok) throw new Error('The latest Challenge could not load. Try again.')
     const next: ChallengeData = await response.json()
-    setData(next); setError(''); document.title = next.challenge.title + ' - Techno Optimists'
+    setData(previous => previous?.challenge.slug === next.challenge.slug
+      ? { ...next, challenge: { ...next.challenge, views_count: Math.max(previous.challenge.views_count, next.challenge.views_count) } }
+      : next); setError(''); document.title = next.challenge.title + ' - Techno Optimists'
   }
   useEffect(() => {
     void refresh().catch(e => setError(e.message))
     void getMe().then(person => { setMe(person); setSessionReady(true) })
   }, [])
+  // One POST per Challenge per mount. The ref guards React's double-invoke in
+  // development and a refresh() that re-renders with the same slug; the server
+  // dedupes the rest, so a repeat visit is a no-op insert.
+  const viewed = useRef('')
+  useEffect(() => {
+    const slug = data?.challenge.slug
+    if (!slug || viewed.current === slug) return
+    viewed.current = slug
+    void fetch(`/api/challenges/${encodeURIComponent(slug)}/view`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+    }).then(async response => {
+      if (!response.ok) return
+      const { views_count } = await response.json() as { views_count: number }
+      setData(previous => previous?.challenge.slug === slug
+        ? { ...previous, challenge: { ...previous.challenge, views_count: Math.max(previous.challenge.views_count, views_count) } }
+        : previous)
+    }).catch(() => {})
+  }, [data?.challenge.slug])
   if (!data) return <div className="np-empty"><h1>{error || 'Opening the Challenge…'}</h1>{error && <button onClick={() => void refresh().catch(e => setError(e.message))}>Try again</button>}</div>
   const c = data.challenge, image = c.media[Math.min(media, c.media.length - 1)]
   let source: URL | null = null
@@ -51,7 +72,7 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
           {image?.kind === 'video' ? <video src={image.url} controls playsInline /> : image ? <img src={image.url} alt={image.alt || ''} /> : <p>Things can be better.</p>}
           {c.media.length > 1 && <div className="np-media-controls"><button aria-label="Previous image" disabled={media === 0} onClick={() => setMedia(media - 1)}>←</button><span>{media + 1} / {c.media.length}</span><button aria-label="Next image" disabled={media + 1 >= c.media.length} onClick={() => setMedia(media + 1)}>→</button></div>}
         </div>
-        <div className="np-story-reading"><PagedContent compact label="Story"><h1>{c.title}</h1><p className="np-deck">{c.summary}</p><p className="np-story-author">Shared by <a href={'/people?handle=' + encodeURIComponent(c.author.handle)}>@{c.author.handle}</a> · {formatDate(c.imported_at || c.created_at)}</p>{c.body && c.body.split(/\n\s*\n/).map((p, i) => <p key={i}>{p}</p>)}</PagedContent></div>
+        <div className="np-story-reading"><PagedContent compact label="Story"><h1>{c.title}</h1><p className="np-deck">{c.summary}</p><p className="np-story-author">Shared by <a href={'/people?handle=' + encodeURIComponent(c.author.handle)}>@{c.author.handle}</a> · {formatDate(c.imported_at || c.created_at)} <ViewsCount count={c.views_count ?? 0} title={c.title} /></p>{c.body && c.body.split(/\n\s*\n/).map((p, i) => <p key={i}>{p}</p>)}</PagedContent></div>
       </section>
       <Panel name="help" title="How you can help"><ActionBar slug={c.slug} type={c.type} actions={c.actions} /></Panel>
       <Panel name="discussion" title="Discussion"><Discussion panel slug={c.slug} me={me} sessionReady={sessionReady} /></Panel>
