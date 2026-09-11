@@ -24,8 +24,16 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
+      # npm install, not npm ci. vitest 5 bundles rolldown, whose native binding
+      # is an optional per-platform dep. package-lock.json was generated on
+      # darwin-arm64 and names only @rolldown/binding-darwin-arm64, so npm ci on
+      # ubuntu-x64 installs no usable binding and vitest dies at startup with
+      # "Cannot find native binding" (npm/cli#4828). npm install re-resolves
+      # optional deps for the runner and picks up binding-linux-x64-gnu.
+      # Regenerating the lock to carry all 15 bindings was tried and rejected:
+      # a full re-resolve also moved 15 unrelated packages and added 86.
       - name: Install
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       # Same command CONTRIBUTING.md asks contributors to run:
       # npm run typecheck && npm test. No Cloudflare account, no secrets,
