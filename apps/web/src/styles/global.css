@@ -22,11 +22,11 @@
   --color-table:       oklch(98.6% 0.004 240);
   --color-grid-line:   oklch(88% 0.045 245);
   --color-grid-ink:    oklch(58% 0.16 250);
-  --color-ink:         oklch(15% 0 0);
+  --color-ink:         oklch(17% 0.035 265);
   --color-ink-soft:    oklch(45% 0 0);
-  --color-ink-faint:   oklch(62% 0 0);
-  --color-rule:        oklch(15% 0 0);
-  --color-rule-soft:   oklch(86% 0 0);
+  --color-ink-faint:   oklch(48% 0.018 255);
+  --color-rule:        oklch(95% 0.005 255);
+  --color-rule-soft:   oklch(83% 0.012 255);
 
   /*
    * The seven lifecycle stages. Colour is the primary carrier of stage on the
@@ -47,9 +47,9 @@
   --color-experiment:  oklch(50% 0.24 300);
   --color-build-type:  oklch(52% 0.17 148);
 
-  --font-display: "Instrument Serif", ui-serif, Georgia, serif;
+  --font-display: "Libre Caslon Display", Georgia, serif;
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+  --font-mono: var(--font-sans);
 
   /*
    * One timing for every hover/focus/active response on the sheet - a rule
@@ -57,6 +57,11 @@
    * component read as jitter once several are on screen together; a single
    * shared value keeps every affordance moving at the same speed.
    */
+  --color-accent: oklch(44% 0.12 255);
+  --color-selected: oklch(96% 0.022 245);
+  --color-mint: oklch(94% 0.038 175);
+  --color-lilac: oklch(93% 0.039 292);
+  --color-quote: oklch(70% 0.04 265);
   --ease-ink: 120ms ease-out;
 }
 
@@ -106,11 +111,11 @@
    */
   body {
     background-color: var(--color-table);
-    background-image:
-      linear-gradient(to right, var(--color-grid-line) 1px, transparent 1px),
-      linear-gradient(to bottom, var(--color-grid-line) 1px, transparent 1px);
-    background-size: 14px 14px;
+
   }
+  [hidden] { display: none !important; }
+  button, a { -webkit-tap-highlight-color: transparent; }
+  h1,h2,h3 { text-wrap: balance; }
   ::selection { background: oklch(88% 0.06 258); }
   :focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }
 }

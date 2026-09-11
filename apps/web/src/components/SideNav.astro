@@ -1,0 +1,15 @@
+---
+import Icon from './Icon.astro'
+const path = Astro.url.pathname
+const links = [
+  { label: 'Home', icon: 'house', href: '/' },
+  { label: 'Map', icon: 'globe', href: '/map' },
+  { label: 'Ideas', icon: 'lightbulb', href: '/?type=idea' },
+  { label: 'Experiments', icon: 'flask', href: '/?type=experiment' },
+  { label: 'Build', icon: 'rocket', href: '/?type=build' },
+]
+---
+<nav class="side-nav" aria-label="Main navigation">
+  <div class="side-links">{links.map(({label,icon,href}) => <a href={href} data-side-link aria-current={path === href ? 'page' : undefined}><Icon name={icon} size={28} /><span>{label}</span></a>)}</div>
+  <div class="side-footer"><Icon name="globe" size={28} /><span>A brighter<br />tomorrow</span></div>
+</nav>

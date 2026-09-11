@@ -1,0 +1,17 @@
+---
+import Icon from './Icon.astro'
+interface Props { hidden?: boolean }
+const { hidden = false } = Astro.props
+const paths = [
+  {title: 'Explore the Map', copy: 'See challenges and ideas around the world.', icon: 'compass', href: '/map', tone: 'blue'},
+  {title: 'Browse Ideas', copy: 'Discover what people are working on.', icon: 'lightbulb', href: '/?type=idea', tone: 'mint'},
+  {title: 'Post a Challenge', copy: 'Start a conversation. Change something.', icon: 'plus', href: '/post', tone: 'lilac'},
+]
+---
+<section class="empty-index" data-empty-index hidden={hidden}>
+  <img class="empty-landscape" src="/images/optimist-landscape.png" width="1200" height="360" alt="A person looking toward a sunrise across blue mountain ridges" fetchpriority="high" />
+  <h1>Nothing here yet.</h1>
+  <p class="empty-explanation">Explore another part of the index<br />or be the first to add a Challenge.</p>
+  <div class="discovery-links">{paths.map(p => <a href={p.href} class:list={['discovery-link',p.tone]}><span class="discovery-icon"><Icon name={p.icon} size={36} /></span><span><h2>{p.title}</h2><p>{p.copy}</p></span><span class="discovery-arrow"><Icon name="arrow-right" size={21} /></span></a>)}</div>
+  <blockquote><span aria-hidden="true">“</span><p>A more human future is a design choice.</p><cite>Techno Optimists</cite></blockquote>
+</section>
