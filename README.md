@@ -161,3 +161,62 @@ reporting. Details in [CONTRIBUTING.md](CONTRIBUTING.md#reporting-a-security-iss
 
 MIT — see [LICENSE](LICENSE). Use it, fork it, ship it commercially, no permission
 needed. Copyright 2026 Techguyver Labs, LLC.
+
+## Challenge discovery
+
+Scout reads specific source URLs, RSS/Atom feeds, Reddit JSON searches, and optional
+Brave web searches, then asks a local Ollama model to draft Challenges and classify
+reach, severity and lifecycle. It writes review files; it does not publish.
+
+```sh
+npm ci --prefix scripts/scout
+npm run scout -- --sources-only --limit 9 --out outputs/scout
+npm run test:scout
+```
+
+The example configuration is `scripts/scout/themes.yaml` (JSON is valid YAML).
+Edit its sources, themes, places, feeds and Reddit communities for the next batch.
+Omit `--sources-only` to enable discovery. Web search needs
+`BRAVE_SEARCH_API_KEY`; sources and feeds work without it. `max_queries` bounds
+search requests and `--limit` bounds successfully fetched source pages, not accepted
+Challenges. Failed candidates are logged. `--fetch-only` tests fetching without a
+model. The default model is `qwen3.5:9b` on Ollama at localhost:11434; override with
+`SCOUT_MODEL` and `SCOUT_MODEL_BASE`. Models must already be installed.
+
+Outputs include `cards.json` (passed mechanical checks, still needs human review),
+`review_queue.json`, `rejected.json`, `sources.json` and
+`approvals.template.json`. Cache files contain source text and model responses;
+keep `outputs/` private and untracked. Each run refreshes sources daily and reuses
+identical model inputs. Use separate output directories for simultaneous runs.
+Only HTML sources are supported; PDFs and blocked pages go to review.
+
+Impact rings follow the app: personal, neighbourhood, town, region, global.
+`severity` is separate. A model's explanation is an inference, not evidence of
+population size. Source measurements require an exact short quote, and unclear
+or stale dates, ambiguous locations and missing solution checks are flagged.
+Search results are recorded as follow-up leads: a reviewer must read them before
+concluding whether the situation has changed. Local models can still misread a
+source even when these mechanical checks pass.
+
+Review and correct the JSON against the source. Copy the approval template to a
+separate file, fill in reviewer and checks, and accept only reviewed records.
+Approval `revision` is SHA-256 of `JSON.stringify(card)`; after editing a card,
+recompute it using `hash` from `scripts/scout/core.mjs`. Stale approvals fail.
+
+```sh
+npm run scout -- --out outputs/scout --approve outputs/scout/approvals.json
+node scripts/gen-challenge-art.mjs outputs/scout/import.json
+node scripts/gen-challenge-art.mjs outputs/scout/import.json --write
+node scripts/import-challenges.mjs outputs/scout/import.json --base https://technooptimists.org
+```
+
+The illustration script accepts Scout's `image_subject`, uses the existing locked
+style and local generator, and attaches media to the import batch. Its default
+art dimensions remain 688x512 to match the existing site pipeline. Generation needs
+the local image service on port 4750. The importer requires `TO_SESSION` and is a
+dry run until explicitly called with `--write`. Images must be deployed with the
+site before importing their URLs. Nothing in Scout changes the database or deploys
+the site. There is no automatic recurring schedule.
+
+Provider references: [Ollama chat](https://docs.ollama.com/api/chat),
+[Brave web search](https://api-dashboard.search.brave.com/api-reference/web/search/get).

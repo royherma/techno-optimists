@@ -86,6 +86,11 @@ if (!Array.isArray(rows) || rows.length === 0) {
 // "39.8C", and about which stop words go - and every disagreement writes a PNG
 // under a name no Challenge references. Node runs the .ts directly.
 const { slugify } = await import('../apps/api/src/slug.ts')
+const rowSlug = (row) => {
+  const slug = row.slug ?? slugify(row.title)
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) throw new Error('Invalid Challenge slug')
+  return slug
+}
 
 /*
  * One panel description per Challenge. Deliberately concrete and physical: the
@@ -117,10 +122,17 @@ const PANELS = {
     'a large rainwater storage tank beside a wooden house in summer, cloudy water visible in a glass jar on a stump',
 }
 
-const missing = rows.filter((r) => !PANELS[slugify(r.title)])
+// Scout supplies a concrete scene derived from the source-backed body.
+for (const row of rows) {
+  if (typeof row.image_subject === 'string' && row.image_subject.trim()) {
+    PANELS[rowSlug(row)] = row.image_subject.trim().slice(0, 600)
+  }
+}
+
+const missing = rows.filter((r) => !PANELS[rowSlug(r)])
 if (missing.length) {
   console.error(`${missing.length} row(s) have no panel description - add one to PANELS keyed by slug:`)
-  for (const r of missing) console.error(`  - ${slugify(r.title)}  (${r.title})`)
+  for (const r of missing) console.error(`  - ${rowSlug(r)}  (${r.title})`)
   process.exit(1)
 }
 
@@ -144,10 +156,10 @@ const STYLE = 'flat vector editorial illustration, muted earth-tone palette, sim
 const NO_TEXT = 'No text anywhere. No letters, no words, no numbers, no labels, no signage, no writing on any object.'
 
 const promptFor = (cells, { single = false } = {}) => {
-  if (single) return `${cap(STYLE)}: ${PANELS[slugify(cells[0].title)]}. ${NO_TEXT}`
+  if (single) return `${cap(STYLE)}: ${PANELS[rowSlug(cells[0])]}. ${NO_TEXT}`
 
   const panels = Array.from({ length: CELLS }, (_, i) =>
-    `${QUADRANT[i]}: ${cells[i] ? PANELS[slugify(cells[i].title)] : FILLER}.`).join(' ')
+    `${QUADRANT[i]}: ${cells[i] ? PANELS[rowSlug(cells[i])] : FILLER}.`).join(' ')
   return `A 2x2 grid of four separate ${STYLE.replace('flat vector editorial illustration', 'flat vector editorial illustrations')}, ` +
     `divided by thick black lines into four equal panels. ${panels} ${NO_TEXT}`
 }
@@ -161,7 +173,7 @@ const groups = backend === 'local' ? rows.map((r) => [r]) : grids
 const plan = groups.map((cells, i) => ({
   grid: i + 1,
   cells,
-  slugs: cells.map((c) => slugify(c.title)),
+  slugs: cells.map((c) => rowSlug(c)),
   prompt: backend === 'local' ? null : promptFor(cells),
 }))
 
@@ -275,7 +287,7 @@ for (const art of written) {
  */
 const bySlug = new Map(written.map((w) => [w.slug, w]))
 for (const row of rows) {
-  const art = bySlug.get(slugify(row.title))
+  const art = bySlug.get(rowSlug(row))
   if (!art) continue
   row.media = [{
     kind: 'image',
