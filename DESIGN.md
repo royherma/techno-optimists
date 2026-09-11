@@ -27,7 +27,7 @@ Keep routes focused on data loading and composition. Prefer reusing a component 
 
 ## Responsive behavior and states
 
-The rail becomes a five-item bottom navigation on phones. Preserve safe-area spacing. The legend becomes an expandable disclosure; type filters remain in their own row. Challenge media and supporting content stack, the lifecycle wraps, and headings use the full available width. Test 390px, 1024px and reference-width desktop layouts without horizontal overflow.
+The rail becomes a bottom navigation on phones, carrying the same two places it carries on desktop. Preserve safe-area spacing. The legend becomes an expandable disclosure; type filters remain in their own row. Challenge media and supporting content stack, the lifecycle wraps, and headings use the full available width. Test 390px, 1024px and reference-width desktop layouts without horizontal overflow.
 
 Hover/focus responses are short (120ms); respect reduced motion. Active navigation uses pale blue plus text/icon emphasis. Selected form controls use both a stronger border and a tinted background. Keep text readable on every tint; primary-action color does not substitute for text labels.
 
