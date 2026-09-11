@@ -132,3 +132,14 @@ describe('public contribution profiles', () => {
     expect(result.contributions[0].kind).toBe('challenge')
   })
 })
+
+it('paginates contributions without exposing private fields or dropping rows', async () => {
+  const insert = sqlite.prepare("INSERT INTO updates(id,challenge_id,author_id,body) VALUES (?,'c1','p1','Public test result')")
+  for (let i = 0; i < 35; i++) insert.run(`up-${String(i).padStart(2, '0')}`)
+  const read = async (offset: number) => (await app.request(`https://site.test/api/people/reader/contributions?offset=${offset}`, {}, { DB })).json()
+  const first = await read(0), second = await read(first.next_offset)
+  expect(first.contributions).toHaveLength(30)
+  expect(second.contributions).toHaveLength(5)
+  expect(second.next_offset).toBeNull()
+  expect(new Set([...first.contributions, ...second.contributions].map((r: {id: string}) => r.id)).size).toBe(35)
+})
