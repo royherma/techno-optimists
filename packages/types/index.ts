@@ -10,6 +10,20 @@ export const STAGES = ['spot', 'understand', 'ideas', 'build', 'test', 'learn', 
 export type Stage = (typeof STAGES)[number]
 
 /**
+ * How far the problem reaches, as a population ladder. Stored as the ring count
+ * 1..5, not as one of these strings: the number sorts and filters directly
+ * (`WHERE impact >= 4` is region and up), and renaming a tier stays a deploy
+ * rather than a data migration.
+ *
+ * Each step is roughly ten to a hundred times more people than the last, which
+ * is what makes the order meaningful: personal 1-10, neighbourhood 10-1k, town
+ * 1k-100k, region 100k-10M, global beyond that. Scope, never activity - a
+ * Challenge one person has is still a complete Challenge here.
+ */
+export const IMPACT_TIERS = ['personal', 'neighbourhood', 'town', 'region', 'global'] as const
+export type ImpactTier = (typeof IMPACT_TIERS)[number]
+
+/**
  * Typed social actions. There is deliberately no generic Like - the whole point
  * is that "4,700 people have this problem" and "34 people can help" are
  * different, useful facts.
@@ -117,6 +131,12 @@ export interface Challenge {
   tags: string[]
   /** Optional single emoji, curated by an admin. */
   emoji: string | null
+  /**
+   * Reach, as a ring count 1..5 indexing IMPACT_TIERS. Null is a real and
+   * permanent state - most Challenges arrive without one, and every surface
+   * leaves unspecified impact unmarked rather than guessing a tier.
+   */
+  impact: number | null
   /**
    * Where the claim came from, when this Challenge was logged on someone else's
    * behalf. Null for anything posted by the person living it, which is the

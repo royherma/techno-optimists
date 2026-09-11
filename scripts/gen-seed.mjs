@@ -63,7 +63,10 @@ const PLACES = {
   'Oakland, USA': [37.80, -122.27],
 }
 
-// [slug, type, stage, title, summary, location, tags, author, media, daysAgo, activityDaysAgo, actions{}, updates[]]
+// [slug, type, stage, title, summary, location, tags, author, media, daysAgo, activityDaysAgo, actions{}, updates[], impact?]
+// impact is the trailing ring count 1..5 (see IMPACT_TIERS in packages/types).
+// Omit it to seed a Challenge with unspecified impact - that is a real state and
+// the surfaces leave it unmarked.
 const challenges = [
   ['milk-cooling-loss','problem','ideas',
    'This farmer loses a third of his milk to the afternoon heat',
@@ -171,7 +174,7 @@ for (const [id, handle, location, skills, roles] of people) {
 out.push('')
 
 let u = 0
-for (const [slug, type, stage, title, summary, location, tags, author, media, days, act, actions, updates] of challenges) {
+for (const [slug, type, stage, title, summary, location, tags, author, media, days, act, actions, updates, impact] of challenges) {
   const id = `ch_${slug.replace(/-/g, '_')}`
   // A row with no location stays unplaced rather than being invented onto the
   // map. `drone-compute-mesh` is deliberately one of these: it is a question
@@ -179,7 +182,7 @@ for (const [slug, type, stage, title, summary, location, tags, author, media, da
   const [lat, lng] = PLACES[location] ?? [null, null]
   if (location && !PLACES[location]) throw new Error(`gen-seed: no coordinates for ${location}`)
   const n = (v) => (v === null ? 'NULL' : String(v))
-  out.push(`INSERT INTO challenges (id,slug,type,stage,title,summary,body,media,location,lat,lng,tags,author_id,created_at,last_activity_at,seed_actions) VALUES (${q(id)},${q(slug)},${q(type)},${q(stage)},${q(title)},${q(summary)},NULL,${j(media)},${q(location)},${n(lat)},${n(lng)},${j(tags)},${q(author)},${q(iso(days))},${q(iso(act))},${j(actions)});`)
+  out.push(`INSERT INTO challenges (id,slug,type,stage,title,summary,body,media,location,lat,lng,tags,author_id,created_at,last_activity_at,seed_actions,impact) VALUES (${q(id)},${q(slug)},${q(type)},${q(stage)},${q(title)},${q(summary)},NULL,${j(media)},${q(location)},${n(lat)},${n(lng)},${j(tags)},${q(author)},${q(iso(days))},${q(iso(act))},${j(actions)},${n(impact ?? null)});`)
   // Demo scale goes in challenges.seed_actions as a json blob, NOT as fake rows.
   // Seeding 4,712 people to make one number look right would poison every
   // person-level query on the site. Real rows below are only our 10 seed people,

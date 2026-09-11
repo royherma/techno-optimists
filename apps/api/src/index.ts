@@ -117,6 +117,10 @@ const toChallenge = (r: Row, actionRows: Row[]): Challenge => {
     lng: r.lng == null ? null : Number(r.lng),
     tags: json<string[]>(r.tags, []),
     emoji: r.emoji == null ? null : String(r.emoji),
+    // Number(null) would report every unspecified Challenge as impact 0, which
+    // is not a tier. The null has to reach the surfaces so they can leave the
+    // rings unmarked rather than drawing a smallest-scope ring.
+    impact: r.impact == null ? null : Number(r.impact),
     // Three nullable columns collapse to one nullable object: a row with no
     // provenance returns `source: null` rather than an object of three nulls,
     // so `c.source &&` is the only check a surface needs. A row that has any
@@ -230,6 +234,9 @@ const createBody = z.object({
   lat: z.number().min(-90).max(90).optional(),
   lng: z.number().min(-180).max(180).optional(),
   tags: z.array(z.string().trim().toLowerCase().min(2).max(30)).max(6).default([]),
+  // The ring count, not a tier name. Omitted means unspecified, which is the
+  // common case and stays NULL rather than defaulting to 1.
+  impact: z.number().int().min(1).max(5).optional(),
 })
 
 /**
@@ -243,7 +250,7 @@ app.post('/api/challenges', async (c) => {
 
   const parsed = createBody.safeParse(await c.req.json().catch(() => null))
   if (!parsed.success) return c.json({ error: 'bad_body', detail: parsed.error.issues }, 400)
-  const { type, title, summary, body, media, location, lat, lng, tags } = parsed.data
+  const { type, title, summary, body, media, location, lat, lng, tags, impact } = parsed.data
 
   const id = `c_${mintToken().slice(0, 16)}`
   const slug = await uniqueSlug(c.env.DB, slugify(title))
@@ -254,13 +261,13 @@ app.post('/api/challenges', async (c) => {
   const placed = lat != null && lng != null
 
   await c.env.DB.prepare(
-    `INSERT INTO challenges (id, slug, type, stage, title, summary, body, media, location, lat, lng, tags, author_id)
-     VALUES (?, ?, ?, 'spot', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO challenges (id, slug, type, stage, title, summary, body, media, location, lat, lng, tags, author_id, impact)
+     VALUES (?, ?, ?, 'spot', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).bind(
     id, slug, type, title, summary, body ?? null,
     JSON.stringify(media), location ?? null,
     placed ? lat : null, placed ? lng : null,
-    JSON.stringify([...new Set(tags)]), me.id,
+    JSON.stringify([...new Set(tags)]), me.id, impact ?? null,
   ).run()
 
   const row = await c.env.DB.prepare(`${SELECT_CHALLENGE} WHERE c.id = ?`).bind(id).first()
@@ -386,7 +393,7 @@ app.post('/api/challenges/import', async (c) => {
     return existing
       ? c.env.DB.prepare(
           `UPDATE challenges SET type=?, stage=?, title=?, summary=?, body=?, media=?,
-             location=?, lat=?, lng=?, tags=?, author_id=?,
+             location=?, lat=?, lng=?, tags=?, author_id=?, impact=?,
              created_at=COALESCE(datetime(?), created_at),
              last_activity_at=COALESCE(datetime(?), last_activity_at),
              seed_actions=?, source_url=?, source_name=?, source_note=?,
@@ -395,15 +402,15 @@ app.post('/api/challenges/import', async (c) => {
         ).bind(
           row.type, row.stage, row.title, row.summary, row.body ?? null, media,
           row.location ?? null, placed ? row.lat : null, placed ? row.lng : null,
-          tags, authorRow.id, created, active, seedActions,
+          tags, authorRow.id, row.impact ?? null, created, active, seedActions,
           row.source_url ?? null, row.source_name ?? null, row.source_note ?? null,
           existing,
         )
       : c.env.DB.prepare(
           `INSERT INTO challenges (id, slug, type, stage, title, summary, body, media,
-             location, lat, lng, tags, author_id, created_at, last_activity_at,
+             location, lat, lng, tags, author_id, impact, created_at, last_activity_at,
              seed_actions, source_url, source_name, source_note, imported_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
              COALESCE(datetime(?), datetime('now')),
              COALESCE(datetime(?), datetime('now')),
              ?, ?, ?, ?, datetime('now'))`,
@@ -411,7 +418,7 @@ app.post('/api/challenges/import', async (c) => {
           `c_${mintToken().slice(0, 16)}`, slug, row.type, row.stage, row.title,
           row.summary, row.body ?? null, media, row.location ?? null,
           placed ? row.lat : null, placed ? row.lng : null, tags, authorRow.id,
-          created, active, seedActions,
+          row.impact ?? null, created, active, seedActions,
           row.source_url ?? null, row.source_name ?? null, row.source_note ?? null,
         )
   })

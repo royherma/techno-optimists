@@ -10,5 +10,11 @@ if (!tables[0]?.results?.length) throw new Error('No challenges table; refusing 
 if (!tables[0].results.some((c) => c.name === 'emoji')) {
   run(['--command', 'ALTER TABLE challenges ADD COLUMN emoji TEXT'])
 }
+// Ring count 1..5 indexing IMPACT_TIERS. Nullable on purpose: every row that
+// existed before this column keeps an unspecified impact rather than being
+// backfilled to a tier nobody chose.
+if (!tables[0].results.some((c) => c.name === 'impact')) {
+  run(['--command', 'ALTER TABLE challenges ADD COLUMN impact INTEGER'])
+}
 run(['--file', 'packages/db/community.sql'])
 console.log(`Community schema ready (${target}); existing records preserved.`)
