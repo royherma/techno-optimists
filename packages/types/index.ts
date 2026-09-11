@@ -115,6 +115,23 @@ export interface Challenge {
   lng: number | null
   /** Free tags: 'water', 'cooling', 'agriculture'. */
   tags: string[]
+  /**
+   * Where the claim came from, when this Challenge was logged on someone else's
+   * behalf. Null for anything posted by the person living it, which is the
+   * normal case.
+   *
+   * Deliberately not merged into `author`: the author is who entered it here,
+   * the source is who reported it. A row authored by @atlas and sourced from a
+   * newspaper is the site logging someone else's problem, and the card says so
+   * rather than presenting it as our own find.
+   *
+   * `url` is usually a link but is not guaranteed to be one - an interview or a
+   * phone call is a legitimate source. Callers must check for http(s) before
+   * rendering an anchor.
+   */
+  source: { url: string | null; name: string | null; note: string | null } | null
+  /** Set when the row arrived through a bulk import rather than the post form. */
+  imported_at: string | null
   author: Pick<PublicPerson, 'id' | 'handle' | 'avatar_url' | 'location'>
   /** Per-kind counts, always present, zero-filled. */
   actions: Record<ActionKind, number>

@@ -19,6 +19,38 @@ export default defineConfig({
   ],
   // Static output: the Worker serves /api/*, the assets binding serves the rest.
   output: 'static',
+  security: {
+    // Astro emits a per-page <meta http-equiv="content-security-policy"> and
+    // computes a sha256 for every inline script and style it generated. That
+    // matters here: island hydration ships three inline <script> blocks with
+    // real bodies, so a hand-written `script-src 'self'` would break the page,
+    // and a hand-copied hash list would go stale on the next build. Astro
+    // regenerates the hashes each build instead.
+    //
+    // The Worker sends the transport-level headers (HSTS, frame-ancestors,
+    // nosniff) - a <meta> CSP cannot carry frame-ancestors at all.
+    csp: {
+      algorithm: 'SHA-256',
+      directives: [
+        "default-src 'self'",
+        // Google Fonts: the stylesheet comes from googleapis, the font files
+        // from gstatic. Both are in Base.astro's <head>.
+        'font-src https://fonts.gstatic.com',
+        // R2 media is served same-origin through /media/*, so 'self' covers it.
+        // data: is for the inline SVGs the map draws.
+        "img-src 'self' data:",
+        "connect-src 'self'",
+        "form-action 'self'",
+        "base-uri 'self'",
+        "object-src 'none'",
+      ],
+      styleDirective: {
+        // Tailwind is a real stylesheet ('self'); this adds the font CSS origin
+        // alongside whatever hashes Astro computes for its own inline styles.
+        resources: ["'self'", 'https://fonts.googleapis.com'],
+      },
+    },
+  },
   devToolbar: { enabled: false },
   server: { port: 4321 },
   vite: {
