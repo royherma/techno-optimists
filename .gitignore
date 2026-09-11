@@ -49,3 +49,12 @@ outputs/
 
 # worktrees
 .worktrees/
+
+# cloudflare config: carries the account_id, D1/KV ids and the real domain.
+# Not credentials - useless without an API token - but this repo is public, and
+# a contributor's stray `wrangler deploy` should never be able to aim at the
+# real resources. Copy wrangler.jsonc.example and fill in your own ids.
+# The maintainer's real copy is backed up outside the repo, since it is now
+# untracked and a `git clean` would take it otherwise.
+wrangler.jsonc
+wrangler.build.jsonc

@@ -94,6 +94,17 @@ protection lives only in the header.
 token; returned unconditionally, POSTing a stranger's address hands over their account. A
 missing mail key in prod must break sign-in loudly, never open a door.
 
+**Admins come from the `ADMIN_EMAILS` secret. Unset demotes everyone, silently.**
+`apps/api/src/admin.ts` reads a comma-separated secret; `identities.is_admin` only
+caches it, and `currentPerson` rewrites the column to agree on every request. So a
+Worker deployed without the secret does not fall back to the cached column - it
+strips admin from every account on their next page load, and `/api/challenges/import`
+starts answering 403 to the person who owns the site. The addresses used to be an
+array in source, which is why this trap is new: an edit could not be forgotten, a
+`wrangler secret put` on a new environment can. Set it on **every** environment you
+deploy, before the first sign-in: `wrangler secret put ADMIN_EMAILS --env <env>`.
+`wrangler secret list --env <env>` is the check. Locally it goes in `.dev.vars`.
+
 **Email is stored in `identities`, never on `people`; `people.name` is returned by
 `/api/auth/me` alone.** `SELECT p.*` then cannot leak an address, and `name` is derived
 from the email local part at signup - a real name nobody chose to publish.

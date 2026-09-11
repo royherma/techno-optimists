@@ -54,7 +54,7 @@ Every target delegates to an npm script, so `npm run ship` works the same.
 
 | | dev | prod |
 |---|---|---|
-| Address | `techno-optimists-dev.techguyver1337.workers.dev` | `technooptimists.org` |
+| Address | `techno-optimists-dev.<your-subdomain>.workers.dev` | your domain |
 | Data | throwaway, seeded | real, starts empty |
 | Sign-in | returns `dev_link` in the response | mails the link, fails closed |
 
@@ -65,6 +65,27 @@ the IDs behind them differ.
 `ship` applies additive migrations before deploying; it never resets existing data.
 `schema.sql` is a destructive reset fixture for a new local database, not a migration.
 See [`docs/CONSTRAINTS.md`](docs/CONSTRAINTS.md).
+
+## Running your own instance
+
+`wrangler.jsonc` is not in the repo - it carries an account id, D1 and KV ids and a
+domain, all specific to one Cloudflare account. Copy the templates and fill in your
+own:
+
+```sh
+cp wrangler.jsonc.example wrangler.jsonc
+cp wrangler.build.jsonc.example wrangler.build.jsonc
+```
+
+Every `<your-...>` placeholder needs a real value before a deploy. `wrangler d1
+create` and `wrangler kv namespace create` print the ids; `wrangler whoami` prints
+the account id. For local work you do not need any of them - `make dev` runs against
+a local D1 that wrangler creates on demand.
+
+Admins come from the `ADMIN_EMAILS` secret, comma-separated. Unset means nobody is an
+admin, which is the default for a fresh clone: the site works and the import route
+stays closed. Set it with `wrangler secret put ADMIN_EMAILS --env dev`, or put it in
+`.dev.vars` for local. See [`.env.example`](.env.example) for the rest.
 
 ## Docs
 
