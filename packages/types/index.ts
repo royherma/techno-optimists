@@ -115,6 +115,8 @@ export interface Challenge {
   lng: number | null
   /** Free tags: 'water', 'cooling', 'agriculture'. */
   tags: string[]
+  /** Optional single emoji, curated by an admin. */
+  emoji: string | null
   /**
    * Where the claim came from, when this Challenge was logged on someone else's
    * behalf. Null for anything posted by the person living it, which is the
@@ -151,6 +153,18 @@ export interface Update {
   stage: Stage | null
   body: string
   media: Media[]
+  created_at: string
+}
+
+export const COMMENT_KINDS = ['comment', 'idea', 'question', 'evidence', 'test_result'] as const
+export type CommentKind = (typeof COMMENT_KINDS)[number]
+export interface ChallengeComment {
+  id: string
+  challenge_id: string
+  parent_id: string | null
+  kind: CommentKind
+  body: string
+  author: Pick<PublicPerson, 'id' | 'handle' | 'avatar_url'>
   created_at: string
 }
 
