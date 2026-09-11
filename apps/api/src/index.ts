@@ -8,6 +8,7 @@ import {
 import { isAdminEmail } from './admin'
 import { track } from './analytics'
 import { community } from './community'
+import { notify } from './slack'
 import { MAX_BYTES, checkUpload, dimensionsOf, mediaKey, mediaUrl } from './media'
 import { slugify } from './slug'
 import {
@@ -45,6 +46,16 @@ type Env = {
    * admins, which is what a fresh clone should get. See src/admin.ts.
    */
   ADMIN_EMAILS?: string
+  /**
+   * Slack alerts (src/slack.ts). One bot token for the whole workspace, shared
+   * with the other projects. Every channel id is optional and an unset one
+   * skips that channel rather than defaulting to another, so a half-configured
+   * env is quiet instead of noisy in the wrong place.
+   */
+  SLACK_BOT_TOKEN?: string
+  SLACK_CHANNEL_GROWTH?: string
+  SLACK_CHANNEL_PRODUCT?: string
+  SLACK_CHANNEL_ALERTS?: string
 }
 
 const app = new Hono<{ Bindings: Env }>()
@@ -271,6 +282,7 @@ app.post('/api/challenges', async (c) => {
   ).run()
 
   const row = await c.env.DB.prepare(`${SELECT_CHALLENGE} WHERE c.id = ?`).bind(id).first()
+  notify(c, 'challenge_created', { slug, title, type, author: me.handle ?? me.id })
   return c.json({ ok: true, challenge: toChallenge(row as Row, []) }, 201)
 })
 
@@ -883,6 +895,7 @@ app.get('/api/auth/callback', async (c) => {
         .bind(id, email, isAdminEmail(c.env, email) ? 1 : 0),
     ])
     person = { id }
+    notify(c, 'person_created', { handle, email })
   }
 
   const session = mintToken()

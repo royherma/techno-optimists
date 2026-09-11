@@ -3,6 +3,7 @@ import { bodyLimit } from 'hono/body-limit'
 import { z } from 'zod'
 import { track } from './analytics'
 import { currentPerson, mintToken } from './auth'
+import { notify } from './slack'
 import { COMMENT_KINDS, type ChallengeComment } from '../../../packages/types/index'
 
 // A single grapheme accepts flags, skin tones and joined emoji, but not a string
@@ -154,5 +155,13 @@ community.post('/:slug/comments', async (c) => {
     c.env.DB.prepare("UPDATE challenges SET last_activity_at = datetime('now') WHERE id = ?").bind(row.id),
     ...(kind === 'idea' ? [c.env.DB.prepare("INSERT OR IGNORE INTO challenge_actions (challenge_id, person_id, kind) VALUES (?, ?, 'have_idea')").bind(row.id, me.id)] : []),
   ])
+  notify(c, 'comment_posted', {
+    slug: c.req.param('slug'),
+    kind,
+    author: me.handle ?? me.id,
+    // Slack renders the preview as a blockquote, so a newline would break out
+    // of it and the rest of the comment would read as a separate line.
+    preview: body.replace(/\s+/g, ' ').slice(0, 160),
+  })
   return c.json({ ok: true, id }, 201)
 })
