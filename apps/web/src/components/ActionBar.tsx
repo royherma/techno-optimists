@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ActionKind, Challenge } from '../../../../packages/types/index'
-import { ACTION_LABEL, count } from '../lib/vocab'
+import { ACTION_LABEL } from '../lib/vocab'
 import { snack } from '../lib/snack'
 import '../styles/activity.css'
 
@@ -134,7 +134,7 @@ export default function ActionBar({ slug, type, actions }: {
           >
             <span>{on && <span aria-hidden="true">✓ </span>}{ACTION_LABEL[kind]}</span>
             <span className={`ml-2 tabular-nums ${on ? 'text-(--color-paper)' : 'text-(--color-ink-faint)'}`}>
-              {count(counts[kind])}
+              {counts[kind].toLocaleString('en-US')}
             </span>
           </button>
         )

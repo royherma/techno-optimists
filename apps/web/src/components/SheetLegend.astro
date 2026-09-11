@@ -129,7 +129,7 @@ import { DEPTH_LABEL, LEGEND_ACTIONS, LEGEND_ACTION_LABEL, STAGE_MEANING, STAGE_
       }
     }
     for (const el of document.querySelectorAll('.sheet-legend')) {
-      el.addEventListener('toggle', () => { el.dataset.touched = '1' })
+      el.querySelector('summary')?.addEventListener('click', () => { el.dataset.touched = '1' })
     }
     sync()
     mq.addEventListener('change', sync)
