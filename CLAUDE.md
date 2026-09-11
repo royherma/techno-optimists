@@ -41,6 +41,23 @@ keep going. Do not stop to ask permission for `deploy:dev` or `deploy:prod`, and
 do not ask whether to check something - check it. This overrides the global
 deploy gate for this repo, and it expires the day real Challenges exist.
 
+**Push to prod generously.** Default is ship, not ask. A non-critical change goes
+straight to prod the moment it builds and verifies - copy, styling, layout, a new
+page, a bug fix, a content or seed-free data tweak. Do not queue these behind a
+question. Two standing authorizations, both permanent: Roy said yes once to a kind
+of change, that yes covers the next one of the same kind; and if Roy asked for the
+thing, the deploy that makes it real was part of the ask - shipping it is not a
+second decision.
+
+Still ask first, only for these: a schema change or migration on prod D1, anything
+touching auth, billing, secrets or DNS, deleting prod data, and a rollback of
+someone else's live change. That list is the whole definition of "critical" - if a
+change is not on it, ship it.
+
+Speed is about the asking, never about the checking. Verify after every prod deploy
+and paste the artifact. A deploy you did not verify is not a fast deploy, it is an
+unknown one, and "it built" is not verification.
+
 - `npm run deploy:dev` -> `techno-optimists-dev.<subdomain>.workers.dev`, throwaway data.
 - `npm run deploy:prod` -> `technooptimists.org`, real data. The apex and `www` are
   custom domains declared in `wrangler.jsonc`, so the deploy creates their DNS records.
