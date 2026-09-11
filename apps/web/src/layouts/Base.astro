@@ -1,13 +1,14 @@
 ---
 import '../styles/global.css'
 import Snack from '../components/Snack.tsx'
+import { ORIGIN, SCHEMA_JSON } from '../lib/schema.mjs'
 interface Props { title: string; description?: string; image?: string; noindex?: boolean }
 const { title, description = 'Find interesting real-world problems and help solve them.', image = '/og.png', noindex = false } = Astro.props
 
 // The canonical origin. Astro.site is unset (static output, two deploy targets),
 // so the prod domain is named here - a relative og:image is ignored by every
-// scraper, they all require an absolute URL.
-const ORIGIN = 'https://technooptimists.org'
+// scraper, they all require an absolute URL. It comes from lib/schema.mjs
+// because astro.config.mjs needs the same value to hash the JSON-LD.
 const canonical = new URL(Astro.url.pathname, ORIGIN).href
 const ogImage = new URL(image, ORIGIN).href
 
@@ -15,48 +16,6 @@ const ogImage = new URL(image, ORIGIN).href
 // then omitted entirely rather than emitted empty, which Search Console reads
 // as a failed verification.
 const gscToken = import.meta.env.GSC_VERIFICATION ?? process.env.GSC_VERIFICATION ?? ''
-
-/*
- * Structured data. Two nodes in one graph rather than two script tags, which is
- * what Google's own examples do and what lets the WebSite reference the
- * Organization by @id instead of repeating it.
- *
- * The Organization carries the legal entity, because the name a search engine
- * shows in a knowledge panel should match the one on the Terms page. No
- * `sameAs` profiles are listed - inventing URLs here would be a fabricated
- * claim, and an absent property costs nothing.
- *
- * SearchAction is deliberately absent: the sitelinks searchbox needs a real
- * query endpoint, and there is no /search route to point it at.
- *
- * It is emitted on indexable pages only. A noindex page telling a crawler it is
- * the organisation's home is a contradiction, and the account and profile pages
- * are both noindex.
- */
-const schema = {
-  '@context': 'https://schema.org',
-  '@graph': [
-    {
-      '@type': 'Organization',
-      '@id': `${ORIGIN}/#organization`,
-      name: 'Techno Optimists',
-      url: ORIGIN,
-      logo: new URL('/icon-192.png', ORIGIN).href,
-      description:
-        'A global community of people using technology to understand real-world problems, try ideas and build better solutions together.',
-      parentOrganization: { '@type': 'Organization', name: 'Techguyver Labs, LLC' },
-    },
-    {
-      '@type': 'WebSite',
-      '@id': `${ORIGIN}/#website`,
-      url: ORIGIN,
-      name: 'Techno Optimists',
-      description: 'Find interesting real-world problems and help solve them.',
-      publisher: { '@id': `${ORIGIN}/#organization` },
-      inLanguage: 'en',
-    },
-  ],
-}
 ---
 <!doctype html>
 <html lang="en">
@@ -109,7 +68,17 @@ const schema = {
     -->
     {gscToken && <meta name="google-site-verification" content={gscToken} />}
 
-    {!noindex && <script type="application/ld+json" set:html={JSON.stringify(schema)} />}
+    <!--
+      Structured data, on indexable pages only - a noindex page claiming to be
+      the organisation's home is a contradiction, and the account and profile
+      pages are both noindex.
+
+      The bytes come from lib/schema.mjs and are printed verbatim. They must
+      stay verbatim: astro.config.mjs hashes that same string into the CSP
+      script-src, and the emitted tag has to match it byte for byte or the
+      browser drops it. `is:inline` keeps Astro's pipeline from touching it.
+    -->
+    {!noindex && <script type="application/ld+json" is:inline set:html={SCHEMA_JSON} />}
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
