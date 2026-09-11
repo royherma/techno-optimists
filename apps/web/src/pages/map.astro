@@ -127,7 +127,7 @@ const depth = depthScale(challenges)
       if (e.key === 'Escape') { preview(''); pin.blur() }
     })
   })
-  window.addEventListener('feed-updated', () => {
-    if (selected && !Array.from(pins).some((p) => p.getAttribute('href') === `/c/${selected}` && !p.hidden && p.style.display !== 'none')) preview('')
+  window.addEventListener('feed-filtered', () => {
+    if (selected && !Array.from(pins).some((p) => p.getAttribute('href') === `/c/${selected}` && p.style.display !== 'none')) preview('')
   })
 </script>

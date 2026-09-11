@@ -55,6 +55,7 @@ export function initFeedFilters() {
           link.setAttribute("aria-current", "page");
         else link.removeAttribute("aria-current");
       });
+    window.dispatchEvent(new Event('feed-filtered'));
   }
   document.addEventListener("click", (event) => {
     const link = (event.target as Element).closest<HTMLAnchorElement>(
