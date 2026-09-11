@@ -1,11 +1,11 @@
 ---
 import BrandIcon from './BrandIcon.astro'
 import DelightText from './DelightText.astro'
-const taglines = ['People', 'Ideas', 'Technology', 'A better today', 'A brighter tomorrow']
+const taglines = ['People', 'Ideas', 'Technology']
 ---
 <header class="masthead">
-  <a href="/" class="brand-mark" aria-label="Techno Optimists home"><BrandIcon size={46} /><span>A brighter<br />tomorrow<br />builds today</span></a>
+  <a href="/" class="brand-mark" aria-label="Techno Optimists home"><BrandIcon size={46} /><span>A better<br />tomorrow<br />starts today</span></a>
   <div class="brand-title"><a href="/" aria-label="TechnoOptimists.org"><DelightText text="TechnoOptimists.org" letters /></a><p>{taglines.map((text, i) => <>{i > 0 && <> <span class="delight-separator" aria-hidden="true">×</span> </>}<DelightText text={text} color={i} /></>)}</p></div>
   <p class="brand-manifesto"><DelightText text="Explore" color={0} /><br /><DelightText text="Solve" color={1} /><br /><DelightText text="Build" color={2} /><br /><DelightText text="Together" color={3} /></p>
-  <div class="brand-future delight-orb-hit"><img class="delight-orb" src="/images/optimist-orb.png" alt="" width="100" height="100" /><p><DelightText text="More" color={0} /><br /><DelightText text="human" color={1} /><br /><DelightText text="tomorrows" color={2} /></p></div>
+  <div class="brand-future delight-orb-hit"><img class="delight-orb" src="/images/optimist-orb.png" alt="" width="100" height="100" /></div>
 </header>
