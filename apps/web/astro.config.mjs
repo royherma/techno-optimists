@@ -33,10 +33,6 @@ export default defineConfig({
       algorithm: 'SHA-256',
       directives: [
         "default-src 'self'",
-        // Data-driven stage colors, media ratios and map marks use style
-        // attributes. Astro hashes <style> blocks, not these attributes.
-        // Permit attributes only; script and stylesheet policies stay strict.
-        "style-src-attr 'unsafe-inline'",
         // Google Fonts: the stylesheet comes from googleapis, the font files
         // from gstatic. Both are in Base.astro's <head>.
         'font-src https://fonts.gstatic.com',
@@ -51,7 +47,12 @@ export default defineConfig({
       styleDirective: {
         // Tailwind is a real stylesheet ('self'); this adds the font CSS origin
         // alongside whatever hashes Astro computes for its own inline styles.
-        resources: ["'self'", 'https://fonts.googleapis.com'],
+        resources: [
+          "'self'", 'https://fonts.googleapis.com',
+          // Data-driven colors and media ratios use attributes, which Astro's
+          // style-block hashes do not cover. Keep scripts/stylesheets strict.
+          { resource: "'unsafe-inline'", kind: 'attribute' },
+        ],
       },
     },
   },
