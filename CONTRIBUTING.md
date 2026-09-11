@@ -81,6 +81,6 @@ reporting.
 ## Working alongside agents
 
 Parts of this codebase are written by Claude Code sessions, sometimes two at once.
-[AGENTS.md](AGENTS.md) describes the shared operation lock and the file-ownership rules.
+[CLAUDE.md](CLAUDE.md#agent-coordination) describes the shared operation lock and the file-ownership rules.
 You do not need it to send a patch, but it explains why the npm scripts wrap everything
 in `coordinate.py` and why `git stash` is banned here.
