@@ -9,7 +9,6 @@ import FeedTopUp from '../components/FeedTopUp'
 import { getFeed } from '../lib/api'
 import { depthScale } from '../lib/vocab'
 import '../styles/index.css'
-import '../styles/viewport.css'
 const { challenges } = await getFeed('?limit=50')
 const depth = depthScale(challenges)
 ---
