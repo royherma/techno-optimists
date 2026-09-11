@@ -11,6 +11,18 @@ them. The core object is a **Challenge**. Read [PRODUCT.md](PRODUCT.md) for the
 argument and [`docs/2026-09-10-concept.md`](docs/2026-09-10-concept.md) for the raw
 concept before proposing a feature - most product questions are already answered there.
 
+## Ways to help
+
+You do not need to write code. [Share a Challenge](https://technooptimists.org/post),
+join a discussion, bring research or expertise, test an idea, or help with design,
+writing and translation. [Open an issue](https://github.com/royherma/techno-optimists/issues)
+for a bug or improvement, or email roy@techguyverlabs.org to discuss collaboration.
+For security vulnerabilities, use the private reporting path below.
+
+Code contributions are reviewed through pull requests under the repository's MIT
+license. Contributing does not grant production database, deployment or admin access.
+The code license does not automatically license members' content on the site.
+
 ## Run it locally
 
 You need Node 22 (see `.nvmrc`) and Python 3. Python is not optional: the build,
