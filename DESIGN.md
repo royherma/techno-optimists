@@ -20,9 +20,9 @@ Keep routes focused on data loading and composition. Prefer reusing a component 
 ## Screen patterns
 
 - **Index:** index/map switch, type tabs, expandable search, quiet five-column table, legend on the right. Empty state: shallow panorama, large serif heading, three practical discovery links, philosophy line. Live additions obey the same filters and empty-state rules.
-- **Challenge:** breadcrumb toolbar, title and human attribution, contour impact, seven-stage progression, media/story/progress in the reading column, participation and people in the supporting column. Describe facts; never invent progress or contributors. Missing updates receive a calm explanatory state.
+- **Challenge:** shared view toolbar, title and human attribution, contour impact, seven-stage progression, media/story/progress in the reading column, participation and people in the supporting column. Describe facts; never invent progress or contributors. Missing updates receive a calm explanatory state.
 - **Map:** the same toolbar, editorial heading and caption, soft map frame, semantic pins and readable Challenge links.
-- **Post/account/sign-in:** shared icon-led header, comfortable reading width, labeled inputs, obvious selected options, navy primary action, visible focus and error states. Posting and account actions retain their sign-in gates.
+- **Post/sign-in:** shared icon-led header, comfortable reading width, labeled inputs, obvious selected options, navy primary action, visible focus and error states. Posting and account actions retain their sign-in gates.
 - **Not found:** the same shell and form-scale content, clear recovery link and real recent Challenges.
 
 ## Responsive behavior and states
@@ -41,3 +41,11 @@ Every screen using Sheet is a viewport-height application frame at desktop width
 
 
 Index and Map are two views of one browsing surface. Both must render BrowseFrame (shared BrowseToolbar, content island and SheetLegend); Map must never substitute a breadcrumb toolbar. The active view is blue in both the view tabs and rail. Type and search filters apply to both map pins and the readable list. Keep page-specific map content separate from the shared frame.
+
+## Account and toolbar contract
+
+All routes use AppToolbar: Index/Map view links on the left, filters or the current screen in the center, session actions on the right. BrowseToolbar and PageToolbar compose it; never recreate a breadcrumb or a second set of view links.
+
+The account is a full-width workspace, not a posting form. Separate Your Challenges, Profile, Skills & roles, and Sign-in with keyboard-accessible tabs and deep links. Preserve drafts and filters across tab changes. Keep a single account sign-in gate, explicit loading and retry states, and save only the current section. Show role explanations next to their choices. Desktop scrolling belongs inside the content panel; mobile uses document scrolling.
+
+Before shipping account changes, inspect populated and signed-out states at desktop and 390px widths, switch tabs after typing, test keyboard navigation, and verify the shared toolbar on Home and a detail page.
