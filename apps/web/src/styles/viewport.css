@@ -29,7 +29,7 @@
     min-height: 0;
     align-items: stretch;
   }
-  .index-main {
+  .site-shell .index-main {
     height: 100%;
     overflow-y: auto;
     overscroll-behavior: contain;

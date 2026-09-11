@@ -32,10 +32,7 @@ const depth = depthScale(challenges)
       </p>
 
       <div class="map-surface">
-        <!--
-          Pins go across as a prop, not as slotted children: the plate hydrates,
-          and SVG drawn here into its children slot is discarded on hydration.
-        -->
+        <!-- Static SVG links need no client hydration; shared filters toggle the pins. -->
         <WorldPlate
           pins={placed.map((c) => ({
             type: c.type,

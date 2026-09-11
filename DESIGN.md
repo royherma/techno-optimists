@@ -38,3 +38,6 @@ The reference’s People and Impact destinations are not existing standalone scr
 ## Desktop viewport contract
 
 Every screen using Sheet is a viewport-height application frame at desktop widths (1024px and up), governed by styles/viewport.css. Header, toolbar height and navigation rail bounds must match across index, map, challenge details, sign-in, post and settings. Masthead, toolbar, navigation rail and the complete legend stay visible. Only the central Challenge pane scrolls; its column headers stay at the top of that pane. Compact vertical spacing at laptop heights must preserve every legend row and action. On phones, use normal page scrolling and the fixed bottom navigation. Verify both overflow behavior and visibility of the last legend action, not just a full-page screenshot.
+
+
+Index and Map are two views of one browsing surface. Both must render BrowseFrame (shared BrowseToolbar, content island and SheetLegend); Map must never substitute a breadcrumb toolbar. The active view is blue in both the view tabs and rail. Type and search filters apply to both map pins and the readable list. Keep page-specific map content separate from the shared frame.
