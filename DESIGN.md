@@ -52,3 +52,6 @@ The account is a full-width workspace, not a posting form. Separate Your Challen
 
 Before shipping account changes, inspect populated and signed-out states at desktop and 390px widths, switch tabs after typing, test keyboard navigation, and verify the shared toolbar on Home and a detail page.
 
+
+
+Do not render a side or bottom navigation rail. Index and Map already live in AppToolbar on every route. The workspace has one full-width column; do not reserve an empty rail gutter or bottom-navigation padding.
