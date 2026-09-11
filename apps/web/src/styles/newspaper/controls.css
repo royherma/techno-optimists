@@ -1,0 +1,102 @@
+/* Shared edition controls: native behavior, consistent shape and clear states. */
+.newspaper {
+  --np-input:#fffdf6;
+  --np-selected:#e8e5da;
+}
+.newspaper select:not([multiple]) {
+  appearance:none; -webkit-appearance:none;
+  border:1px solid var(--np-rule); border-radius:2px;
+  background-color:var(--np-input);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='m5 8 5 5 5-5' fill='none' stroke='%23171a19' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 10px center; background-size:18px;
+  color:var(--np-ink); padding:10px 38px 10px 12px; min-height:42px; max-width:100%;
+  font:14px/1.4 system-ui,sans-serif; cursor:pointer;
+}
+.newspaper select:not([multiple]):hover { border-color:var(--np-ink); }
+.newspaper input:not([type=checkbox]):not([type=radio]):not([type=file]),
+.newspaper textarea {
+  color:var(--np-ink);
+}
+.newspaper input::placeholder,.newspaper textarea::placeholder { color:var(--np-muted); opacity:1; }
+.newspaper :is(input,select,textarea):focus-visible {
+  outline:2px solid var(--np-red); outline-offset:2px;
+}
+.newspaper :is(input,select,textarea)[aria-invalid=true] { border-color:var(--np-red); }
+.newspaper :is(input,select,textarea):disabled { opacity:.55; cursor:not-allowed; }
+.newspaper .np-account { --color-ink-faint:var(--np-muted); }
+.newspaper .np-account .account-settings-form { max-width:900px; }
+.newspaper .np-account .account-settings-form>section { margin:0 0 16px; padding:0 0 16px; }
+.newspaper .np-account .account-settings-form>section:last-of-type { border-bottom:0; }
+.newspaper .np-account .form-section-heading { margin:0 0 12px; }
+.newspaper .np-account .form-section-heading>span:last-child {
+  font:600 14px/1.4 system-ui,sans-serif; color:var(--np-ink);
+  letter-spacing:0; text-transform:none;
+}
+.newspaper .np-account label { margin-bottom:14px; }
+.newspaper .np-account label>span:first-child:not(.account-handle) {
+  font:600 12px/1.4 system-ui,sans-serif; letter-spacing:0; text-transform:none; color:var(--np-ink);
+}
+.newspaper .np-account .account-settings-form input { min-height:42px; border-radius:2px; background:var(--np-input); font-size:14px; padding:10px 12px; }
+.newspaper .np-account .account-handle { display:flex; align-items:center; gap:0; border:1px solid var(--np-rule); background:var(--np-input); border-radius:2px; }
+.newspaper .np-account .account-handle>span { padding-left:12px; font-size:15px; }
+.newspaper .np-account .account-handle input { border:0; background:transparent; margin:0; }
+.newspaper .np-account .account-handle:focus-within { outline:2px solid var(--np-red); outline-offset:2px; }
+.newspaper .np-account .account-handle input:focus-visible { outline:0; }
+.newspaper .np-account .account-roles { gap:10px; }
+.newspaper .np-account .account-roles button {
+  border:1px solid var(--np-rule); background:transparent; color:var(--np-ink);
+  border-radius:2px; padding:12px; gap:6px; box-shadow:none;
+  break-inside:avoid;
+}
+.newspaper .np-account .account-roles button:hover { border-color:var(--np-ink); background:var(--color-paper-sunk); }
+.newspaper .np-account .account-roles button[aria-pressed=true] {
+  border-color:var(--np-ink); background:var(--np-selected); box-shadow:inset 0 0 0 1px var(--np-ink);
+}
+.newspaper .np-account .account-roles strong { font-size:13px; font-weight:650; }
+.newspaper .np-account .account-roles small { color:var(--np-muted); font-size:12px; line-height:1.4; }
+.newspaper .np-account .account-save {
+  margin-top:0; padding-top:14px; gap:16px; break-inside:avoid;
+}
+.newspaper .np-account .account-save p { margin:0; text-align:left; }
+.newspaper .np-account .account-save button { min-height:44px; border-radius:2px; font-weight:600; }
+.newspaper .np-account .account-settings-form>section[hidden] { margin:0; padding:0; }
+.newspaper .np-account .activity-filter { display:flex; align-items:center; flex-wrap:wrap; gap:12px; margin:18px 0 12px; font-size:13px; }
+.newspaper .np-account .activity-filter select { width:auto; min-width:190px; }
+.newspaper .np-account .my-activity>p { font:14px/1.5 system-ui,sans-serif; margin-bottom:12px; }
+.newspaper .np-account .my-activity ul { padding:0; list-style:none; }
+.newspaper .np-account a.activity-item { text-decoration:none; padding:16px 0; gap:16px; break-inside:avoid; }
+.newspaper .np-account .activity-item:hover strong { text-decoration:underline; text-underline-offset:4px; }
+.newspaper .np-account .activity-item img { flex-shrink:0; border-radius:2px; object-fit:contain; background:var(--color-paper-sunk); }
+.newspaper .np-account .activity-item strong { font:bold 23px/1.2 Georgia,serif; margin:6px 0 12px; }
+.newspaper .np-account .activity-item small { font:11px/1.4 system-ui,sans-serif; }
+.newspaper .np-account .activity-responses>span { border-radius:2px; background:var(--np-selected); font-size:11px; color:var(--np-ink); }
+@media(max-width:599px) {
+  .newspaper select:not([multiple]) { min-height:44px; font-size:16px; }
+  .newspaper .np-account .account-settings-form input { font-size:16px; }
+  .newspaper .np-account .account-roles { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .newspaper .np-account .account-roles button { padding:10px; }
+  .newspaper .np-account .account-role-title { gap:6px; }
+  .newspaper .np-account .account-save { gap:10px; }
+  .newspaper .np-account .activity-item strong { font-size:20px; }
+  .newspaper .np-account .activity-item img { width:60px; height:60px; }
+}
+@media(prefers-reduced-motion:no-preference) {
+  .newspaper select,.newspaper .account-roles button { transition:background-color 120ms ease-out,border-color 120ms ease-out; }
+}
+@media(forced-colors:active) {
+  .newspaper select:not([multiple]) { appearance:auto; background-image:none; }
+  .account-roles button[aria-pressed=true] .account-role-check { color:HighlightText; background:Highlight; forced-color-adjust:none; }
+}
+
+/* Roles and skills belong in the same view; do not strand Save on a new page. */
+@media(min-width:760px) {
+  .newspaper .np-account .account-settings-form:has(.account-roles):has(section:nth-of-type(2):not([hidden])) {
+    display:grid; grid-template-columns:minmax(0,2fr) minmax(220px,1fr); gap:18px 24px; max-width:none;
+  }
+  .newspaper .np-account .form-surface .account-settings-form:has(section:nth-of-type(2):not([hidden]))>section {
+    margin:0; padding:0; border:0; min-width:0;
+  }
+  .newspaper .np-account .account-settings-form:has(section:nth-of-type(2):not([hidden])) .account-save { grid-column:1/-1; }
+}
+.newspaper .np-account .form-surface .account-settings-form>section { margin-top:0; }
+.newspaper .np-account .form-surface .account-settings-form>section:not([hidden]):has(+section[hidden]) { border-bottom:0; }
