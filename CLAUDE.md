@@ -46,9 +46,10 @@ deploy gate for this repo, and it expires the day real Challenges exist.
   custom domains declared in `wrangler.jsonc`, so the deploy creates their DNS records.
 - `workers_dev` is **false** in prod. One public address, so no second URL gets
   bookmarked. Do not turn it back on to "check something" - use dev for that.
-- **The build prerenders from LOCAL D1.** `db:reset:local` before `deploy:prod` puts
-  local seed rows on the public domain. Empty local D1 (`npm run db:local`, no seed)
-  is what prod ships from until real Challenges exist.
+- **Production builds read the production API.** `deploy:prod` sets
+  `PUBLIC_API_BASE=https://technooptimists.org` and uses the locked `build:web:only`
+  entry point. Development builds still use local D1. Never replace this with
+  `build:web` in the production pipeline: that would publish local seed rows.
 - Prod D1 starts empty on purpose: 7 tables, zero rows. Seeds are a dev fixture and
   never belong on the domain.
 
