@@ -1,3 +1,4 @@
+import { appendScoutRows, ScoutInputError } from './scout-import'
 import { Hono } from 'hono'
 import { z } from 'zod'
 import {
@@ -315,6 +316,7 @@ const importRow = createBody.extend({
 })
 
 const importBody = z.object({
+  create_only: z.boolean().default(false),
   /**
    * The handle every row in this batch is authored by. Must already exist -
    * the route will not create people, because a typo'd handle silently minting
@@ -351,11 +353,21 @@ app.post('/api/challenges/import', async (c) => {
 
   const parsed = importBody.safeParse(await c.req.json().catch(() => null))
   if (!parsed.success) return c.json({ error: 'bad_body', detail: parsed.error.issues }, 400)
-  const { author, dry_run, challenges } = parsed.data
+  const { author, dry_run, challenges, create_only } = parsed.data
 
   const authorRow = await c.env.DB.prepare('SELECT id FROM people WHERE handle = ?')
     .bind(normalizeHandle(author)).first<{ id: string }>()
   if (!authorRow) return c.json({ error: 'unknown_author', handle: author }, 400)
+  if (create_only) {
+    try {
+      const plan = await appendScoutRows(c.env.DB, authorRow.id, challenges, dry_run)
+      return c.json({ ok: true, create_only: true, dry_run, author: normalizeHandle(author), plan }, dry_run ? 200 : 201)
+    } catch (error) {
+      if (error instanceof ScoutInputError) return c.json({ error: error.message }, 400)
+      throw error
+    }
+  }
+
 
   // Every row is checked before any row is written. A batch that fails halfway
   // leaves a partial import that looks exactly like a successful smaller one.
