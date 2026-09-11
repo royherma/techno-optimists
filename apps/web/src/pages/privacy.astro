@@ -1,0 +1,127 @@
+---
+import Base from '../layouts/Base.astro'
+import Sheet from '../components/Sheet.astro'
+import PageToolbar from '../components/PageToolbar.astro'
+import '../styles/legal.css'
+
+/*
+ * Privacy. Every claim here was read off the schema and the auth code, not
+ * assumed - if one of these changes, this page is wrong and has to change with
+ * it in the same commit:
+ *
+ *   packages/db/schema.sql   identities.email (unique), magic_links.ip,
+ *                            magic_links.expires_at, sessions.user_agent,
+ *                            sessions.expires_at, people.handle/location/skills
+ *   apps/api/src/auth.ts:17  SESSION_DAYS = 60
+ *   apps/api/src/auth.ts:18  LINK_MINUTES = 15
+ *   apps/api/src/index.ts    track() - path, kind, country, referrer, ms,
+ *                            status. No user id, no IP, no cookie.
+ *   apps/api/src/index.ts    people.name is never returned publicly; email
+ *                            lives only in identities.
+ */
+const updated = '11 September 2026'
+---
+<Base
+  title="Privacy - Techno Optimists"
+  description="What Techno Optimists stores, why, and for how long."
+>
+  <Sheet>
+    <PageToolbar label="Privacy" />
+    <main class="legal-page">
+      <header class="legal-header">
+        <h1>Privacy</h1>
+        <p class="legal-updated">Last updated {updated}</p>
+      </header>
+
+      <section>
+        <p class="legal-lede">
+          You can read the whole site without an account and without signing in. This
+          page describes what happens when you do sign in.
+        </p>
+      </section>
+
+      <section>
+        <h2>What we store</h2>
+        <p><strong>Your email address.</strong> It is how you sign in. It is stored
+        separately from your public profile and is never shown to other members or
+        returned by the public parts of the site.</p>
+
+        <p><strong>Your handle, and anything you choose to add</strong> - location,
+        skills, roles. These are public. Your handle is the only identity shown next to
+        what you post.</p>
+
+        <p><strong>Sign-in requests.</strong> When you ask for a sign-in link we record
+        the address it was sent to, the time, and the IP address the request came from.
+        The IP is there to stop someone flooding the site with sign-in mail; it is not
+        attached to your profile or to anything you post.</p>
+
+        <p><strong>Sessions.</strong> When you sign in we store a session record with
+        the browser user-agent string, so you can stay signed in.</p>
+
+        <p><strong>What you post.</strong> Challenges, progress, comments, typed actions
+        and any media you upload. All of it is public.</p>
+      </section>
+
+      <section>
+        <h2>How long</h2>
+        <p>
+          Sign-in links expire 15 minutes after they are sent and work exactly once.
+          Sessions expire 60 days after you sign in. Your profile and what you have
+          posted stay until you remove them or close your account.
+        </p>
+      </section>
+
+      <section>
+        <h2>Traffic measurement</h2>
+        <p>
+          We record which pages are opened: the path, the country your request came
+          from, the referring site, how long the response took and its status code. This
+          carries no account id, no IP address and no cookie, so it cannot be traced back
+          to you. There are no third-party analytics or advertising trackers on the site.
+        </p>
+      </section>
+
+      <section>
+        <h2>Cookies</h2>
+        <p>
+          One cookie holds your session so you stay signed in; it cannot be read by
+          scripts in the page. A second short-lived cookie carries a one-off message
+          such as "you are signed in" and clears itself. No advertising or tracking
+          cookies.
+        </p>
+      </section>
+
+      <section>
+        <h2>Who else sees it</h2>
+        <p>
+          The site runs on Cloudflare, which serves the pages and stores the data. Email
+          is sent through a mail provider so sign-in links can reach you. We do not sell
+          your data and we do not share it for advertising.
+        </p>
+      </section>
+
+      <section>
+        <h2>Your choices</h2>
+        <p>
+          You can change your handle and profile, and sign out of your account, from your
+          account page. To get a copy of what we hold about you, correct it, or have it
+          deleted, write to
+          <a href="mailto:roy@techguyverlabs.org">roy@techguyverlabs.org</a>. Deleting an
+          account removes your profile and sign-in records.
+        </p>
+      </section>
+
+      <section>
+        <h2>Contact</h2>
+        <p>
+          Techguyver Labs, LLC, 131 Continental Dr, Suite 305, Newark, DE 19713, USA.
+          <a href="mailto:roy@techguyverlabs.org">roy@techguyverlabs.org</a>.
+        </p>
+      </section>
+
+      <p class="legal-footer-link">
+        See also <a href="/terms">Terms</a>.
+      </p>
+    </main>
+  </Sheet>
+</Base>
