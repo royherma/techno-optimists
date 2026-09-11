@@ -1,6 +1,6 @@
 import type { Context } from 'hono'
 import type { Role } from '../../../packages/types/index'
-import { isAdminEmail } from './admin'
+import { type AdminEnv, isAdminEmail } from './admin'
 
 /**
  * Email magic-link auth. No passwords, no OAuth provider.
@@ -168,7 +168,7 @@ export const readCookie = (header: string | undefined, name: string): string | n
  * never throws, so read routes can call it unconditionally to personalise.
  */
 export const currentPerson = async (
-  c: Context<{ Bindings: { DB: D1Database } }>,
+  c: Context<{ Bindings: { DB: D1Database } & AdminEnv }>,
 ): Promise<SessionPerson | null> => {
   const token = readCookie(c.req.header('cookie'), SESSION_COOKIE)
   if (!token) return null
@@ -184,7 +184,7 @@ export const currentPerson = async (
   let roles: Role[] = []
   try { roles = JSON.parse(String(row.roles ?? '[]')) as Role[] } catch { roles = [] }
 
-  // ADMIN_EMAILS decides; is_admin caches. Reconcile here so editing that list
+  // The ADMIN_EMAILS secret decides; is_admin caches. Reconcile here so editing it
   // promotes or demotes accounts that already exist, on their next request.
   //
   // LEFT JOIN because a seeded person has no identity row - they have no email,
@@ -194,7 +194,7 @@ export const currentPerson = async (
   // read path of every route; an unconditional UPDATE would make each page load
   // a database write for no reason.
   const email = row.email == null ? null : normalizeEmail(String(row.email))
-  const shouldBeAdmin = email !== null && isAdminEmail(email)
+  const shouldBeAdmin = email !== null && isAdminEmail(c.env, email)
   const cachedAdmin = Number(row.is_admin ?? 0) === 1
   if (email !== null && shouldBeAdmin !== cachedAdmin) {
     await c.env.DB.prepare('UPDATE identities SET is_admin = ? WHERE person_id = ?')
