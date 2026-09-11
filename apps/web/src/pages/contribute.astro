@@ -1,0 +1,73 @@
+---
+import Base from '../layouts/Base.astro'
+import Sheet from '../components/Sheet.astro'
+import PageToolbar from '../components/PageToolbar.astro'
+import '../styles/legal.css'
+---
+<Base title="Contribute - Techno Optimists" description="Share a Challenge, bring your experience, or help improve the open-source site.">
+  <Sheet>
+    <PageToolbar label="Contribute" />
+    <main class="legal-page">
+      <header class="legal-header">
+        <h1>Help make things better.</h1>
+        <p>Techno Optimists is open source and open to your help.</p>
+      </header>
+      <section>
+        <h2>Why this exists</h2>
+        <p>
+          The idea is simple: connect people who notice something that could be better
+          with people who can help. There is no business model in place. Right now,
+          the focus is helping people find each other and work on useful things together.
+        </p>
+        <p>
+          I'm Roy, and I'd love help building this community and improving the site.
+          Research, design, writing, translation, testing and code all count.
+        </p>
+      </section>
+      <section>
+        <h2>Share something worth exploring</h2>
+        <p>
+          <a href="/post">Share a Challenge</a>: a Problem, Idea, Experiment or Build.
+          You do not need a solution. A clear account of what is happening, who it
+          affects and what you have noticed is a useful contribution on its own.
+        </p>
+      </section>
+      <section>
+        <h2>Bring what you know</h2>
+        <p>
+          <a href="/">Browse the Challenges</a> and join one that interests you.
+          Ask a useful question, add research, suggest an idea, offer to test something
+          or share what you tried. Sign in to contribute. You do not need to be an expert.
+        </p>
+      </section>
+      <section>
+        <h2>Improve the site</h2>
+        <p>
+          <a href="https://github.com/royherma/techno-optimists/issues">Report a bug or suggest an improvement</a>
+          on GitHub. Describe what happened or what you would like to make better.
+          Please keep private information out of public issues.
+        </p>
+        <p>
+          Want to work on the code? Read the
+          <a href="https://github.com/royherma/techno-optimists/blob/main/CONTRIBUTING.md">contribution guide</a>,
+          run it locally and send a pull request. The code is MIT-licensed.
+          Proposed changes are reviewed before going live; contributing does not
+          require access to the live database.
+        </p>
+        <p>
+          For a security vulnerability, use
+          <a href="https://github.com/royherma/techno-optimists/security/advisories/new">private security reporting</a>.
+        </p>
+      </section>
+      <section>
+        <h2>Get in touch</h2>
+        <p>
+          For collaboration, an offer of help, or a suggestion you would rather discuss
+          directly, email <a href="mailto:roy@techguyverlabs.org">roy@techguyverlabs.org</a>.
+          Tell me what interests you and how you would like to get involved.
+        </p>
+      </section>
+      <p class="legal-footer-link">See also <a href="/terms">Terms</a> and <a href="/privacy">Privacy</a>.</p>
+    </main>
+  </Sheet>
+</Base>
