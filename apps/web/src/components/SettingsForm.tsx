@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ROLES, type Role } from '../../../../packages/types/index'
-import { getMe, signOut, type Me } from '../lib/session'
+import { signOut, type Me } from '../lib/session'
 import { snack } from '../lib/snack'
 
 /**
@@ -102,7 +102,7 @@ export default function SettingsForm({ person, section }: { person: Me; section:
 
       if (data?.person) {
         setMe(data.person)
-        setHandle(data.person.handle)
+        if (section === 'profile') setHandle(data.person.handle)
         window.dispatchEvent(new CustomEvent('profile-updated'))
       }
       snack('Saved.')

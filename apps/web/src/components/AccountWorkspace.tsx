@@ -24,10 +24,10 @@ export default function AccountWorkspace() {
     window.addEventListener('popstate', sync)
     return () => { window.removeEventListener('hashchange', sync); window.removeEventListener('popstate', sync) }
   }, [])
-  function select(id: string) { setActive(id); history.pushState(null, '', `#${id}`) }
+  function select(id: string) { setActive(id); history.pushState(null, '', `#${id}`); document.querySelector('.account-body')?.scrollTo(0, 0) }
   return <div className="account-workspace">
     <header className="account-header"><div><span className="account-eyebrow">Your space</span><h1>Your account</h1></div><p>Keep track of your Challenges.<br />Make your skills part of what happens next.</p></header>
-    <div className="account-tabs" role="tablist" aria-label="Account sections">{tabs.map(([id, label], index) => <button key={id} id={`account-tab-${id}`} type="button" role="tab" aria-selected={active === id} aria-controls={`account-panel-${id}`} tabIndex={active === id ? 0 : -1} onClick={() => select(id)} onKeyDown={(e) => {
+    <div className="account-tabs" role="tablist" aria-label="Account sections">{tabs.map(([id, label], index) => <button key={id} id={`account-tab-${id}`} type="button" role="tab" aria-selected={active === id} aria-controls={id === 'activity' ? 'account-panel-activity' : 'account-panel-settings'} tabIndex={active === id ? 0 : -1} onClick={() => select(id)} onKeyDown={(e) => {
       const next = e.key === 'ArrowRight' ? (index + 1) % tabs.length : e.key === 'ArrowLeft' ? (index + tabs.length - 1) % tabs.length : e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : -1
       if (next < 0) return
       e.preventDefault(); select(tabs[next][0]); document.getElementById(`account-tab-${tabs[next][0]}`)?.focus()
@@ -35,7 +35,7 @@ export default function AccountWorkspace() {
     <div className="account-body">
       {error ? <div className="account-empty"><h2>Your account could not load</h2><p>Your connection may have dropped.</p><button onClick={() => void load()}>Try again</button></div> : person === undefined ? <p role="status">Loading your account...</p> : person === null ? <div className="account-empty"><h2>A place for your next step</h2><p>Sign in to find your marked Challenges and manage your profile.</p><a className="account-primary" href={`/signin?next=${encodeURIComponent(`/settings#${active}`)}`}>Sign in to your account</a></div> : <>
         <section role="tabpanel" id="account-panel-activity" aria-labelledby="account-tab-activity" hidden={active !== 'activity'} tabIndex={0}><MyActivity /></section>
-        <div className="form-surface" hidden={active === 'activity'} role="tabpanel" id={`account-panel-${active === 'activity' ? 'profile' : active}`} aria-labelledby={`account-tab-${active === 'activity' ? 'profile' : active}`} tabIndex={0}><SettingsForm person={person} section={active} /></div>
+        <div className="form-surface" hidden={active === 'activity'} role="tabpanel" id="account-panel-settings" aria-labelledby={`account-tab-${active === 'activity' ? 'profile' : active}`} tabIndex={0}><SettingsForm person={person} section={active} /></div>
       </>}
     </div>
   </div>
