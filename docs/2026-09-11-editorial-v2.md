@@ -4,11 +4,11 @@ Roy's references: [first](design/2026-09-11-editorial-v2/reference-1.png), [seco
 
 ## The newspaper
 
-Warm paper, black Georgia masthead, fine rules, generous lead headline, image above the lead story, two stacked secondary stories, and a three-column briefs strip when space permits. Keep the smaller editorial details: type and place, typed participation counts, contour marks, source attribution, map, colophon. Keep the right legend visible on laptops; small screens get a dedicated Legend view, not a missing legend. Do not copy the reference's geographic labels onto participation ranks: the rings represent relative contributions, not measured real-world impact.
+Warm paper, black Georgia masthead, fine rules, generous lead headline, the complete image beside the lead story, and a two-column grid of secondary Challenges when space permits. Keep the smaller editorial details: type and place, typed participation counts, contour marks, source attribution, map, colophon. Keep the right legend visible on laptops; small screens get a dedicated Legend view, not a missing legend. The impact legend uses the original Local, Neighbourhood, Town, Region and Critical tiers. Rings expand outward. Reactions and updates must never be converted into impact: the current data model has no explicit impact field, so actual Challenges remain unmarked and detail pages say impact is not specified.
 
 ## One view, one screen
 
-Six stories on large desktop editions, three on laptops, one on phones. Previous and next editions replace the infinite feed. Details have Story, Context, Discussion, Progress, People, Participate and Source sections. Reading uses real browser column fragmentation and explicit page turns, retaining all content and preserving native text selection. Controls stay mounted when turning pages; focus and form validation turn to the relevant page. Discussion separates reading from writing, and posting uses Notice, Describe, Place and Review steps.
+Five Challenges on large desktop views, three on laptops, one on phones. The actual content frame is measured with ResizeObserver; typography scales to each card height. Images use contain, and summaries truncate at whole lines. Previous and More Challenges replace the infinite feed, with a visible result range. Challenge details show story, discussion, progress, people, help and source panels simultaneously. No section tabs or collapsed panels. Each panel pages independently in place; writing opens a focused editor while the newspaper remains mounted underneath. Reading uses real browser column fragmentation and explicit page turns, retaining all content and preserving native text selection. Controls stay mounted when turning pages; focus and form validation turn to the relevant page. Discussion keeps the response list visible while the editor opens, and posting uses Notice, Describe, Place and Review steps.
 
 The frame fits the viewport, with no document or inner scrolling required to browse or read. Textareas retain native editing behavior. Exception: windows shorter than the 400px minimum retain natural overflow to avoid making controls impossible to operate.
 
@@ -23,7 +23,8 @@ V2 Challenge routes share the existing Worker fallback for newly published Chall
 - `NewspaperShell.astro`: masthead, navigation, layout, edition links and colophon.
 - `Legend.tsx`: rings, lifecycle meanings, action vocabulary and supporting world overview.
 - `FrontPage.tsx`, `StoryTile.tsx`, `useFeed.ts`: feed state, composition and reusable story tile.
-- `ChallengePage.tsx`: Challenge loading and section selection; shared Discussion, Progress, ActionBar, PeopleLive and Editorial retain the existing APIs and permission checks.
+- `ChallengePage.tsx`: Challenge loading and permanent panel composition; shared Discussion, Progress, ActionBar, PeopleLive and Editorial retain the existing APIs and permission checks.
+- `PanelDialog.tsx`: native dialog editing with draft preservation and page controls.
 - `PagedContent.tsx`: reusable page fragmentation, measurement and keyboard focus handling.
 - Map, account, sign-in, submission, community and article adapters each have their own file.
 - `src/content/*.html`: one checked-in source for both editions' legal and contribution articles.

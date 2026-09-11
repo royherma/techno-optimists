@@ -1,4 +1,4 @@
-import type { ActionKind, Challenge, ChallengeType, Stage } from '../../../../packages/types/index'
+import type { ActionKind, ChallengeType, Stage } from '../../../../packages/types/index'
 
 /** User-facing labels. The product's words - see CLAUDE.md vocabulary. */
 export const TYPE_LABEL: Record<ChallengeType, string> = {
@@ -57,16 +57,12 @@ export const ACTION_SHORT: Record<ActionKind, string> = {
 /** Third person, for listing what someone is doing on a Challenge. */
 export const ACTION_DOING: Record<ActionKind, string> = {
   have_problem: 'has this problem', want_this: 'wants this', have_idea: 'has an idea',
-  can_help: 'helping', will_test: 'testing', building_this: 'building',
+  can_help: 'offered help', will_test: 'offered to test', building_this: 'building',
   follow: 'following',
 }
 
-/**
- * The actions the legend teaches, in the order it teaches them. Five, not
- * seven: 'want this' and 'building this' are the same two marks as 'have this
- * problem' and 'I can help' seen from the other side of a Challenge, and a
- * legend that draws one symbol twice teaches nobody anything.
- */
+/** The five core actions shown in the original legend. Other Challenge types
+ * also expose their explicitly labelled want/build actions. */
 export const LEGEND_ACTIONS: ActionKind[] = [
   'have_problem', 'have_idea', 'can_help', 'will_test', 'follow',
 ]
@@ -87,61 +83,9 @@ export const typeColor = (t: ChallengeType) =>
 
 export const stageColor = (s: Stage) => `var(--color-${s})`
 
-/**
- * Investigation depth, 1-5 rings. This has to be a real quantity or the mark is
- * cartographic decoration, which is the failure mode this direction was warned
- * about. It counts what has actually accumulated on the Challenge: people who
- * confirmed the problem, ideas offered, help offered, tests promised, and
- * entries in the progress log. Thresholds are geometric because the first few
- * contributions change a Challenge far more than the fiftieth.
- */
-/*
- * How much has accumulated on a Challenge. Confirmations are the wide signal;
- * offers of help, tests and progress entries are rarer and count for more,
- * because a Challenge with three testers has moved further than one with three
- * hundred nods.
- */
-export const weightOf = (c: Challenge) => {
-  const a = c.actions
-  return (
-    a.have_problem + a.want_this +
-    a.have_idea * 3 +
-    a.can_help * 3 +
-    a.will_test * 5 +
-    a.building_this * 5 +
-    c.updates_count * 8
-  )
-}
-
-/*
- * Rings are assigned by rank within the sheet being read, not by an absolute
- * cutoff. This is the one scheme that keeps the mark meaningful at every corpus
- * size: fixed thresholds peg every Challenge at five once the product grows,
- * and a log scale collapses when everything sits in one decade - both were
- * measured against the real feed and both failed. Ranking means five rings
- * always says "deepest here", which is what a reader actually wants to know.
- *
- * The quintile edges come from the set the reader is looking at, so pass the
- * whole page of Challenges, not one.
- */
-export const depthScale = (all: Challenge[]) => {
-  const sorted = all.map(weightOf).sort((x, y) => x - y)
-  return (c: Challenge) => {
-    if (sorted.length === 0) return 1
-    const w = weightOf(c)
-    // Share of the sheet this Challenge sits at or above.
-    const below = sorted.filter((v) => v < w).length
-    const pct = below / sorted.length
-    return Math.min(5, Math.floor(pct * 5) + 1)
-  }
-}
-
-export const DEPTH_LABEL = ['local', 'neighbourhood', 'town', 'region', 'critical']
-
-export const depthLabel = (rings: number) => {
-  const n = Math.min(5, Math.max(1, rings))
-  return `${DEPTH_LABEL[n - 1]} - ${n} of 5`
-}
+/** Impact tiers from the original product legend. These describe scope/importance,
+ * never participation. No impact value is stored on a Challenge yet. */
+export const IMPACT_LABELS = ['local', 'neighbourhood', 'town', 'region', 'critical'] as const
 
 /**
  * A stable grid reference for a Challenge. The sheet promises every Challenge

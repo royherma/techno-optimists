@@ -1,13 +1,12 @@
 ---
 import type { Challenge } from '../../../../packages/types/index'
 import ActionGlyph from './ActionGlyph.astro'
-import ContourRings from './ContourRings.astro'
 import MediaPlate from './MediaPlate.astro'
-import { ACTION_LABEL, count, depthLabel, gridRef, rowNo, stageColor, typeColor, TYPE_LABEL } from '../lib/vocab'
+import { ACTION_LABEL, count, gridRef, rowNo, stageColor, typeColor, TYPE_LABEL } from '../lib/vocab'
 import { STAGE_STAMP } from '../lib/vocab'
 
-interface Props { challenge: Challenge; rings: number; index: number; priority?: boolean }
-const { challenge: c, rings, index, priority = false } = Astro.props
+interface Props { challenge: Challenge; index: number; priority?: boolean }
+const { challenge: c, index, priority = false } = Astro.props
 const hero = c.media[0]
 const ref = gridRef(c.id)
 
@@ -158,12 +157,7 @@ const ACTIONS = ['have_problem', 'have_idea', 'can_help', 'will_test'] as const
     word in another. They split back into their own ruled columns at sm.
   -->
   <div class="flex items-center gap-2.5 px-2.5 pb-3 sm:hidden">
-    <ContourRings
-      rings={rings}
-      color={stageColor(c.stage)}
-      label={`Impact: ${depthLabel(rings)}`}
-      size={26}
-    />
+    <span class="text-[10px] text-(--color-ink-faint)" title="Impact has not been specified">Not set</span>
     <span
       class="font-[family-name:var(--font-display)] text-[1.05rem] font-bold uppercase tracking-[0.02em]"
       style={`color:${stageColor(c.stage)}`}
@@ -172,12 +166,7 @@ const ACTIONS = ['have_problem', 'have_idea', 'can_help', 'will_test'] as const
 
   <!-- IMPACT: rings in the stage colour, centred in their own ruled cell. -->
   <div class="hidden items-center justify-center border-(--color-rule) px-1 py-4 sm:flex sm:border-r">
-    <ContourRings
-      rings={rings}
-      color={stageColor(c.stage)}
-      label={`Impact: ${depthLabel(rings)}`}
-      size={44}
-    />
+    <span class="text-[10px] text-(--color-ink-faint)" title="Impact has not been specified">Not set</span>
   </div>
 
   <!-- STAGE: the margin stamp, in its own cell so the colour column reads down. -->

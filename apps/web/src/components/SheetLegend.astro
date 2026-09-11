@@ -2,7 +2,7 @@
 import ActionGlyph from './ActionGlyph.astro'
 import ContourRings from './ContourRings.astro'
 import { STAGES } from '../../../../packages/types/index'
-import { DEPTH_LABEL, LEGEND_ACTIONS, LEGEND_ACTION_LABEL, STAGE_MEANING, STAGE_STAMP } from '../lib/vocab'
+import { IMPACT_LABELS, LEGEND_ACTIONS, LEGEND_ACTION_LABEL, STAGE_MEANING, STAGE_STAMP } from '../lib/vocab'
 
 /*
  * The legend is not decoration and not a nav. It is how a first-time reader
@@ -48,7 +48,7 @@ import { DEPTH_LABEL, LEGEND_ACTIONS, LEGEND_ACTION_LABEL, STAGE_MEANING, STAGE_
           <span class="text-[0.78rem] text-(--color-ink-soft)">
             <span class="tabular-nums text-(--color-ink)">{n}</span>
             {n === 1 ? ' ring = ' : ' rings = '}
-            <span class="text-(--color-ink)">{DEPTH_LABEL[n - 1]}</span>
+            <span class="text-(--color-ink)">{IMPACT_LABELS[n - 1]}</span>
           </span>
         </li>
       ))}

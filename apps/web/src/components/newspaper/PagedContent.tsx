@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
  * Controls remain mounted, so changing pages never discards a draft.
  * Focus entering a later column turns to that page, including native validation.
  */
-export default function PagedContent({ children, label = 'Reading', resetKey = '' }: { children: ReactNode; label?: string; resetKey?: string }) {
+export default function PagedContent({ children, label = 'Reading', resetKey = '', compact = false }: { children: ReactNode; label?: string; resetKey?: string; compact?: boolean }) {
   const viewport = useRef<HTMLDivElement>(null)
   const flow = useRef<HTMLDivElement>(null)
   const [page, setPage] = useState(0)
@@ -46,10 +46,10 @@ export default function PagedContent({ children, label = 'Reading', resetKey = '
     measure()
     return () => { cancelAnimationFrame(frame); size.disconnect(); changes.disconnect(); content.removeEventListener('load', measure, true); content.removeEventListener('focusin', focus) }
   }, [])
-  return <div className="np-paged">
+  return <div className={`np-paged ${compact ? 'np-paged-compact' : ''}`}>
     <div className="np-page-window" ref={viewport} aria-label={label}>
       <div className="np-page-flow" ref={flow}>{children}</div>
     </div>
-    <nav className="np-page-controls" aria-label={`${label} pages`}><span aria-live="polite">{label} · {page + 1} / {pages}</span><div><button type="button" disabled={page === 0} onClick={() => turn(page - 1)}>← Previous</button><button type="button" disabled={page + 1 >= pages} onClick={() => turn(page + 1)}>Next →</button></div></nav>
+    <nav className="np-page-controls" aria-label={`${label} pages`}><span aria-live="polite">{!compact && label + ' · '}{page + 1} / {pages}</span><div><button type="button" disabled={page === 0} aria-label={`Previous page of ${label}`} onClick={() => turn(page - 1)}>{compact ? '←' : '← Previous'}</button><button type="button" disabled={page + 1 >= pages} aria-label={`Next page of ${label}`} onClick={() => turn(page + 1)}>{compact ? '→' : 'Next →'}</button></div></nav>
   </div>
 }

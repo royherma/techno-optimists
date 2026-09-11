@@ -7,7 +7,7 @@ import PostFab from '../components/PostFab.astro'
 import MediaPlate from '../components/MediaPlate.astro'
 import WorldPlate from '../components/WorldPlate.tsx'
 import { getFeed } from '../lib/api'
-import { TYPE_LABEL, depthScale, stageColor } from '../lib/vocab'
+import { TYPE_LABEL, stageColor } from '../lib/vocab'
 
 const { challenges } = await getFeed('?limit=50')
 
@@ -16,7 +16,6 @@ const { challenges } = await getFeed('?limit=50')
 // below the map rather than dropped silently or faked onto 0,0.
 const placed = challenges.filter((c) => c.lat != null && c.lng != null)
 const unplaced = challenges.length - placed.length
-const depth = depthScale(challenges)
 ---
 <Base
   title="Map - Techno Optimists"
@@ -28,8 +27,7 @@ const depth = depthScale(challenges)
         Where the Challenges are
       </h1>
       <p class="mt-2 max-w-2xl text-(--color-ink-soft)">
-        Every pin is somewhere a person reported from. Ring colour is the stage it
-        has reached; ring size is how much has accumulated on it.
+        Every pin is somewhere a person reported from. Pin colour shows its current stage. Pin size does not represent impact.
       </p>
 
       <div class="map-surface">
@@ -40,7 +38,7 @@ const depth = depthScale(challenges)
             search: `${c.title} ${c.summary} ${c.location ?? ''}`.toLowerCase(),
             lat: c.lat!,
             lng: c.lng!,
-            r: 5 + depth(c) * 2.2,
+            r: 8,
             color: stageColor(c.stage),
             href: `/c/${c.slug}`,
             label: `${c.title} - ${c.location ?? 'unplaced'}`,
