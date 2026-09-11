@@ -23,7 +23,7 @@ Two further audiences exist in the concept and will use the same objects, but th
 not optimized for them:
 
 - **The capable builder** — engineer/maker scanning for a problem worth their skills.
-- **The person with the problem** — farmer, resident, fisherman, posting their own Challenge,
+- **The person with the problem** — farmer, resident, fisherman, posting their own thread,
   possibly in another language and in unstructured form.
 
 Nobody needs to be an engineer to matter. The person experiencing the problem can be the most
@@ -59,14 +59,14 @@ people ↔ skills ↔ problems ↔ ideas ↔ experiments ↔ solutions.
 
 The MVP scope named in the concept doc:
 
-- **Home** — visual feed of Challenges, photos and video first.
+- **Home** — visual feed of threads, photos and video first.
 - **Create** — three choices: share a problem, share an idea, share something you're building.
   AI helps structure the post.
-- **Challenge page** — media, problem/context, location if relevant, ideas, people helping,
+- **thread page** — media, problem/context, location if relevant, ideas, people helping,
   experiments, updates. A living page, not a disposable social post.
 - **One contribution button** — "Help solve this", then "How can you help?" (research, code,
   hardware, design, expertise, testing, funding, other).
-- **Progress log** — every meaningful development appends to the Challenge timeline.
+- **Progress log** — every meaningful development appends to the thread timeline.
 
 Explicitly out of scope for the first build: GitHub + Reddit + Kickstarter + Discord in one.
 
@@ -74,8 +74,10 @@ Explicitly out of scope for the first build: GitHub + Reddit + Kickstarter + Dis
 
 **Vocabulary is binding** (from `CLAUDE.md`, use these exact words):
 
-- **Challenge** — the core object. Not "post", not "project", not "issue".
-- A Challenge starts as one of: **Problem**, **Idea**, **Experiment**, **Build**.
+- **Thread** — the user-facing name for the core object (plural: **threads**). Use sentence case in copy: "Open thread", "Search threads", "Share a thread".
+- Internal `Challenge` types, API routes, database names, and `/c/` URLs stay unchanged; this is a naming change, not a data migration.
+- Naming decision (2026-09-11): a thread carries a problem, idea, experiment or build through discussion and progress. "Challenge" is no longer the public label.
+- A thread starts as one of: **Problem**, **Idea**, **Experiment**, **Build**.
 - Lifecycle: Spot → Understand → Ideas → Build → Test → Learn → Improve.
 - People roles: **Scout**, **Thinker**, **Researcher**, **Builder**, **Expert**, **Tester**.
 - Social actions are typed, never a generic Like: I have this problem / I want this / I have an
@@ -86,14 +88,14 @@ Typed actions carry meaning the product depends on: 4,700 people clicking "I hav
 that.
 
 **AI is invisible plumbing.** Transcribe, translate, identify the core problem, extract constraints,
-generate a clean Challenge page, find similar problems, suggest questions, surface relevant
-research, identify contributors. On an active Challenge it maintains: what we know / what we've
+generate a clean thread page, find similar problems, suggest questions, surface relevant
+research, identify contributors. On an active thread it maintains: what we know / what we've
 tried / open questions / current best hypothesis / next experiment. Never presented as an "AI
 community".
 
 **Undecided, do not invent:** auth model, moderation, media pipeline and hosting, geo/location
 handling, i18n scope beyond "input may be any language", notification model, the D1 schema.
-Business model directions exist in the concept (bounties, sponsored Challenges, talent,
+Business model directions exist in the concept (bounties, sponsored threads, talent,
 tools/components, R&D network) but none is committed and none may appear in UI.
 
 ## Brand Commitments
@@ -118,10 +120,10 @@ tools/components, R&D network) but none is committed and none may appear in UI.
 
 ## Evidence on Hand
 
-**None.** There are no real Challenges, users, photos, videos, metrics, testimonials or partners.
+**None.** There are no real threads, users, photos, videos, metrics, testimonials or partners.
 Confirmed by the user 2026-09-10.
 
-The first build uses clearly fictional placeholder Challenges. The concept doc's five examples
+The first build uses clearly fictional placeholder threads. The concept doc's five examples
 (milk cooling, drone compute, mosquitoes, hot bedroom, fishermen) are illustrative sketches, not
 real submissions, and media for them does not exist and must be sourced or generated.
 
@@ -134,7 +136,7 @@ people, organizations, press or funding.
    asked. If the first viewport is not interesting, nothing downstream matters.
 2. **Engagement must mean something.** Every social action is typed and produces a fact about who
    has the problem, who wants it, and who can help.
-3. **A Challenge is a living page, not a post.** It accumulates knowledge and progress over time
+3. **A thread is a living page, not a post.** It accumulates knowledge and progress over time
    instead of scrolling away.
 4. **AI is plumbing, never the subject.** It removes coordination cost between strangers and stays
    invisible in the interface.

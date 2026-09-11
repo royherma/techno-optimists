@@ -91,7 +91,7 @@ export default function PlacePicker({
           ? 'Location is off for this site. Click the map to place it instead.'
           : state === 'unavailable'
             ? 'This browser cannot report a location. Click the map to place it instead.'
-            : 'Click anywhere to place this Challenge. Optional - a Challenge without a place is still complete.'}
+            : 'Click anywhere to place this thread. Optional - a thread without a place is still complete.'}
       </p>
     </div>
   )

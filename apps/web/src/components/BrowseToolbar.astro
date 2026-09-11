@@ -17,7 +17,7 @@ const base = view === 'map' ? '/map' : '/'
     really is one. "All types" names the filter it belongs to.
   -->
   <nav class="type-tabs" aria-label="Filter by type"><a href={base} data-type-filter="" aria-current="page">All types</a>{CHALLENGE_TYPES.map(t => <a href={`${base}?type=${t}`} data-type-filter={t}>{TYPE_LABEL[t]}</a>)}</nav>
-  <Fragment slot="actions"><button class="search-toggle" aria-label="Search Challenges" aria-expanded="false" aria-controls="feed-search"><Icon name="magnifying-glass" /></button><SessionNav client:load /></Fragment>
+  <Fragment slot="actions"><button class="search-toggle" aria-label="Search threads" aria-expanded="false" aria-controls="feed-search"><Icon name="magnifying-glass" /></button><SessionNav client:load /></Fragment>
 </AppToolbar>
 
-<form id="feed-search" class="feed-search" role="search" hidden><label for="challenge-search">Search Challenges</label><input id="challenge-search" type="search" placeholder="Search by title, place or idea…" autocomplete="off" /><button type="reset">Clear</button></form>
+<form id="feed-search" class="feed-search" role="search" hidden><label for="challenge-search">Search threads</label><input id="challenge-search" type="search" placeholder="Search by title, place or idea…" autocomplete="off" /><button type="reset">Clear</button></form>

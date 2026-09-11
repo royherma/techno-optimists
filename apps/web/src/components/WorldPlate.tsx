@@ -68,7 +68,7 @@ export default function WorldPlate({
       className={`block w-full ${onPick ? 'cursor-crosshair' : ''} ${className}`}
       onClick={pick}
       role={onPick ? 'application' : 'group'}
-      aria-label={onPick ? 'World map. Click to place this Challenge.' : 'World map of Challenges'}
+      aria-label={onPick ? 'World map. Click to place this thread.' : 'World map of threads'}
     >
       <rect x="0" y="0" width={ATLAS_W} height={ATLAS_H} fill="var(--color-paper-sunk)" />
 

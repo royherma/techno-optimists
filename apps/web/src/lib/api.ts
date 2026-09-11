@@ -43,6 +43,6 @@ export async function getChallenge(slug: string): Promise<{
   challenge: Challenge; updates: Update[]; people: DetailPerson[]
 }> {
   const r = await fetch(`${BASE}/api/challenges/${slug}`)
-  if (!r.ok) throw new Error(`challenge ${slug}: ${r.status}`)
+  if (!r.ok) throw new Error(`thread ${slug}: ${r.status}`)
   return r.json()
 }

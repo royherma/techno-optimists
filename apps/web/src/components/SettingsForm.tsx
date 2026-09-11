@@ -162,7 +162,7 @@ export default function SettingsForm({ person, section }: { person: Me; section:
         <Field
           name="name"
           label="Name"
-          hint="Only you see this. It is not printed next to your Challenges."
+          hint="Only you see this. It is not printed next to your threads."
           value={name}
           onChange={setName}
           maxLength={80}
@@ -200,7 +200,7 @@ export default function SettingsForm({ person, section }: { person: Me; section:
           ))}
         </div>
         <p className="text-xs text-(--color-ink-faint)">
-          {roles.length ? `${roles.length} selected. ` : 'Choose one or more. '}They help people find you when a Challenge needs what you do.
+          {roles.length ? `${roles.length} selected. ` : 'Choose one or more. '}They help people find you when a thread needs what you do.
         </p>
       </section>
 
@@ -225,7 +225,7 @@ export default function SettingsForm({ person, section }: { person: Me; section:
             : <>You sign in with a link sent to your email.</>}
         </p>
         <p className="text-xs text-(--color-ink-faint)">
-          Only you can see this address. It is never shown on your Challenges or to anyone else.
+          Only you can see this address. It is never shown on your threads or to anyone else.
         </p>
         <button
           type="button"

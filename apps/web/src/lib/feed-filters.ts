@@ -35,7 +35,7 @@ export function initFeedFilters() {
     empty.hidden = count > 0;
     status.textContent =
       type || query
-        ? `${count} ${count === 1 ? "Challenge" : "Challenges"}${type ? ` · ${type}` : ""}${query ? ` matching “${params.get("q")}”` : ""}`
+        ? `${count} ${count === 1 ? "thread" : "threads"}${type ? ` · ${type}` : ""}${query ? ` matching “${params.get("q")}”` : ""}`
         : "";
     document
       .querySelectorAll<HTMLElement>("[data-type-filter]")

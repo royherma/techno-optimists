@@ -154,7 +154,7 @@ export default function ActionBar({ slug, type, actions }: {
       })}
       </div>
       <p className="action-status" role="status" aria-live="polite">{status}</p>
-      <a className="action-account" href="/settings#activity">View your marked Challenges →</a>
+      <a className="action-account" href="/settings#activity">View your marked threads →</a>
     </div>
   )
 }
