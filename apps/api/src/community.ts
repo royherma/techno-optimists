@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { bodyLimit } from 'hono/body-limit'
 import { z } from 'zod'
 import { currentPerson, mintToken } from './auth'
 import { COMMENT_KINDS, type ChallengeComment } from '../../../packages/types/index'
@@ -27,6 +28,7 @@ const commentBody = z.object({
 }).strict()
 
 export const community = new Hono<{ Bindings: { DB: D1Database } }>()
+community.use('*', bodyLimit({ maxSize: 128_000, onError: (c) => c.json({ error: 'body_too_large' }, 413) }))
 community.use('*', async (c, next) => {
   c.header('Cache-Control', 'private, no-store')
   if (c.req.method !== 'GET') {

@@ -27,6 +27,9 @@ export default function FeedTopUp({ known }: { known: string[] }) {
             if (emoji) emoji.textContent = c.emoji ? `${c.emoji} ` : ''
             const title = row.querySelector('[data-feed-title]')
             if (title) title.textContent = c.title
+            const summary = row.querySelector('[data-feed-summary]')
+            if (summary) summary.textContent = c.summary
+            row.dataset.search = `${c.title} ${c.summary} ${c.location ?? ''} ${c.tags.join(' ')}`.toLowerCase()
           })
           document.querySelectorAll<HTMLElement>('[data-challenge]').forEach((el) => {
             if (el.dataset.challenge !== c.slug) return
