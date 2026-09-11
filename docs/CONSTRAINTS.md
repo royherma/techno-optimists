@@ -57,6 +57,14 @@ back to a guessed ratio - the sizing work was live and inert at the same time.
 
 ## Deploys
 
+**Deployment needs a checkout-local `wrangler.jsonc`.** The real config is ignored
+and is not copied into new worktrees. Without it, Wrangler discovers the parent
+checkout's config and uploads that checkout's `apps/web/dist`, even though Astro
+built the worktree. On 2026-09-11 this uploaded zero assets and briefly served
+404s; rebuilding and deploying from the main checkout restored the site. Before
+deploying a worktree, provide its own config with the intended bindings and verify
+the asset directory printed by Wrangler matches the build output.
+
 **Prod ships empty - schema only, no seed.** The 12 seed Challenges
 ("well-pump-runs-dry", "milk-cooling-loss") are a dev fixture. They were in prod D1 once
 already, from the aborted un-park.
