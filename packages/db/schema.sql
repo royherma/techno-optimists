@@ -51,8 +51,45 @@ CREATE TABLE challenges (
   -- SEED ONLY. Demo counts so the feed shows realistic scale before real users
   -- exist. The API adds this to the true COUNT() from challenge_actions.
   -- Delete this column and its uses the day real traffic lands.
-  seed_actions     TEXT NOT NULL DEFAULT '{}'
+  seed_actions     TEXT NOT NULL DEFAULT '{}',
+
+  -- ---------------------------------------------------------------------------
+  -- Provenance. Set when a Challenge was logged on someone else's behalf rather
+  -- than posted by the person living it - a researcher reading a news report, a
+  -- forum thread, a paper.
+  --
+  -- These are NOT the same fact as author_id, and collapsing them would be the
+  -- bug. author_id is who typed it into this site; these three say where the
+  -- claim actually came from. A Challenge sourced from a Sri Lankan farmer's
+  -- account in a newspaper is authored by @atlas and sourced from that paper,
+  -- and the card has to be able to say so - otherwise the site is quietly
+  -- claiming a stranger's problem as its own reporting.
+  --
+  -- NULL is the normal case and always will be: someone posting their own
+  -- problem has no source to cite, and a row without these is complete.
+
+  -- Where the claim came from. A URL in practice, but not constrained to one:
+  -- "phone call with a co-op manager, 2026-09" is a real provenance and a
+  -- column that rejected it would push it into the body where nothing can read
+  -- it. Rendering treats an http(s) value as a link and anything else as text.
+  source_url       TEXT,
+  -- Human label for the source: 'Nepali Times', 'r/permaculture', 'Gavi'.
+  -- Kept separate from the URL so a card can credit the outlet without making
+  -- the reader parse a hostname, and so two rows citing one outlet group.
+  source_name      TEXT,
+  -- Free note on how this was verified, for rows where the URL alone does not
+  -- carry it: which claim in the article we relied on, what stayed unconfirmed.
+  source_note      TEXT,
+  -- When the row was imported in bulk rather than posted. Doubles as the flag
+  -- for "this is an imported row" - the one query that matters for pulling a
+  -- bad batch back out is WHERE imported_at IS NOT NULL, and a boolean column
+  -- would answer that without telling you which batch.
+  imported_at      TEXT
 );
+
+-- Pulling one import batch back out, and listing everything Atlas logged, are
+-- both this index. Partial so the rows people actually posted cost nothing.
+CREATE INDEX idx_challenges_imported ON challenges(imported_at DESC) WHERE imported_at IS NOT NULL;
 
 CREATE INDEX idx_challenges_activity ON challenges(last_activity_at DESC);
 CREATE INDEX idx_challenges_created  ON challenges(created_at DESC);
@@ -123,10 +160,15 @@ CREATE TABLE magic_links (
   created_at  TEXT NOT NULL DEFAULT (datetime('now')),
   expires_at  TEXT NOT NULL,
   -- Set when redeemed. A link works exactly once.
-  used_at     TEXT
+  used_at     TEXT,
+  -- Who asked. This table IS the rate limiter: the hourly per-email and per-IP
+  -- counts are COUNT(*) over the two indexes below. Nullable because a request
+  -- without CF-Connecting-IP (a local curl) still has to be able to sign in.
+  ip          TEXT
 );
 
 CREATE INDEX idx_magic_links_email ON magic_links(email, created_at DESC);
+CREATE INDEX idx_magic_links_ip ON magic_links(ip, created_at DESC);
 
 -- Live sessions. Same hashing rule as magic_links, same reason.
 CREATE TABLE sessions (

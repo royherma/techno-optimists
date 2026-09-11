@@ -100,6 +100,53 @@ await check('sign-in accepts a request', async () => {
   }
 })
 
+await check('security headers are on every page', async () => {
+  // These are set in one place (the fetch wrapper in apps/api/src/index.ts), so
+  // a route added later cannot miss them - but a bad deploy can drop all of
+  // them at once, which is exactly the failure this catches. frame-ancestors is
+  // checked on the header specifically: a <meta> CSP cannot carry it, so if it
+  // is missing here the page is frameable no matter what the HTML says.
+  const r = await fetch(BASE)
+  const h = (n) => r.headers.get(n) ?? ''
+  const missing = []
+  if (!h('content-security-policy').includes("frame-ancestors 'none'")) missing.push('CSP frame-ancestors')
+  if (!/max-age=\d{7,}/.test(h('strict-transport-security'))) missing.push('HSTS')
+  if (h('x-content-type-options') !== 'nosniff') missing.push('nosniff')
+  if (!h('referrer-policy')) missing.push('Referrer-Policy')
+  return { ok: missing.length === 0, detail: missing.length ? `missing: ${missing.join(', ')}` : 'CSP, HSTS, nosniff, Referrer-Policy' }
+})
+
+await check('page CSP carries script hashes', async () => {
+  // Astro computes a sha256 per inline script at build time and emits them in a
+  // <meta> CSP. If this is absent the page still renders - which is why it
+  // needs asserting - but every inline script on it is unprotected.
+  const html = await (await fetch(BASE)).text()
+  const meta = html.match(/<meta http-equiv="content-security-policy" content="([^"]*)"/i)?.[1] ?? ''
+  const hashes = (meta.match(/'sha256-/g) ?? []).length
+  return { ok: hashes > 0, detail: hashes ? `${hashes} hash(es) in page CSP` : 'no meta CSP on the page' }
+})
+
+await check('sign-in is rate limited', async () => {
+  // The limit is 5/hour per address. Six requests from one fresh address must
+  // end in a 429; if they all pass, the limiter is not deployed and anyone can
+  // mailbomb a stranger from our domain.
+  //
+  // A unique address per run, so this never eats a real person's allowance and
+  // never depends on what a previous run left behind.
+  const probe = `rl-probe-${Date.now()}@technooptimists.org`
+  let last = 0
+  for (let i = 0; i < 6; i++) {
+    const r = await fetch(`${BASE}/api/auth/request`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: probe }),
+    })
+    last = r.status
+    if (r.status === 429) break
+  }
+  return { ok: last === 429, detail: last === 429 ? '429 within 6 requests' : `6 requests, none refused (last ${last})` }
+})
+
 await check('sitemap is XML, not the 404 page', async () => {
   // robots.txt names one sitemap URL. If that URL serves the 404 HTML page,
   // Search Console rejects the submission and reports "couldn't fetch" - which

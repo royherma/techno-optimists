@@ -149,6 +149,19 @@ const toChallenge = (r: Row, actionRows: Row[]): Challenge => {
     lat: r.lat == null ? null : Number(r.lat),
     lng: r.lng == null ? null : Number(r.lng),
     tags: json<string[]>(r.tags, []),
+    // Three nullable columns collapse to one nullable object: a row with no
+    // provenance returns `source: null` rather than an object of three nulls,
+    // so `c.source &&` is the only check a surface needs. A row that has any
+    // one of them keeps the other two as null - citing an outlet with no link
+    // is a real state, and so is a bare URL.
+    source: r.source_url == null && r.source_name == null && r.source_note == null
+      ? null
+      : {
+          url: r.source_url == null ? null : String(r.source_url),
+          name: r.source_name == null ? null : String(r.source_name),
+          note: r.source_note == null ? null : String(r.source_note),
+        },
+    imported_at: r.imported_at == null ? null : String(r.imported_at),
     // No `name`. The public identity is the handle - see the Person type.
     author: {
       id: String(r.author_id),
@@ -313,9 +326,18 @@ app.post('/api/challenges/:slug/updates', async (c) => {
   if (!parsed.success) return c.json({ error: 'bad_body', detail: parsed.error.issues }, 400)
   const { body, stage, media } = parsed.data
 
-  const challenge = await c.env.DB.prepare('SELECT id FROM challenges WHERE slug = ?')
+  const challenge = await c.env.DB.prepare('SELECT id, author_id FROM challenges WHERE slug = ?')
     .bind(c.req.param('slug')).first()
   if (!challenge) return c.json({ error: 'not_found' }, 404)
+
+  // Anyone signed in may post an update - that is the collaboration. Moving the
+  // Challenge along its lifecycle is a different act: it rewrites the object
+  // itself, and it belongs to whoever owns it. Without this, any signed-in
+  // stranger could mark someone else's Challenge Learn and it would read as the
+  // author saying so.
+  if (stage && String(challenge.author_id) !== me.id && !me.is_admin) {
+    return c.json({ error: 'not_yours' }, 403)
+  }
 
   const id = `u_${mintToken().slice(0, 16)}`
   const writes = [
@@ -506,6 +528,50 @@ const safeNext = (raw: string | undefined) =>
   raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : null
 
 /**
+ * How many sign-in links one address, and one IP, may ask for per hour.
+ *
+ * Per-email stops someone mailbombing a person they dislike with real mail from
+ * a real domain - the reputational damage lands on us, not them. Per-IP is the
+ * wider net: a script walking an address list gets 20 attempts, not unlimited.
+ * The IP ceiling is the looser of the two on purpose, because a household, an
+ * office or a carrier NAT is one address to us and several people to itself.
+ */
+const LINKS_PER_EMAIL_HOUR = 5
+const LINKS_PER_IP_HOUR = 20
+
+/**
+ * Counted in D1, not in the Workers rate-limiting binding.
+ *
+ * The binding cannot express an hour: its `period` is an enum of 10 or 60
+ * SECONDS (node_modules/wrangler/config-schema.json), so the shortest limit it
+ * can state is per-minute, which stops nothing an attacker paces. KV is out for
+ * a different reason - one write per second per key, and a counter is one key.
+ *
+ * magic_links already stores the email and the timestamp of every request, so
+ * the count is a query against a table we were writing anyway. The cost is two
+ * indexed COUNT(*)s on the sign-in path, which is not a hot path.
+ */
+export const overRateLimit = async (
+  db: D1Database,
+  email: string,
+  ip: string | null,
+): Promise<boolean> => {
+  const row = await db.prepare(
+    `SELECT
+       (SELECT COUNT(*) FROM magic_links
+         WHERE email = ? AND created_at > datetime('now', '-1 hour')) AS by_email,
+       (SELECT COUNT(*) FROM magic_links
+         WHERE ip IS NOT NULL AND ip = ? AND created_at > datetime('now', '-1 hour')) AS by_ip`,
+  ).bind(email, ip).first<{ by_email: number; by_ip: number }>()
+  if (!row) return false
+  if (Number(row.by_email) >= LINKS_PER_EMAIL_HOUR) return true
+  // A missing IP cannot be rate limited by IP - `ip = NULL` is never true in
+  // SQL, so the subquery returns 0 and only the per-email limit applies.
+  if (ip !== null && Number(row.by_ip) >= LINKS_PER_IP_HOUR) return true
+  return false
+}
+
+/**
  * Sends a magic link. Always answers the same way whether or not the address is
  * known - the response must not reveal who has an account here.
  */
@@ -513,14 +579,23 @@ app.post('/api/auth/request', async (c) => {
   const parsed = emailBody.safeParse(await c.req.json().catch(() => null))
   if (!parsed.success) return c.json({ error: 'bad_email' }, 400)
   const email = normalizeEmail(parsed.data.email)
+  const ip = c.req.header('cf-connecting-ip') ?? null
+
+  const over = await overRateLimit(c.env.DB, email, ip)
+  if (over) {
+    // 429 with no detail about which limit tripped. Saying "too many for this
+    // address" confirms the address was tried, which is the same disclosure the
+    // uniform success response at the bottom of this handler exists to prevent.
+    return c.json({ error: 'too_many_requests' }, 429)
+  }
 
   // One live link per address at a time: requesting a second invalidates the
   // first, so a forwarded old email cannot be used to take the account.
   const token = mintToken()
   await c.env.DB.batch([
     c.env.DB.prepare("UPDATE magic_links SET used_at = datetime('now') WHERE email = ? AND used_at IS NULL").bind(email),
-    c.env.DB.prepare('INSERT INTO magic_links (token_hash, email, expires_at) VALUES (?, ?, ?)')
-      .bind(await hashToken(token), email, linkExpiry()),
+    c.env.DB.prepare('INSERT INTO magic_links (token_hash, email, expires_at, ip) VALUES (?, ?, ?, ?)')
+      .bind(await hashToken(token), email, linkExpiry(), ip),
   ])
 
   const next = safeNext(parsed.data.next)
@@ -805,10 +880,28 @@ app.get('/api/people/:handle', async (c) => {
   })
 })
 
+/**
+ * Signs out. `{"everywhere":true}` revokes every session for the account, not
+ * just this browser - the only move available to someone who thinks a device
+ * was taken, and there is no other way to reach a 60-day cookie sitting on a
+ * phone they no longer hold.
+ */
 app.post('/api/auth/signout', async (c) => {
   const token = readCookie(c.req.header('cookie'), SESSION_COOKIE)
+  const everywhere = (await c.req.json().catch(() => null))?.everywhere === true
   if (token) {
-    await c.env.DB.prepare('DELETE FROM sessions WHERE token_hash = ?').bind(await hashToken(token)).run()
+    const hash = await hashToken(token)
+    if (everywhere) {
+      // Resolve the person from this session, then drop all of theirs. Scoped
+      // by person_id, so a stolen cookie can only revoke its own account.
+      const row = await c.env.DB.prepare('SELECT person_id FROM sessions WHERE token_hash = ?')
+        .bind(hash).first<{ person_id: string }>()
+      if (row) {
+        await c.env.DB.prepare('DELETE FROM sessions WHERE person_id = ?').bind(row.person_id).run()
+      }
+    } else {
+      await c.env.DB.prepare('DELETE FROM sessions WHERE token_hash = ?').bind(hash).run()
+    }
   }
   const secure = new URL(c.req.url).protocol === 'https:'
   c.header('set-cookie', clearCookie(secure))
@@ -890,7 +983,51 @@ app.get('/api/_throw', (c) => {
 
 app.all('/api/*', (c) => c.json({ error: 'not_found' }, 404))
 
-export { app }
+/**
+ * The headers every response carries, applied in one place for the same reason
+ * track() is: this is the only point every response passes through, so there is
+ * no route that can be added later and quietly miss them.
+ *
+ * What each one stops:
+ *  - frame-ancestors 'none' - clickjacking. A CSP in a <meta> tag CANNOT carry
+ *    this directive (browsers ignore it there), which is why the page CSP that
+ *    Astro generates is not enough on its own and this exists.
+ *  - HSTS - the downgrade attack on the first http:// hop. preload is included
+ *    deliberately: the apex and www both serve https and nothing else does.
+ *  - nosniff - a user-uploaded file being re-interpreted as script. R2 media is
+ *    served from this same origin, so this is the one that matters most here.
+ *  - Referrer-Policy - a Challenge URL leaking to whatever a reader clicks to.
+ *  - Permissions-Policy - denies hardware this site never asks for.
+ *
+ * The API sends its own CSP because Astro's <meta> tag only exists on HTML
+ * pages; a JSON response rendered directly in a browser tab has none otherwise.
+ */
+const secured = (res: Response, req: Request): Response => {
+  const out = new Response(res.body, res)
+  const url = new URL(req.url)
+  out.headers.set('X-Content-Type-Options', 'nosniff')
+  out.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  out.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()')
+  // Only over https - sent on a plain http response it is ignored by spec, and
+  // on local dev it would pin 127.0.0.1 to https in the browser for a year.
+  if (url.protocol === 'https:') {
+    out.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
+  }
+  // Pages: Astro's <meta> CSP already carries the script/style hashes, so the
+  // header here adds only what a meta tag cannot express, and must NOT restate
+  // script-src - two policies both apply, and the strictest of each directive
+  // wins, so a 'self' here would override Astro's hashes and break hydration.
+  // API: nothing renders, so everything is denied.
+  out.headers.set(
+    'Content-Security-Policy',
+    url.pathname.startsWith('/api/')
+      ? "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+      : "frame-ancestors 'none'",
+  )
+  return out
+}
+
+export { app, secured }
 export default {
   /**
    * One call site for traffic, rather than a track() in every route: this is
@@ -902,7 +1039,7 @@ export default {
    */
   async fetch(req: Request, env: Env, ctx: ExecutionContext) {
     const started = Date.now()
-    const res = await app.fetch(req, env, ctx)
+    const res = await secured(await app.fetch(req, env, ctx), req)
     try {
       const url = new URL(req.url)
       // Assets and the API both come through here. Recording every hashed
