@@ -17,7 +17,7 @@ export default function Legend({ challenges = [] }: { challenges?: Challenge[] }
       <h3>Impact (contour rings)</h3><div className="np-rings-scale">{[1,2,3,4,5].map(n => <div key={n}><Rings count={n} /><span>{IMPACT_LABELS[n - 1]}</span></div>)}</div><p>Impact scope, not activity. Unspecified impact is left unmarked.</p>
     </section>
     <section className={'np-legend-stages ' + (section === 'stages' ? 'selected' : '')}>
-      <h3>From noticing to improving</h3><ul>{STAGE_ORDER.map(stage => <li key={stage}><i className={`np-stage-color stage-${stage}`} /><strong>{STAGE_STAMP[stage]}</strong><span>{STAGE_MEANING[stage]}</span></li>)}</ul>
+      <h3>From noticing to improving</h3><ul>{STAGE_ORDER.map(stage => <li key={stage} data-stage={stage}><i className={`np-stage-color stage-${stage}`} /><strong>{STAGE_STAMP[stage]}<small className="np-stage-now"> · Now</small></strong><span>{STAGE_MEANING[stage]}</span></li>)}</ul>
     </section>
     <section className={'np-legend-actions ' + (section === 'actions' ? 'selected' : '')}>
       <h3>Every action means something</h3><ul>{LEGEND_ACTIONS.map((action, i) => <li key={action}><img src={`/icons/${icons[i]}.svg`} width="18" height="18" alt="" /><span>{LEGEND_ACTION_LABEL[action]}</span></li>)}</ul>

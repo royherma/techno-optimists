@@ -190,3 +190,23 @@ body:has(.newspaper) { background: #f7f4eb; }
   .np-arrow-link:hover { color:var(--np-red); }
   .np-arrow-link:hover>span { transform:translateX(3px); }
 }
+
+/* Stage names describe ongoing work, with space for the full label. */
+.newspaper .np-legend-stages li { grid-template-columns:10px minmax(100px, .95fr) minmax(0, 1fr); }
+.np-stage-now { display:none; font:10px/1.2 system-ui,sans-serif; }
+.np-stage-badge { display:inline-flex; align-items:center; gap:6px; white-space:nowrap; font:11px/1.3 system-ui,sans-serif; letter-spacing:0; text-transform:none; color:var(--np-ink); flex-shrink:0; }
+.np-stage-badge .np-stage-color { width:8px; height:8px; }
+.newspaper:has(.np-challenge[data-stage="spot"]) .np-legend-stages li[data-stage="spot"] { background:var(--np-selected); }
+.newspaper:has(.np-challenge[data-stage="spot"]) .np-legend-stages li[data-stage="spot"] .np-stage-now { display:inline; }
+.newspaper:has(.np-challenge[data-stage="understand"]) .np-legend-stages li[data-stage="understand"] { background:var(--np-selected); }
+.newspaper:has(.np-challenge[data-stage="understand"]) .np-legend-stages li[data-stage="understand"] .np-stage-now { display:inline; }
+.newspaper:has(.np-challenge[data-stage="ideas"]) .np-legend-stages li[data-stage="ideas"] { background:var(--np-selected); }
+.newspaper:has(.np-challenge[data-stage="ideas"]) .np-legend-stages li[data-stage="ideas"] .np-stage-now { display:inline; }
+.newspaper:has(.np-challenge[data-stage="build"]) .np-legend-stages li[data-stage="build"] { background:var(--np-selected); }
+.newspaper:has(.np-challenge[data-stage="build"]) .np-legend-stages li[data-stage="build"] .np-stage-now { display:inline; }
+.newspaper:has(.np-challenge[data-stage="test"]) .np-legend-stages li[data-stage="test"] { background:var(--np-selected); }
+.newspaper:has(.np-challenge[data-stage="test"]) .np-legend-stages li[data-stage="test"] .np-stage-now { display:inline; }
+.newspaper:has(.np-challenge[data-stage="learn"]) .np-legend-stages li[data-stage="learn"] { background:var(--np-selected); }
+.newspaper:has(.np-challenge[data-stage="learn"]) .np-legend-stages li[data-stage="learn"] .np-stage-now { display:inline; }
+.newspaper:has(.np-challenge[data-stage="improve"]) .np-legend-stages li[data-stage="improve"] { background:var(--np-selected); }
+.newspaper:has(.np-challenge[data-stage="improve"]) .np-legend-stages li[data-stage="improve"] .np-stage-now { display:inline; }
