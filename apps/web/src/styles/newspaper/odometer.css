@@ -1,0 +1,59 @@
+/*
+ * The hit counter: a row of mechanical digit wheels, the way a page counter
+ * looked when a counter on a page was a normal thing to have.
+ *
+ * Each digit is a strip of 0-9 inside a fixed window; landing on a number is a
+ * translate of the strip, so the wheel rolls past the digits in between rather
+ * than swapping the glyph. The strip carries a leading blank cell so a wheel
+ * can start empty and roll in on first paint.
+ *
+ * Motion is opt-in via the same `prefers-reduced-motion: no-preference` gate
+ * the masthead uses (delight.css). With motion reduced the digits are simply
+ * in position - global.css also clamps every duration to 0.01ms, so the
+ * transition below cannot sneak past it.
+ */
+.np-odometer {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  vertical-align: middle;
+}
+.np-odometer-digit {
+  /* The window. Height is one cell; the strip inside is ten. */
+  position: relative;
+  overflow: hidden;
+  width: 0.72em;
+  height: 1.15em;
+  border: 1px solid var(--np-rule, currentColor);
+  border-radius: 2px;
+  background: color-mix(in oklch, currentColor 7%, transparent);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15em;
+}
+.np-odometer-strip {
+  display: block;
+  /* --digit is set per wheel; each step is exactly one cell height. */
+  transform: translateY(calc(var(--digit, 0) * -1.15em));
+}
+.np-odometer-strip span {
+  display: block;
+  height: 1.15em;
+  text-align: center;
+}
+/*
+ * The separator between thousands. Not a digit window - it sits on the
+ * baseline between two wheels so 12,483 reads as a number and not as five
+ * unrelated dials.
+ */
+.np-odometer-sep {
+  opacity: 0.5;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .np-odometer-strip {
+    /* Staggered per wheel (--spin, set inline) so the units wheel settles
+       first and the leading digits follow, which is what makes it read as a
+       mechanism rather than a single sliding block. */
+    transition: transform 900ms cubic-bezier(.22, 1, .36, 1);
+    transition-delay: calc(var(--spin, 0) * 60ms);
+  }
+}
