@@ -59,7 +59,7 @@ export default function ActionBar({ slug, type, actions }: {
       setCounts(d.challenge.actions)
       setMine(p.mine)
       setReady(true)
-      setStatus('Choose what fits. “I have an idea” opens the composer.')
+      setStatus('')
     }).catch(() => {
       if (!cancelled) { setError(true); setStatus('Your selections could not load.') }
     })
@@ -129,6 +129,7 @@ export default function ActionBar({ slug, type, actions }: {
         return (
           <button
             key={kind}
+            data-action-kind={kind}
             onClick={() => act(kind)}
             disabled={busy !== null}
             type="button"
@@ -142,7 +143,7 @@ export default function ActionBar({ slug, type, actions }: {
                   : 'border-(--color-rule-soft) text-(--color-ink-soft) hover:border-(--color-rule) hover:bg-(--color-paper-sunk) hover:text-(--color-ink) active:bg-(--color-table)'
             }`}
           >
-            <span>{on && <span aria-hidden="true">✓ </span>}{ACTION_LABEL[kind]}</span>
+            <span className="action-label"><span className="action-mark" aria-hidden="true">{pending ? '…' : on ? '✓' : kind === 'have_idea' ? '+' : '○'}</span>{ACTION_LABEL[kind]}</span>
             <span className={`ml-2 tabular-nums ${on ? 'text-(--color-paper)' : 'text-(--color-ink-faint)'}`}>
               {counts[kind].toLocaleString('en-US')}
             </span>
@@ -150,7 +151,7 @@ export default function ActionBar({ slug, type, actions }: {
         )
       })}
       </div>
-      <p className="action-status" role="status">{status}</p>
+      <p className="action-status" role="status" aria-live="polite">{status}</p>
       <a className="action-account" href="/settings#activity">View your marked Challenges →</a>
     </div>
   )
