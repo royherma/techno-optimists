@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { app, json, mergeActions, overRateLimit, secured, track } from '../src/index'
+import { app, json, mergeActions, overRateLimit, secured } from '../src/index'
+import { track } from '../src/analytics'
 import { ACTION_KINDS, EMPTY_ACTIONS } from '../../../packages/types/index'
 
 describe('json', () => {

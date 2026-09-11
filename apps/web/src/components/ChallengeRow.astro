@@ -146,6 +146,16 @@ const ACTIONS = ['have_problem', 'have_idea', 'can_help', 'will_test'] as const
               <span class="font-semibold tabular-nums">{count(c.actions[k])}</span>
             </a>
           ))}
+          {c.views_count > 0 && (
+            <span
+              title="Distinct viewers, counted once per person per day"
+              aria-label={`Viewed - ${c.views_count}`}
+              class="flex items-center gap-1.5 text-[0.75rem] text-(--color-ink-faint)"
+            >
+              <span class="font-semibold tabular-nums">{count(c.views_count)}</span>
+              <span>viewed</span>
+            </span>
+          )}
         </div>
       </div>
     </div>

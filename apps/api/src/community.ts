@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { z } from 'zod'
+import { track } from './analytics'
 import { currentPerson, mintToken } from './auth'
 import { COMMENT_KINDS, type ChallengeComment } from '../../../packages/types/index'
 
@@ -76,6 +77,55 @@ community.get('/:slug/comments', async (c) => {
   const page = rows.results.slice(0, 50)
   return c.json({ comments: page.reverse().map(toComment),
     next_cursor: rows.results.length > 50 ? String(page[0].cursor) : null })
+})
+
+/**
+ * Records that someone opened this Challenge.
+ *
+ * A POST from the page rather than a count inside the `/c/:slug` handler,
+ * because that handler mostly does not run: the top Challenges are prerendered
+ * by `getStaticPaths`, so the asset handler answers them and the Worker never
+ * sees the read. Counting there would have counted every Challenge except the
+ * popular ones.
+ *
+ * Anonymous by design - most readers are signed out, and a view that only
+ * counts members is not the number Roy asked for. No body, no auth, and the
+ * response carries the new count so the page can render it without a refetch.
+ */
+community.post('/:slug/view', async (c) => {
+  const row = await c.env.DB.prepare('SELECT id FROM challenges WHERE slug = ?').bind(c.req.param('slug')).first()
+  if (!row) return c.json({ error: 'not_found' }, 404)
+
+  // IP and User-Agent identify a reload; the Challenge id salts them so the
+  // same reader hashes differently on every Challenge. SHA-256 of that, stored
+  // truncated - enough to collide rarely, not enough to reverse to an address.
+  const raw = [
+    c.req.header('cf-connecting-ip') ?? '',
+    c.req.header('user-agent') ?? '',
+    String(row.id),
+  ].join('|')
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw))
+  const viewerKey = [...new Uint8Array(digest)].slice(0, 12).map((b) => b.toString(16).padStart(2, '0')).join('')
+  // Day granularity: the same person opening it tomorrow is a real second view,
+  // opening it twice in one afternoon is not.
+  const viewedOn = new Date().toISOString().slice(0, 10)
+
+  await c.env.DB.prepare(
+    'INSERT OR IGNORE INTO challenge_views (challenge_id, viewer_key, viewed_on) VALUES (?, ?, ?)',
+  ).bind(row.id, viewerKey, viewedOn).run()
+
+  // The counter above is the deduplicated number a card shows. This is the raw
+  // event stream, one row per open with no dedupe, in the dataset that already
+  // records traffic - so "how did views build up over the week" stays answerable
+  // even though the table only ever holds a total.
+  track(c.env as { ANALYTICS?: AnalyticsEngineDataset }, 'challenge_view', `/c/${c.req.param('slug')}`, {
+    country: c.req.header('cf-ipcountry') ?? '',
+    referrer: c.req.header('referer') ?? '',
+  })
+
+  const total = await c.env.DB.prepare('SELECT COUNT(*) n FROM challenge_views WHERE challenge_id = ?')
+    .bind(row.id).first<{ n: number }>()
+  return c.json({ ok: true, views_count: Number(total?.n ?? 0) })
 })
 
 community.post('/:slug/comments', async (c) => {
