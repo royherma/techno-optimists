@@ -1,7 +1,8 @@
 ---
 import Base from '../layouts/Base.astro'
 import Sheet from '../components/Sheet.astro'
-import SessionNav from '../components/SessionNav.tsx'
+import PageToolbar from '../components/PageToolbar.astro'
+import '../styles/map.css'
 import PostFab from '../components/PostFab.astro'
 import WorldPlate from '../components/WorldPlate.tsx'
 import { getFeed } from '../lib/api'
@@ -22,16 +23,9 @@ const depth = depthScale(challenges)
   description="Where the Challenges are. Every pin is a real place someone reported from."
 >
   <Sheet>
-    <nav
-      class="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-(--color-rule) px-3 py-2 font-[family-name:--font-mono] text-[0.7rem] uppercase tracking-[0.06em]"
-      aria-label="Sheet"
-    >
-      <a href="/" class="ink-transition ink-underline text-(--color-ink-soft) hover:text-(--color-ink)">← Index</a>
-      <span class="font-bold">Map</span>
-      <span class="ml-auto"><SessionNav client:load /></span>
-    </nav>
+    <PageToolbar label="Map" />
 
-    <div class="px-3 py-5 sm:px-5">
+    <div class="map-page">
       <h1 class="font-[family-name:--font-display] text-[2rem] leading-[1.1] tracking-tight sm:text-[2.4rem]">
         Where the Challenges are
       </h1>
@@ -40,7 +34,7 @@ const depth = depthScale(challenges)
         has reached; ring size is how much has accumulated on it.
       </p>
 
-      <div class="mt-5 border-2 border-(--color-rule)">
+      <div class="map-surface">
         <!--
           Pins go across as a prop, not as slotted children: the plate hydrates,
           and SVG drawn here into its children slot is discarded on hydration.

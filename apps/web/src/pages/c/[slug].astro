@@ -1,205 +1,46 @@
 ---
-import '../../styles/detail.css'
 import Base from '../../layouts/Base.astro'
-import ActionBar from '../../components/ActionBar'
-import LiveChallenge from '../../components/LiveChallenge.tsx'
 import Sheet from '../../components/Sheet.astro'
-import ContourRings from '../../components/ContourRings.astro'
+import PageToolbar from '../../components/PageToolbar.astro'
+import ActionBar from '../../components/ActionBar'
+import LiveChallenge from '../../components/LiveChallenge'
 import MediaPlate from '../../components/MediaPlate.astro'
-import StageStamp from '../../components/StageStamp.astro'
+import ChallengeHeader from '../../components/challenge/ChallengeHeader.astro'
+import Lifecycle from '../../components/challenge/Lifecycle.astro'
+import ProgressLog from '../../components/challenge/ProgressLog.astro'
+import PeoplePanel from '../../components/challenge/PeoplePanel.astro'
 import { getChallenge, getFeed } from '../../lib/api'
-import {
-  ACTION_DOING, ACTION_SHORT, STAGE_ORDER, STAGE_STAMP,
-  TYPE_LABEL, ago, count, depthLabel, depthScale, gridRef, stageColor,
-} from '../../lib/vocab'
-import { ACTION_KINDS } from '../../../../../packages/types/index'
-
+import { depthScale } from '../../lib/vocab'
+import '../../styles/detail.css'
 export async function getStaticPaths() {
   const { challenges } = await getFeed('?limit=50')
-  return challenges.map((c) => ({ params: { slug: c.slug } }))
+  return challenges.map(c => ({ params: { slug: c.slug } }))
 }
-
 const { slug } = Astro.params
 const { challenge: c, updates, people } = await getChallenge(slug!)
-const hero = c.media[0]
-const reached = STAGE_ORDER.indexOf(c.stage)
-
-// Same scale the index uses, so a Challenge shows the same rings in both places.
 const { challenges: peers } = await getFeed('?limit=50')
-const rings = depthScale(peers.some((p) => p.id === c.id) ? peers : [...peers, c])(c)
-const ref = gridRef(c.id)
-const ranked = ACTION_KINDS.map((k) => [k, c.actions[k]] as const)
-  .filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1])
+const rings = depthScale(peers.some(p => p.id === c.id) ? peers : [...peers,c])(c)
+const hero = c.media[0]
 ---
 <Base title={`${c.title} - Techno Optimists`} description={c.summary}>
   <Sheet>
-  <main class="challenge-detail px-5 py-6">
-    <a href="/" class="ink-transition ink-underline font-[family-name:--font-mono] text-[0.7rem] uppercase tracking-[0.1em] text-(--color-ink-soft) hover:text-(--color-ink) hover:decoration-current">
-      ← Back to the index
-    </a>
-
-    <!-- Entry header: the same marks as the index row, so the sheet stays one sheet. -->
-    <div class="mt-5 flex flex-wrap items-start justify-between gap-x-8 gap-y-4 border-b-2 border-(--color-rule) pb-5">
-      <div class="min-w-0 flex-1">
-        <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-[0.75rem] uppercase tracking-[0.1em] text-(--color-ink-soft)">
-          <span class="font-[family-name:--font-mono] tracking-tight text-(--color-ink)">{ref}</span>
-          <span>{TYPE_LABEL[c.type]}</span>
-          {c.location && <span>{c.location}</span>}
-          <span>Active {ago(c.last_activity_at)}</span>
+    <PageToolbar label="Challenge" />
+    <main class="challenge-detail">
+      <ChallengeHeader challenge={c} rings={rings} />
+      <Lifecycle stage={c.stage} />
+      <div class="detail-grid">
+        <div class="detail-story">
+          <figure class="detail-media" hidden={!hero}><MediaPlate media={hero} fit="contain" eager min={0.62} max={2.6} class="mx-auto max-h-[30rem] w-auto max-w-full" /></figure>
+          <section class="detail-section challenge-context" hidden={!c.body}><h2>The Challenge</h2><p data-field="body">{c.body}</p></section>
+          <ProgressLog updates={updates} stage={c.stage} />
         </div>
-        <!--
-          2.4rem on a 390px screen set this title over six lines and filled the
-          whole first viewport before the summary. The display face still leads
-          the page; it just starts at a size the phone has room for.
-        -->
-        <h1 data-field="title" class="mt-2.5 max-w-3xl font-[family-name:--font-display] text-[1.75rem] leading-[1.12] tracking-tight sm:text-[2.1rem] lg:text-[2.4rem]">
-          {c.title}
-        </h1>
-        <p data-field="summary" class="mt-2.5 max-w-2xl text-lg leading-relaxed text-(--color-ink-soft)">{c.summary}</p>
-        <p class="mt-3 text-sm text-(--color-ink-soft)">
-          Spotted by <span data-field="author" class="font-medium text-(--color-ink)">@{c.author.handle}</span>
-          {c.author.location && <span class="text-(--color-ink-faint)"> · {c.author.location}</span>}
-        </p>
-      </div>
-
-      <!--
-        Rings only. The stage stamp and its meaning used to sit here too, and
-        the lifecycle strip immediately below says both again, in sequence and
-        in colour - so this cluster was restating its neighbour.
-      -->
-      <div class="shrink-0 text-(--color-ink)">
-        <ContourRings rings={rings} color={stageColor(c.stage)} label={`Impact: ${depthLabel(rings)}`} size={54} />
-      </div>
-    </div>
-
-    <!--
-      Always in the DOM, hidden when there is no image: a Challenge posted since
-      the last build fills this in on load, and it needs something to fill.
-    -->
-    <!--
-      The picture is the subject of an entry, so it is shown whole rather than
-      cropped to a house ratio: a portrait photo keeps its top and bottom, a
-      panorama keeps both ends. The plate is centred and capped in height so a
-      9:16 shot cannot push the text a full screen down.
-    -->
-    <figure class="m-0 mt-6" hidden={!hero}>
-      <MediaPlate
-        media={hero}
-        fit="contain"
-        eager
-        min={0.62}
-        max={2.6}
-        class="mx-auto max-h-[26rem] w-auto max-w-full"
-      />
-    </figure>
-
-    <!--
-      Lifecycle as ordered stations rather than a status field: you read left to
-      right and see the handoffs, which is what makes the sequence legible.
-    -->
-    <!--
-      Seven equal columns need about 55rem to set their labels; below that the
-      words truncated to "SPOT UNDE IDEAS BUILI" and the row pushed the page
-      wider than the screen. Wrapping instead of dividing means each station
-      takes the width its own word needs, at any viewport.
-    -->
-    <ol class="mt-8 flex flex-wrap gap-px border border-(--color-rule) bg-(--color-rule-soft)"
-        aria-label="Lifecycle stage">
-      {STAGE_ORDER.map((s, i) => (
-        <li
-          class:list={['station ink-transition flex-1 basis-[6.5rem] bg-(--color-paper) px-2 py-2.5 text-center', i <= reached && 'station-reached']}
-          style={i <= reached ? `--stage-color:var(--color-${s})` : ''}
-        >
-          <span class="station-rule block h-1" style={i <= reached ? `background:var(--color-${s})` : ''}></span>
-          <span
-            class:list={['mt-2 block text-[0.68rem] font-semibold uppercase tracking-[0.05em]',
-                         i > reached && 'text-(--color-ink-faint)']}
-            style={i <= reached ? `color:var(--color-${s})` : ''}
-          >{STAGE_STAMP[s]}</span>
-          {i === reached && (
-            <span class="mt-0.5 block text-[0.62rem] uppercase tracking-[0.08em] text-(--color-ink-soft)">now</span>
-          )}
-        </li>
-      ))}
-    </ol>
-
-    <style>
-      /*
-       * A reached station washes in its own stage tint and thickens its rule on
-       * hover - the same ink-on-paper move as everywhere else, scoped to the
-       * station's own colour rather than a generic grey. An unreached station
-       * has no --stage-color and stays inert: there is nothing to affirm yet.
-       */
-      .station-rule {
-        transition: height var(--ease-ink);
-      }
-      .station-reached:hover {
-        background: color-mix(in oklch, var(--stage-color) 10%, var(--color-paper));
-      }
-      .station-reached:hover .station-rule {
-        height: 0.25rem;
-      }
-    </style>
-
-    <div class="mt-8 gap-10 lg:grid lg:grid-cols-[1fr_18rem]">
-      <div class="min-w-0">
-        <section id="contribute" class="border-y border-(--color-rule) py-5">
-          <h2 class="mb-3 text-[0.72rem] font-semibold uppercase tracking-[0.14em]">How can you help?</h2>
-          <div data-action-bar data-slug={c.slug}>
-            <ActionBar client:load slug={c.slug} type={c.type} actions={c.actions} />
-          </div>
-          <div class="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm text-(--color-ink-faint)">
-            {ranked.map(([k, n]) => (
-              <span><strong class="tabular-nums text-(--color-ink-soft)">{count(n)}</strong> {ACTION_SHORT[k]}</span>
-            ))}
-          </div>
-        </section>
-
-        {updates.length > 0 && (
-          <section class="mt-8">
-            <h2 class="text-[0.72rem] font-semibold uppercase tracking-[0.14em]">Progress log</h2>
-            <ol class="mt-4">
-              {updates.map((u) => (
-                <li class="grid grid-cols-[auto_1fr] gap-x-4 border-b border-(--color-rule-soft) py-4">
-                  <span
-                    class="mt-1.5 h-2.5 w-2.5 shrink-0"
-                    style={`background:var(--color-${u.stage ?? c.stage})`}
-                  ></span>
-                  <div>
-                    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
-                      <span class="font-medium">@{u.author.handle}</span>
-                      {u.stage && <StageStamp stage={u.stage} class="text-[0.72rem]" />}
-                      <span class="text-xs text-(--color-ink-faint)">{ago(u.created_at)}</span>
-                    </div>
-                    <p class="mt-1.5 leading-relaxed text-(--color-ink-soft)">{u.body}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </section>
-        )}
-      </div>
-
-      {people.length > 0 && (
-        <aside class="mt-8 lg:mt-0">
-          <h2 class="text-[0.72rem] font-semibold uppercase tracking-[0.14em]">People on this</h2>
-          <ul class="mt-3 border-t border-(--color-rule-soft)">
-            {people.map((p) => (
-              <li class="border-b border-(--color-rule-soft) py-2.5">
-                <p class="text-sm font-medium">@{p.handle}</p>
-                <p class="text-xs text-(--color-ink-soft)">
-                  {p.kinds.map((k) => ACTION_DOING[k]).join(' · ')}
-                </p>
-                <p class="mt-0.5 text-xs text-(--color-ink-faint)">
-                  {p.skills.slice(0, 3).join(' · ')}{p.location && ` · ${p.location}`}
-                </p>
-              </li>
-            ))}
-          </ul>
+        <aside class="detail-sidebar">
+          <section id="contribute" class="detail-panel contribution-panel"><h2>How can you help?</h2><p>You don’t need all the answers. Start with what you know.</p><div data-action-bar data-slug={c.slug}><ActionBar client:load slug={c.slug} type={c.type} actions={c.actions} /></div></section>
+          <PeoplePanel people={people} />
+          <p class="detail-philosophy">A more human future<br />is a design choice.</p>
         </aside>
-      )}
-    </div>
-  </main>
+      </div>
+    </main>
   </Sheet>
   <LiveChallenge client:load />
 </Base>
