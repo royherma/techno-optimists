@@ -12,10 +12,10 @@ export default function SourcePlace({ challenge: c }: { challenge: Challenge }) 
     <header className="np-panel-heading"><h2>Source &amp; place</h2></header>
     <div className="np-source-columns"><div className="np-place-content" aria-label="Place">
         <h3>Place</h3>
-        <p>{c.location || (placed ? 'Reported location' : 'No location provided.')}</p>
+        <p>{mapUrl ? <a href={mapUrl} target="_blank" rel="noopener noreferrer">{c.location || 'Reported location'} ↗</a> : c.location || 'No location provided.'}</p>
         {placed && <LocalMap lat={c.lat!} lng={c.lng!} label={c.location || 'Reported location'} href={mapUrl!} />}
 
-        {mapUrl ? <p><a href={mapUrl} target="_blank" rel="noopener noreferrer">Explore this location ↗</a></p> : <p>No map coordinates provided.</p>}
+        {!mapUrl && <p>No map coordinates provided.</p>}
       </div><div className="np-source-content"><h3>Source</h3><PagedContent compact label="Source">
         <p>{source ? <a href={source.href} target="_blank" rel="noopener noreferrer">{c.source?.name || source.hostname} ↗</a> : c.source?.name || c.source?.url || 'Shared directly here.'}</p>
         {c.source?.note && <p>{c.source.note}</p>}

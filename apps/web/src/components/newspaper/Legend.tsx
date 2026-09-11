@@ -11,10 +11,10 @@ export function Rings({ count, size = 38 }: { count: number; size?: number }) {
 export default function Legend({ challenges = [] }: { challenges?: Challenge[] }) {
   const [section, setSection] = useState('stages')
   return <div className="np-legend">
-    <header className="np-rule-heading"><h2>The field guide</h2><span>Reading the Challenge</span></header>
+    <header className="np-rule-heading"><h2>The field guide</h2><span>Legend</span></header>
     <nav className="np-legend-tabs" aria-label="Legend sections">{['stages','rings','world'].map(id => <button key={id} aria-pressed={section === id} onClick={() => setSection(id)}>{id}</button>)}</nav>
     <section className={'np-legend-rings ' + (section === 'rings' ? 'selected' : '')}>
-      <h3>Impact (contour rings)</h3><p className="np-impact-current"><strong>This Challenge: impact not specified</strong></p><div className="np-rings-scale">{[1,2,3,4,5].map(n => <div key={n}><Rings count={n} /><span>{IMPACT_LABELS[n - 1]}</span></div>)}</div><p>Impact scope, not activity. Unspecified impact is left unmarked.</p>
+      <h3>Impact (contour rings)</h3><p className="np-impact-current"><strong>This Challenge: impact not specified</strong></p><div className="np-rings-scale">{[1,2,3,4,5].map(n => <div key={n}><Rings count={n} /><span>{n === 2 ? <>Neighbour<wbr />hood</> : IMPACT_LABELS[n - 1]}</span></div>)}</div><p>Impact scope, not activity. Unspecified impact is left unmarked.</p>
     </section>
     <section className={'np-legend-stages ' + (section === 'stages' ? 'selected' : '')}>
       <h3>From noticing to improving</h3><p className="np-guide-context">The highlighted stage is where this Challenge is now.</p><ul>{STAGE_ORDER.map(stage => <li key={stage} data-stage={stage}><i className={`np-stage-color stage-${stage}`} /><strong>{STAGE_STAMP[stage]}<small className="np-stage-now">Current stage</small></strong><span>{STAGE_MEANING[stage]}</span></li>)}</ul>
