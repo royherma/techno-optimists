@@ -31,3 +31,9 @@ V2 Challenge routes share the existing Worker fallback for newly published Chall
 - Styles split into newspaper shell and content compositions. Classic styles remain scoped to their existing pages.
 
 Use `node scripts/preview-editorial.mjs` after a production-API build for a read-only local preview. Use the normal local Worker for form tests. Do not publish test Challenges to production.
+
+## Account controls
+
+Shared V2 form controls live in `styles/newspaper/controls.css`. Keep native selects with a consistent caret, paper field, focus ring and comfortable target size. Selected roles have an explicit checkmark plus a stronger border; tint alone is insufficient. Profile fields and the roles/skills workspace use desktop columns so Save remains with the fields. Phone layouts preserve page turns and mounted drafts. Activity rows underline their title on hover rather than every child.
+
+For populated visual QA without touching a real account, run `node scripts/preview-editorial.mjs 4340 --account-fixture` after a production-API build. The fixture is local-only, uses a fictional person and public Challenges, and refuses writes.
