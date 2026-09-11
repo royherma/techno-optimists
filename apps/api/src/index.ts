@@ -551,8 +551,37 @@ app.get('/api/challenges/:slug', async (c) => {
   })
 })
 
+// Personalized state is never shared through a browser or edge cache.
+app.get('/api/challenges/:slug/actions/me', async (c) => {
+  c.header('Cache-Control', 'private, no-store')
+  const me = await currentPerson(c)
+  if (!me) return c.json({ mine: [] })
+  const rows = await c.env.DB.prepare(
+    `SELECT a.kind FROM challenge_actions a JOIN challenges c ON c.id = a.challenge_id
+     WHERE c.slug = ? AND a.person_id = ?`,
+  ).bind(c.req.param('slug'), me.id).all()
+  return c.json({ mine: rows.results.map((r) => r.kind) })
+})
+
+app.get('/api/people/me/activity', async (c) => {
+  c.header('Cache-Control', 'private, no-store')
+  const me = await currentPerson(c)
+  if (!me) return c.json({ error: 'sign_in_required' }, 401)
+  const page = Math.max(0, Math.floor(Number(c.req.query('page')) || 0))
+  const rows = await c.env.DB.prepare(
+    `SELECT c.slug, c.title, c.summary, c.type, c.stage, c.media, c.location,
+       GROUP_CONCAT(a.kind) kinds, MAX(a.created_at) marked_at
+     FROM challenge_actions a JOIN challenges c ON c.id = a.challenge_id
+     WHERE a.person_id = ? GROUP BY c.id ORDER BY marked_at DESC, c.id LIMIT 51 OFFSET ?`,
+  ).bind(me.id, page * 50).all()
+  return c.json({ items: rows.results.slice(0, 50).map((r) => ({ ...r,
+    media: json<Media[]>(r.media, []), kinds: String(r.kinds).split(','),
+  })), next_page: rows.results.length > 50 ? page + 1 : null })
+})
+
 const actionBody = z.object({
   kind: z.enum(ACTION_KINDS),
+  active: z.boolean().default(true),
   help_kind: z.enum(HELP_KINDS).optional(),
   note: z.string().max(500).optional(),
 })
@@ -562,7 +591,7 @@ const actionBody = z.object({
 app.post('/api/challenges/:slug/action', async (c) => {
   const parsed = actionBody.safeParse(await c.req.json().catch(() => null))
   if (!parsed.success) return c.json({ error: 'bad_body', detail: parsed.error.issues }, 400)
-  const { kind, help_kind, note } = parsed.data
+  const { kind, active, help_kind, note } = parsed.data
 
   const me = await currentPerson(c)
   if (!me) return c.json({ error: 'sign_in_required' }, 401)
@@ -572,12 +601,14 @@ app.post('/api/challenges/:slug/action', async (c) => {
   if (!challenge) return c.json({ error: 'not_found' }, 404)
 
   await c.env.DB.batch([
-    c.env.DB.prepare(
+    active ? c.env.DB.prepare(
       `INSERT INTO challenge_actions (challenge_id, person_id, kind, help_kind, note)
        VALUES (?, ?, ?, ?, ?)
        ON CONFLICT (challenge_id, person_id, kind) DO UPDATE SET
          help_kind = excluded.help_kind, note = excluded.note`,
-    ).bind(challenge.id, personId, kind, help_kind ?? null, note ?? null),
+    ).bind(challenge.id, personId, kind, help_kind ?? null, note ?? null)
+      : c.env.DB.prepare('DELETE FROM challenge_actions WHERE challenge_id = ? AND person_id = ? AND kind = ?')
+        .bind(challenge.id, personId, kind),
     c.env.DB.prepare("UPDATE challenges SET last_activity_at = datetime('now') WHERE id = ?").bind(challenge.id),
   ])
 
@@ -588,7 +619,8 @@ app.post('/api/challenges/:slug/action', async (c) => {
 
   const real: Record<string, number> = {}
   for (const a of ((counts.results ?? []) as Row[])) real[String(a.kind)] = Number(a.n)
-  return c.json({ ok: true, actions: mergeActions(real, seed?.seed_actions) })
+  c.header('Cache-Control', 'private, no-store')
+  return c.json({ ok: true, active, actions: mergeActions(real, seed?.seed_actions) })
 })
 
 /* -------------------------------------------------------------------------- */

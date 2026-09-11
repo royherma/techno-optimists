@@ -63,7 +63,7 @@ export default function WorldPlate({
       viewBox={`0 0 ${ATLAS_W} ${ATLAS_H}`}
       className={`block w-full ${onPick ? 'cursor-crosshair' : ''} ${className}`}
       onClick={pick}
-      role={onPick ? 'application' : 'img'}
+      role={onPick ? 'application' : 'group'}
       aria-label={onPick ? 'World map. Click to place this Challenge.' : 'World map of Challenges'}
     >
       <rect x="0" y="0" width={ATLAS_W} height={ATLAS_H} fill="var(--color-paper-sunk)" />
@@ -100,8 +100,9 @@ export default function WorldPlate({
           </>
         )
         return p.href ? (
-          <a key={i} href={p.href} className="map-pin" data-feed-pin data-type={p.type} data-search={p.search}>
+          <a key={i} href={p.href} aria-label={p.label} className="map-pin" data-feed-pin data-type={p.type} data-search={p.search}>
             {p.label && <title>{p.label}</title>}
+            <circle cx={x} cy={y} r={Math.max(p.r + 6, 16)} fill="transparent" className="pin-hit" />
             {mark}
           </a>
         ) : (

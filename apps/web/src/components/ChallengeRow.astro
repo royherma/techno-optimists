@@ -90,9 +90,9 @@ const ACTIONS = ['have_problem', 'have_idea', 'can_help', 'will_test'] as const
         whose first principle is that browsing comes before contributing
         cannot be text-only on the device most people browse it on.
       -->
-      <a href={`/c/${c.slug}`} class="w-20 shrink-0 sm:w-28">
+      {hero && <a href={`/c/${c.slug}`} class="w-20 shrink-0 sm:w-28">
         <MediaPlate media={hero} fit="cover" eager={priority} min={0.75} max={1.6} class="w-full" />
-      </a>
+      </a>}
 
       <div class="min-w-0">
         <a href={`/c/${c.slug}`} class="block">

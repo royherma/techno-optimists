@@ -4,6 +4,7 @@ import Sheet from '../components/Sheet.astro'
 import BrowseFrame from '../components/BrowseFrame.astro'
 import '../styles/map.css'
 import PostFab from '../components/PostFab.astro'
+import MediaPlate from '../components/MediaPlate.astro'
 import WorldPlate from '../components/WorldPlate.tsx'
 import { getFeed } from '../lib/api'
 import { TYPE_LABEL, depthScale, stageColor } from '../lib/vocab'
@@ -46,6 +47,14 @@ const depth = depthScale(challenges)
           }))}
         />
       </div>
+
+      <section class="map-preview" aria-label="Challenge preview">
+        <p data-preview-hint>Hover over a pin, use Tab, or tap to preview a Challenge.</p>
+        {placed.map((c) => <a href={`/c/${c.slug}`} data-map-preview={c.slug} hidden>
+          {c.media[0] && <div class="map-preview-media"><MediaPlate media={c.media[0]} fit="cover" /></div>}
+          <span><small>{c.location} · {c.stage}</small><strong>{c.title}</strong><span>{c.summary}</span><b>Explore Challenge →</b></span>
+        </a>)}
+      </section>
 
       <p class="mt-4 font-[family-name:var(--font-mono)] text-[0.7rem] uppercase tracking-[0.06em] text-(--color-ink-faint)">
         {placed.length} placed
@@ -96,4 +105,29 @@ const depth = depthScale(challenges)
 <script>
   import { initFeedFilters } from '../lib/feed-filters'
   initFeedFilters()
+  const previews = document.querySelectorAll<HTMLElement>('[data-map-preview]')
+  const pins = document.querySelectorAll<SVGAElement>('[data-feed-pin]')
+  let selected = ''
+  function preview(href: string) {
+    selected = href.split('/c/')[1] ?? ''
+    previews.forEach((el) => { el.hidden = el.dataset.mapPreview !== selected })
+    document.querySelector<HTMLElement>('[data-preview-hint]')!.hidden = !!selected
+    pins.forEach((pin) => pin.classList.toggle('is-previewed', pin.getAttribute('href') === href))
+  }
+  pins.forEach((pin) => {
+    const href = pin.getAttribute('href')!
+    pin.addEventListener('pointerenter', (e) => { if (e.pointerType !== 'touch') preview(href) })
+    pin.addEventListener('focus', () => preview(href))
+    pin.addEventListener('click', (e) => {
+      if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return
+      e.preventDefault()
+      preview(href)
+    })
+    pin.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { preview(''); pin.blur() }
+    })
+  })
+  window.addEventListener('feed-updated', () => {
+    if (selected && !Array.from(pins).some((p) => p.getAttribute('href') === `/c/${selected}` && !p.hidden && p.style.display !== 'none')) preview('')
+  })
 </script>

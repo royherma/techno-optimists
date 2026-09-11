@@ -63,7 +63,7 @@ const tint = media?.tint ?? 'var(--color-paper-sunk)'
     <video
       src={media.url}
       class:list={['h-full w-full', fit === 'cover' ? 'object-cover' : 'object-contain']}
-      muted playsinline preload="metadata"
+      controls={fit === 'contain'} muted={fit === 'cover'} playsinline preload="metadata"
     ></video>
   ) : media ? (
     <img
