@@ -8,6 +8,14 @@ const { view = 'index' } = Astro.props
 const base = view === 'map' ? '/map' : '/'
 ---
 <AppToolbar view={view}>
+  <!--
+    The first tab clears the type filter, so its href is the current view with
+    no query - on the map that is `/map`, the same address as AppToolbar's Map
+    view link. The href stays, because these are real URLs that must work
+    before the filter script loads; the label is what changed. "Everything"
+    read as a place to go, sitting beside a link of the same address that
+    really is one. "All types" names the filter it belongs to.
+  -->
   <nav class="type-tabs" aria-label="Filter by type"><a href={base} data-type-filter="" aria-current="page">All types</a>{CHALLENGE_TYPES.map(t => <a href={`${base}?type=${t}`} data-type-filter={t}>{TYPE_LABEL[t]}</a>)}</nav>
   <Fragment slot="actions"><button class="search-toggle" aria-label="Search Challenges" aria-expanded="false" aria-controls="feed-search"><Icon name="magnifying-glass" /></button><SessionNav client:load /></Fragment>
 </AppToolbar>
