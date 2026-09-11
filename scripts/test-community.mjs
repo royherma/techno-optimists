@@ -8,7 +8,7 @@ let cookie = ''
 async function api(path, method = 'GET', body) {
   return fetch(base + path, { method, headers: { 'content-type': 'application/json', ...(cookie ? { cookie } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) })
 }
-const auth = await api('/api/auth/request', 'POST', { email: 'royherma@gmail.com' })
+const auth = await api('/api/auth/request', 'POST', { email: 'qa-admin@example.test' })
 assert.equal(auth.status, 200)
 const { dev_link } = await auth.json()
 assert(dev_link, 'A local-only magic link is required')

@@ -35,7 +35,7 @@ afterEach(() => sqlite.close())
 const request = (path: string, method = 'GET', body?: unknown, signed = true, origin?: string) => app.request(`https://site.test/api/challenges/${path}`, {
   method, headers: { 'content-type': 'application/json', ...(signed ? { cookie: `to_session=${token}` } : {}), ...(origin ? { origin } : {}) },
   ...(body ? { body: JSON.stringify(body) } : {}),
-}, { DB })
+}, { DB, ADMIN_EMAILS: 'qa-admin@example.test' })
 const comment = (extra = {}) => ({ body: 'What about a covered bin?', request_id: crypto.randomUUID(), ...extra })
 
 describe('community permissions and persistence', () => {
@@ -49,7 +49,7 @@ describe('community permissions and persistence', () => {
     expect(sqlite.prepare('SELECT emoji FROM challenges WHERE id=?').get('c1')?.emoji).toBeNull()
   })
   it('saves and clears emoji for an authenticated admin only', async () => {
-    sqlite.exec("UPDATE identities SET email='royherma@gmail.com', is_admin=1 WHERE person_id='p1'")
+    sqlite.exec("UPDATE identities SET email='qa-admin@example.test', is_admin=1 WHERE person_id='p1'")
     expect((await request('one/editorial', 'PATCH', { emoji: '🐦', title: 'An improved title' })).status).toBe(200)
     expect((await (await request('one')).json()).challenge.emoji).toBe('🐦')
     expect((await request('one/editorial', 'PATCH', { emoji: '🐦🌱' })).status).toBe(400)
