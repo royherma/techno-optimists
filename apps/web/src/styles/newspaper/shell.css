@@ -160,3 +160,33 @@ body:has(.newspaper) { background: #f7f4eb; }
 .np-rings-scale>div { flex:1; min-width:0; }
 .np-rings-scale span { text-transform:capitalize; text-align:center; font-size:9px; max-width:58px; overflow-wrap:anywhere; }
 .np-stage-color { border-radius:50%; }
+
+/*
+ * The legend teaches the three marks, so its rows have to answer the pointer -
+ * a reader who hovers a ring tier and gets nothing concludes the sheet is a
+ * picture. Rows are informational (.feedback-row semantics: the glyph moves,
+ * the row does not lift); the two anchors are real controls and lift.
+ * Durations and easing are the shared tokens, never new ones.
+ */
+@media(prefers-reduced-motion:no-preference) {
+  .np-rings-scale>div,
+  .np-legend-stages li,
+  .np-legend-actions li { transition:background-color var(--ease-ink); }
+  .np-rings-scale>div svg,
+  .np-legend-stages .np-stage-color,
+  .np-legend-actions img { transition:transform var(--feedback-duration) var(--feedback-ease); }
+  .np-latest>a,
+  .np-arrow-link { transition:transform var(--feedback-duration) var(--feedback-ease), color var(--ease-ink); }
+  .np-arrow-link>span { transition:transform var(--feedback-duration) var(--feedback-ease); }
+}
+@media (hover:hover) and (pointer:fine) {
+  .np-rings-scale>div:hover,
+  .np-legend-stages li:hover,
+  .np-legend-actions li:hover { background-color:var(--color-paper-sunk); }
+  .np-rings-scale>div:hover svg { transform:scale(1.08); }
+  .np-legend-stages li:hover .np-stage-color { transform:scale(1.25); }
+  .np-legend-actions li:hover img { transform:translateY(-2px) rotate(-5deg); }
+  .np-latest>a:hover,
+  .np-arrow-link:hover { color:var(--np-red); }
+  .np-arrow-link:hover>span { transform:translateX(3px); }
+}
