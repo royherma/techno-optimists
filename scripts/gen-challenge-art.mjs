@@ -7,17 +7,20 @@
 // nothing. --write actually spends money, so the expensive direction is the one
 // you ask for by name - same contract as import-challenges.mjs.
 //
-// WHY A GRID. Each call to the image model is billed per image, not per pixel:
-// one 2x2 costs the same as one single illustration. Measured 2026-09-11,
-// gen-1789105522: $0.03362925 for one 1024x1024 call. So nine cards drawn one
-// at a time cost ~$0.30, and the same nine drawn as three 2x2 grids cost ~$0.10.
-// The grid is sliced back into four tiles locally, which is free.
+// TWO BACKENDS, AND THE FREE ONE IS THE DEFAULT.
 //
-// WHY 2x2 AND NOT 3x3. 3x3 would be cheaper still (~$0.03 for nine) but the
-// model refuses 2K for this slug - verified, the provider answers
-// "Image size 2K is not supported for this model" - so 1024 is the ceiling and
-// a 3x3 tile is only 341px. The cards are aspect-[4/3] with object-cover, so a
-// 341px tile is visibly soft. 512px from a 2x2 is not.
+// local (default): local-imagegen on :4750, model x/flux2-klein:4b on pinned
+// Ollama 0.32.5. Costs nothing - it runs on this machine. One call per card,
+// drawn straight at the card's own 4:3, because with no per-call charge there
+// is nothing left for a grid to save.
+//
+// paid (--paid): OpenRouter google/gemini-3.1-flash-lite-image at $0.03362925
+// a call, measured. Here the billing is per image rather than per pixel, so
+// this path asks for a 2x2 grid and slices it into four tiles locally: nine
+// cards cost ~$0.10 instead of ~$0.30. 2x2 and not 3x3 because the provider
+// refuses 2K for this model ("Image size 2K is not supported for this model"),
+// making 1024 the ceiling - a 3x3 tile is 341px, visibly soft in a 4:3 card,
+// where a 2x2 tile is 512px.
 //
 // The output lands in apps/web/public/seed/<slug>.png and is attached to the
 // Challenge by rewriting the batch file's `media` array, so the existing import
@@ -32,17 +35,44 @@ import { join } from 'node:path'
 const GEN = join(homedir(), '.claude/skills/gen-image/gen_image.sh')
 const SLICE = join(homedir(), '.claude/skills/slice-grid-image/bin/slice.py')
 const SEED_DIR = 'apps/web/public/seed'
-const CELLS = 4 // 2x2
-const TILE = 512 // 1024 / 2
+const CELLS = 4 // 2x2, paid backend only
+
+// The card is aspect-[4/3] with object-cover (ChallengeCard.astro:15), so the
+// local backend draws that ratio directly and nothing gets cropped away. 688x512
+// is the 4:3 the local model has real timings for: 13.2s median, against 17.1s
+// for a square that would then lose a quarter of its height to the crop.
+const CARD_W = 688
+const CARD_H = 512
+const STEPS = 6
+const LOCAL_BASE = 'http://localhost:4750'
 
 const argv = process.argv.slice(2)
 const write = argv.includes('--write')
+const paid = argv.includes('--paid')
 const file = argv.find((a) => !a.startsWith('--'))
 
 if (!file) {
-  console.error('usage: gen-challenge-art.mjs <batch.json> [--write]')
+  console.error('usage: gen-challenge-art.mjs <batch.json> [--write] [--paid]')
   process.exit(2)
 }
+
+/*
+ * LOCAL IS THE DEFAULT, AND SPENDING MONEY HAS TO BE ASKED FOR BY NAME.
+ *
+ * local-imagegen (sibling folder) generates on hardware already paid for, at
+ * $0, from a model pinned on Ollama 0.32.5. The first version of this script
+ * ignored it and billed OpenRouter $0.0336 a call, then built a 2x2 grid to get
+ * nine cards down to $0.10 - real optimisation pointed at the wrong number,
+ * because the right number was zero the whole time.
+ *
+ * A rule written in a doc gets read past. This is the same rule as a flag, so
+ * the paid path cannot be taken by a session that simply did not think to look.
+ */
+const BACKENDS = {
+  local: { label: 'local-imagegen (x/flux2-klein:4b, $0)', perCallUsd: 0 },
+  paid: { label: 'OpenRouter google/gemini-3.1-flash-lite-image', perCallUsd: 0.03362925 },
+}
+const backend = paid ? 'paid' : 'local'
 
 const batch = JSON.parse(readFileSync(file, 'utf8'))
 const rows = Array.isArray(batch) ? batch : batch.challenges
@@ -110,26 +140,41 @@ const FILLER = 'an empty dirt path between low trees, nothing in the foreground'
  * across a tank despite being told once. Repetition in different words is what
  * actually suppresses it.
  */
-const promptFor = (cells) => {
+const STYLE = 'flat vector editorial illustration, muted earth-tone palette, simple bold shapes, no gradients'
+const NO_TEXT = 'No text anywhere. No letters, no words, no numbers, no labels, no signage, no writing on any object.'
+
+const promptFor = (cells, { single = false } = {}) => {
+  if (single) return `${cap(STYLE)}: ${PANELS[slugify(cells[0].title)]}. ${NO_TEXT}`
+
   const panels = Array.from({ length: CELLS }, (_, i) =>
     `${QUADRANT[i]}: ${cells[i] ? PANELS[slugify(cells[i].title)] : FILLER}.`).join(' ')
-  return `A 2x2 grid of four separate flat vector editorial illustrations, divided by thick black lines into four equal panels. ` +
-    `Every panel shares one muted earth-tone palette, simple bold shapes, no gradients. ${panels} ` +
-    `No text anywhere. No letters, no words, no numbers, no labels, no signage, no writing on any object.`
+  return `A 2x2 grid of four separate ${STYLE.replace('flat vector editorial illustration', 'flat vector editorial illustrations')}, ` +
+    `divided by thick black lines into four equal panels. ${panels} ${NO_TEXT}`
 }
 
-const plan = grids.map((cells, i) => ({
+function cap(s) { return s[0].toUpperCase() + s.slice(1) }
+
+// Local draws one card at a time, so its "grid" is a group of one. Keeping both
+// backends on the same plan shape means the reporting below has no branches.
+const groups = backend === 'local' ? rows.map((r) => [r]) : grids
+
+const plan = groups.map((cells, i) => ({
   grid: i + 1,
+  cells,
   slugs: cells.map((c) => slugify(c.title)),
-  prompt: promptFor(cells),
+  prompt: backend === 'local' ? null : promptFor(cells),
 }))
 
-console.log(`${write ? 'GENERATING' : 'DRY RUN'}  ${rows.length} challenges in ${grids.length} grid(s) of ${CELLS}`)
+const calls = backend === 'local' ? rows.length : grids.length
+console.log(`${write ? 'GENERATING' : 'DRY RUN'}  ${rows.length} challenges, ${calls} call(s) via ${BACKENDS[backend].label}`)
 for (const p of plan) {
-  console.log(`  grid ${p.grid}: ${p.slugs.join(', ')}${p.slugs.length < CELLS ? ` (+${CELLS - p.slugs.length} filler)` : ''}`)
+  const filler = backend === 'paid' && p.slugs.length < CELLS ? ` (+${CELLS - p.slugs.length} filler)` : ''
+  console.log(`  ${backend === 'local' ? 'card' : 'grid'} ${p.grid}: ${p.slugs.join(', ')}${filler}`)
 }
-// One call per grid at the measured per-call price, not a per-image estimate.
-console.log(`  est. cost: ${grids.length} x $0.0336 = $${(grids.length * 0.03362925).toFixed(4)}`)
+// The measured per-call price, never a modelled one. Local is free, so it says
+// free rather than printing a tidy $0.0000 that looks like a rounded charge.
+const cost = calls * BACKENDS[backend].perCallUsd
+console.log(`  cost: ${cost === 0 ? '$0 (local hardware)' : `${calls} x $0.0336 = $${cost.toFixed(4)}`}`)
 
 if (!write) {
   console.log('Nothing generated. Re-run with --write to apply.')
@@ -143,44 +188,84 @@ mkdirSync(work, { recursive: true })
 const sharp = (await import('sharp')).default
 const written = []
 
+/*
+ * The local server generates to its OWN outputs/ directory and answers with
+ * {saved:[{path}], errors, requested} - it hands back a path on disk, never
+ * base64. Verified 2026-09-11: a probe that assumed an `image` string got
+ * `top-level keys: saved, errors, requested` and no picture, while the PNG sat
+ * on disk the whole time.
+ */
+const genLocal = async (prompt, dest) => {
+  const res = await fetch(`${LOCAL_BASE}/api/gen`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ prompt, width: CARD_W, height: CARD_H, steps: STEPS }),
+  })
+  if (!res.ok) throw new Error(`local /api/gen http ${res.status}: ${(await res.text()).slice(0, 300)}`)
+
+  const body = await res.json()
+  for (const e of body.errors ?? []) throw new Error(`local gen failed: ${e.error ?? JSON.stringify(e)}`)
+
+  const src = body.saved?.[0]?.path
+  if (!src) throw new Error(`local gen returned no saved path. keys: [${Object.keys(body).join(', ')}]`)
+
+  writeFileSync(dest, readFileSync(src))
+}
+
 for (const p of plan) {
-  const gridPath = join(work, `grid-${p.grid}.png`)
-  process.stdout.write(`grid ${p.grid}/${grids.length}: generating... `)
+  if (backend === 'local') {
+    // One call per card. There is no per-call charge to amortise, so a grid
+    // would buy nothing and cost sharpness - this draws straight at the card's
+    // own 4:3 instead of cropping a square.
+    for (const [i, slug] of p.slugs.entries()) {
+      const dest = join(SEED_DIR, `${slug}.png`)
+      const started = Date.now()
+      process.stdout.write(`  ${slug} ... `)
+      await genLocal(promptFor([p.cells[i]], { single: true }), dest)
+      console.log(`${((Date.now() - started) / 1000).toFixed(1)}s`)
+      written.push({ slug, dest })
+    }
+  } else {
+    const gridPath = join(work, `grid-${p.grid}.png`)
+    process.stdout.write(`grid ${p.grid}/${grids.length}: generating... `)
 
-  // Inherits OPENROUTER_API_KEY from the environment, which is where
-  // gen_image.sh reads it from. stdio inherit so its heartbeat and the Gen ID
-  // land in this log rather than disappearing into a buffer.
-  execFileSync('bash', [GEN, '--size', '1K', '--aspect', '1:1', '--out', gridPath, p.prompt], {
-    stdio: ['ignore', 'inherit', 'inherit'],
-    timeout: 300_000,
-  })
+    // Inherits OPENROUTER_API_KEY from the environment, which is where
+    // gen_image.sh reads it from. stdio inherit so its heartbeat and the Gen ID
+    // land in this log rather than disappearing into a buffer.
+    execFileSync('bash', [GEN, '--size', '1K', '--aspect', '1:1', '--out', gridPath, p.prompt], {
+      stdio: ['ignore', 'inherit', 'inherit'],
+      timeout: 300_000,
+    })
 
-  if (!existsSync(gridPath)) {
-    console.error(`grid ${p.grid}: gen-image exited 0 but wrote no file at ${gridPath}`)
-    process.exit(1)
+    if (!existsSync(gridPath)) {
+      console.error(`grid ${p.grid}: gen-image exited 0 but wrote no file at ${gridPath}`)
+      process.exit(1)
+    }
+
+    const tileDir = join(work, `tiles-${p.grid}`)
+    execFileSync('python3', [SLICE, gridPath, '--rows', '2', '--cols', '2', '--out-dir', tileDir, '--prefix', 'panel'], {
+      stdio: ['ignore', 'pipe', 'inherit'],
+    })
+
+    for (const [i, slug] of p.slugs.entries()) {
+      writeFileSync(join(SEED_DIR, `${slug}.png`), readFileSync(join(tileDir, `panel-${i + 1}.png`)))
+      written.push({ slug, dest: join(SEED_DIR, `${slug}.png`) })
+    }
   }
+}
 
-  const tileDir = join(work, `tiles-${p.grid}`)
-  execFileSync('python3', [SLICE, gridPath, '--rows', '2', '--cols', '2', '--out-dir', tileDir, '--prefix', 'panel'], {
-    stdio: ['ignore', 'pipe', 'inherit'],
-  })
-
-  for (const [i, slug] of p.slugs.entries()) {
-    const tile = join(tileDir, `panel-${i + 1}.png`)
-    const dest = join(SEED_DIR, `${slug}.png`)
-    const img = sharp(tile)
-    const { width, height } = await img.metadata()
-
-    // The card paints `tint` behind the image while it loads, so it wants the
-    // average colour of the art rather than a guess. One pixel of resize is the
-    // cheapest honest average available.
-    const { data } = await img.clone().resize(1, 1, { fit: 'cover' }).raw().toBuffer({ resolveWithObject: true })
-    const tint = `#${[data[0], data[1], data[2]].map((n) => n.toString(16).padStart(2, '0')).join('')}`
-
-    writeFileSync(dest, readFileSync(tile))
-    written.push({ slug, dest, w: width, h: height, tint })
-    console.log(`  ${slug}.png  ${width}x${height}  tint ${tint}`)
-  }
+// Dimensions and tint are read off the finished file rather than assumed, so
+// they stay right whichever backend drew it. The card paints `tint` behind the
+// image while it loads, so it wants the art's average colour - one pixel of
+// resize is the cheapest honest average there is.
+for (const art of written) {
+  const img = sharp(art.dest)
+  const meta = await img.metadata()
+  const { data } = await img.clone().resize(1, 1, { fit: 'cover' }).raw().toBuffer({ resolveWithObject: true })
+  art.w = meta.width
+  art.h = meta.height
+  art.tint = `#${[data[0], data[1], data[2]].map((n) => n.toString(16).padStart(2, '0')).join('')}`
+  console.log(`  ${art.slug}.png  ${art.w}x${art.h}  tint ${art.tint}`)
 }
 
 /*
