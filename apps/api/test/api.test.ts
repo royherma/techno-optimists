@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { app, json, mergeActions, track } from '../src/index'
+import { app, json, mergeActions, overRateLimit, secured, track } from '../src/index'
 import { ACTION_KINDS, EMPTY_ACTIONS } from '../../../packages/types/index'
 
 describe('json', () => {
@@ -327,5 +327,144 @@ describe('changing your own profile', () => {
     }, env())
     // No session, so 401 comes first - the point is it does not 500.
     expect([400, 401]).toContain(r.status)
+  })
+})
+
+/**
+ * The limiter is a query, so it is testable without a database: these assert
+ * the thresholds and the null-IP branch, which is where an off-by-one or a
+ * `ip = NULL` comparison would quietly disable half of it.
+ */
+describe('sign-in is rate limited', () => {
+  const counts = (by_email: number, by_ip: number) => ({
+    prepare: () => ({
+      bind: function () { return this },
+      first: async () => ({ by_email, by_ip }),
+    }),
+  }) as unknown as D1Database
+
+  it('allows a request below both limits', async () => {
+    expect(await overRateLimit(counts(4, 19), 'a@b.com', '1.2.3.4')).toBe(false)
+  })
+
+  it('refuses the sixth request from one address within the hour', async () => {
+    expect(await overRateLimit(counts(5, 0), 'a@b.com', '1.2.3.4')).toBe(true)
+  })
+
+  it('refuses the twenty-first request from one IP', async () => {
+    expect(await overRateLimit(counts(0, 20), 'a@b.com', '1.2.3.4')).toBe(true)
+  })
+
+  it('still applies the per-address limit when there is no IP header', async () => {
+    // A local curl has no CF-Connecting-IP. Sign-in must still work, and the
+    // address limit must still bite.
+    expect(await overRateLimit(counts(0, 0), 'a@b.com', null)).toBe(false)
+    expect(await overRateLimit(counts(5, 0), 'a@b.com', null)).toBe(true)
+  })
+
+  it('does not refuse on an IP count when the caller has no IP', async () => {
+    // `ip = NULL` is never true in SQL so by_ip is 0 in practice, but if it
+    // ever were not, a null caller must not inherit someone else's count.
+    expect(await overRateLimit(counts(0, 99), 'a@b.com', null)).toBe(false)
+  })
+
+  it('refuses a real request rather than sending mail', async () => {
+    const overLimit = {
+      prepare: () => ({
+        bind: function () { return this },
+        first: async () => ({ by_email: 5, by_ip: 0 }),
+      }),
+      batch: async () => { throw new Error('must not write a link when over the limit') },
+    }
+    const r = await app.request('/api/auth/request', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: 'a@b.com' }),
+    }, { DB: overLimit as unknown as D1Database, ENVIRONMENT: 'dev' })
+    expect(r.status).toBe(429)
+    // The refusal must not confirm the address exists or which limit tripped.
+    expect(await r.text()).not.toMatch(/email|address|hour/i)
+  })
+})
+
+/**
+ * Anyone signed in may add to the progress log. Moving the Challenge along its
+ * lifecycle rewrites the object itself, and belongs to whoever owns it.
+ */
+describe('only the author moves a Challenge to a new stage', () => {
+  const session = { cookie: 'to_session=' + 'b'.repeat(64) }
+  // currentPerson() resolves first, then the challenge row. stubSeq answers in
+  // that order.
+  const db = (authorId: string) => stubSeq(
+    { id: 'p_me', handle: 'me', name: 'Me', avatar_url: null, location: null, roles: '[]', email: 'me@b.com', is_admin: 0 },
+    { id: 'c_1', author_id: authorId },
+  ) as unknown as D1Database
+
+  const post = (authorId: string, body: unknown) =>
+    app.request('/api/challenges/a-slug/updates', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...session },
+      body: JSON.stringify(body),
+    }, { DB: db(authorId) })
+
+  it('refuses a stage change on someone else\'s Challenge', async () => {
+    const r = await post('p_someone_else', { body: 'done', stage: 'learn' })
+    expect(r.status).toBe(403)
+  })
+
+  it('lets the author move their own', async () => {
+    const r = await post('p_me', { body: 'done', stage: 'learn' })
+    expect(r.status).toBe(201)
+  })
+
+  it('still lets a stranger post an update with no stage', async () => {
+    const r = await post('p_someone_else', { body: 'I tried this too' })
+    expect(r.status).toBe(201)
+  })
+})
+
+/**
+ * Set in one place so no route can be added later that misses them. The two
+ * that need asserting are frame-ancestors (a <meta> CSP cannot carry it, so
+ * without the header the page is frameable) and the API's own CSP (a JSON
+ * response opened in a tab has no Astro meta tag at all).
+ */
+describe('every response carries the security headers', () => {
+  const get = async (path: string, proto = 'https') => {
+    const res = await app.fetch(new Request(`${proto}://example.com${path}`), env() as never)
+    return secured(res, new Request(`${proto}://example.com${path}`))
+  }
+
+  it('denies framing', async () => {
+    const r = await get('/api/health')
+    expect(r.headers.get('content-security-policy')).toContain("frame-ancestors 'none'")
+  })
+
+  it('sets nosniff and a referrer policy', async () => {
+    const r = await get('/api/health')
+    expect(r.headers.get('x-content-type-options')).toBe('nosniff')
+    expect(r.headers.get('referrer-policy')).toBe('strict-origin-when-cross-origin')
+  })
+
+  it('sends HSTS over https', async () => {
+    const r = await get('/api/health')
+    expect(r.headers.get('strict-transport-security')).toMatch(/max-age=31536000/)
+  })
+
+  it('omits HSTS on plain http, so local dev is not pinned to https for a year', async () => {
+    const r = await get('/api/health', 'http')
+    expect(r.headers.get('strict-transport-security')).toBeNull()
+  })
+
+  it('denies everything on an API response, which renders nothing', async () => {
+    const r = await get('/api/health')
+    expect(r.headers.get('content-security-policy')).toContain("default-src 'none'")
+  })
+
+  it('does not restate script-src on a page, which would override Astro\'s hashes', async () => {
+    // Two policies intersect per directive. A 'self' here would beat the
+    // per-build hashes in the meta tag and break island hydration.
+    const r = await get('/')
+    expect(r.headers.get('content-security-policy')).not.toContain('script-src')
   })
 })
