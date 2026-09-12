@@ -174,7 +174,7 @@ Set `SCOUT_ENABLED: "false"` and deploy to pause ingestion.
 
 The remote runner alternates Nepali Times and Mongabay RSS feeds, fetching at most
 two new articles per six-hour slot. It classifies type, stage, reach and severity
-with Workers AI, requires a fresh publication date and an exact measurement quote,
+with Workers AI Llama 3.3 70B (8,000 source characters maximum), requires a fresh publication date and an exact measurement quote,
 and audits the full narrative in a separate inference. Uncertain drafts go to
 private KV keys `scout:review:*`; transient failures retry after a day. The audit
 is automated evidence checking, not independent fact verification. Status is
