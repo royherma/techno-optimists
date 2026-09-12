@@ -338,5 +338,6 @@ Provider references: [Ollama chat](https://docs.ollama.com/api/chat),
 
 - [Project brief](PROJECT_BRIEF.yaml): approved goals, funnel metrics, focus and operating boundaries.
 - [Project health](PROJECT_HEALTH.yaml): product, data and reporting check definitions.
+- [Project questions](PROJECT_QUESTIONS.yaml): timestamped questions, reusable answer methods and measurement gaps.
 
 Measurement setup is pending. Unconfigured checks mean unknown health; these files do not prove the product or pipeline is healthy. Document the verified check command here once implemented.
