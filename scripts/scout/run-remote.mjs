@@ -28,7 +28,7 @@ await writeFile(path, JSON.stringify({
 }));
 let worker;
 try {
-  worker = await unstable_dev(resolve('scripts/scout/remote-entry.ts'), { config: path, ip: '127.0.0.1', port: 0, logLevel: 'error', experimental: { disableExperimentalWarning: true } });
+  worker = await unstable_dev(resolve('scripts/scout/remote-entry.ts'), { config: path, ip: '127.0.0.1', port: 0, logLevel: 'error', experimental: { disableExperimentalWarning: true, watch: false } });
   const sourceIndex = process.argv.indexOf('--source');
   const source = sourceIndex >= 0 ? process.argv[sourceIndex + 1] : process.env.SCOUT_SOURCE;
   const result = await worker.fetch(source ? `/?source=${encodeURIComponent(source)}` : '/', { method: 'POST', headers: { 'x-operator-run-token': token } });
