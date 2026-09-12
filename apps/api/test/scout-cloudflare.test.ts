@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { auditDraft, draftSchema, evidenceGate, feedLinks, fetchText, runScout, type Draft, type Source } from '../src/scout-cloudflare'
+import { articleDate, auditDraft, draftSchema, evidenceGate, feedLinks, fetchText, runScout, type Draft, type Source } from '../src/scout-cloudflare'
 const source: Source = { url: 'https://nepalitimes.com/news/classroom', title: 'School heat', date: '2026-09-01', text: 'In Nepalganj the classroom reached 39.8 degrees during afternoon lessons.' }
 const card: Draft = { eligible: true, reason: '', headline: 'This classroom reaches 39.8 degrees during lessons', body: 'The metal roof traps heat. The school has no electricity.', type: 'problem', stage: 'ideas', place: 'Nepalganj', country: 'Nepal', problem_key: 'classroom-heat', impact: 1, impact_reason: 'One classroom is documented.', severity: 'moderate', status: 'unsolved', status_note: 'No fix deployed at the source date.', confirms: 'the classroom reached 39.8 degrees', tags: ['heat'], image_subject: 'A classroom with a metal roof' }
 afterEach(() => vi.unstubAllGlobals())
@@ -38,6 +38,16 @@ describe('remote Scout evidence and network boundaries', () => {
   verdict.impact_supported=true
   vi.mocked(ai.run).mockResolvedValue({response:JSON.stringify(verdict)})
   expect(await auditDraft(ai,source,card)).toEqual([])
+ })
+ it('extracts publication metadata from an Article graph, ignoring unrelated schema dates', () => {
+  const html='<script type="application/ld+json">'+JSON.stringify({'@graph':[{'@type':'WebSite',datePublished:'2000-01-01'},{'@type':'NewsArticle',datePublished:'2026-09-12T09:00:00+05:30'}]})+'</script>'
+  expect(articleDate(html)).toBe('2026-09-12')
+ })
+ it('keeps same-host slash redirects on HTTPS', async () => {
+  const f=vi.fn().mockResolvedValueOnce(new Response(null,{status:301,headers:{location:'http://nepalitimes.com/news/classroom/'}})).mockResolvedValueOnce(new Response('article'))
+  vi.stubGlobal('fetch',f)
+  expect(await fetchText(source.url)).toBe('article')
+  expect(String(f.mock.calls[1][0])).toBe('https://nepalitimes.com/news/classroom/')
  })
  it('makes no network or AI calls when disabled or when the slot is already claimed', async () => {
   const ai = {run:vi.fn()}, fetcher = vi.fn()
