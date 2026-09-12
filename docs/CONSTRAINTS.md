@@ -11,8 +11,8 @@ A row leaves this file when the code stops making it true, and moves to the arch
 
 ## Generated art
 
-**Challenge illustrations generate on the local $0 model. A paid image API needs
-Roy saying so in the same breath.** `local-imagegen` (sibling folder) serves
+**The local illustration script defaults to the local $0 model. A paid image API needs
+Roy saying so in the same breath.** The remote Scout uses Workers AI FLUX.1 Schnell with a hard per-slot inference cap, within the shared daily free allocation at its intended volume; it does not enable paid billing. See the remote Scout section in README for the account-wide quota caveat. `local-imagegen` (sibling folder) serves
 `x/flux2-klein:4b` on pinned Ollama 0.32.5 at `localhost:4750` and costs nothing -
 it runs on this machine. The first version of `scripts/gen-challenge-art.mjs`
 reached for OpenRouter at $0.03362925 a call and built an elaborate 2x2-grid-and-slice
