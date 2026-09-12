@@ -1,0 +1,182 @@
+---
+schema_version: 1
+project_id: techno_optimists
+status: approved_pending_configuration
+brief_file: PROJECT_BRIEF.yaml
+purpose: Verify product vitals, measurement trust and report delivery before interpreting
+  growth.
+configuration:
+  state: unbound
+  rule: Bind each check to a real command/query, expected output, owner and freshness
+    limit before activation. Null configuration is unknown, never healthy. Approval
+    does not establish live health.
+  secrets: Reference credential names only; never store secrets in this file or reports.
+cadence:
+  proposed: Before each daily or overall report; reuse fresh evidence. Additional
+    polling requires separate scheduling approval.
+  freshness: Set per check from actual ingestion and reporting cadence; always include
+    checked_at and evidence_observed_at.
+checks:
+- id: product_available
+  category: product
+  severity: critical
+  required: true
+  assertion: The public entry point and required backend return expected content,
+    not merely HTTP 200.
+  method: Read-only request and content assertion
+  binding:
+  owner:
+  max_age_hours:
+  affects_metrics: []
+  last_result: not_run
+- id: feed_and_threads
+  category: product
+  severity: critical
+  required: true
+  assertion: The feed and representative thread pages show expected content, with
+    seeded content distinguished in measurement.
+  method: Read-only evidence where sufficient; synthetic execution only in an approved
+    isolated test environment
+  binding:
+  owner:
+  max_age_hours:
+  affects_metrics: []
+  last_result: not_run
+- id: core_journey
+  category: product
+  severity: critical
+  required: true
+  assertion: An authorized test account can follow or contribute to a thread; exclude
+    test activity from KPIs.
+  method: Read-only evidence where sufficient; synthetic execution only in an approved
+    isolated test environment
+  binding:
+  owner:
+  max_age_hours:
+  affects_metrics: []
+  last_result: not_run
+- id: metric_sources_accessible
+  category: data
+  severity: critical
+  required: true
+  assertion: Every metric source can be queried for the intended project/account and
+    reporting window; credentials are valid and pagination is complete.
+  method: Read-only query per configured source
+  binding:
+  owner:
+  max_age_hours:
+  affects_metrics:
+  - eligible_visitors
+  - activation_rate
+  - weekly_contributors
+  last_result: not_run
+- id: metric_data_valid
+  category: data
+  severity: critical
+  required: true
+  assertion: Required fields, timestamps and filters are present; totals reconcile
+    with their source, duplicates are excluded and rate denominators are valid. A
+    successful empty query is not automatically verified zero.
+  method: Validate returned data and source-specific completeness evidence
+  binding:
+  owner:
+  max_age_hours:
+  affects_metrics:
+  - eligible_visitors
+  - activation_rate
+  - weekly_contributors
+  last_result: not_run
+- id: event_pipeline_current
+  category: data
+  severity: critical
+  required: true
+  assertion: Required instrumentation is deployed and its last verified delivery satisfies
+    the configured freshness rule. No user activity alone is not evidence of pipeline
+    failure.
+  method: Inspect collector/job status and delivery evidence; use isolated tagged
+    test events only when authorized
+  binding:
+  owner:
+  max_age_hours:
+  affects_metrics:
+  - eligible_visitors
+  - activation_rate
+  - weekly_contributors
+  last_result: not_run
+- id: report_delivery
+  category: reporting
+  severity: critical
+  required: true
+  assertion: The scheduled report was generated for the intended period and its values
+    match the intended Sheet project tab, with source timestamps and no stale overwrite.
+  method: Read-only comparison of run receipt and destination data
+  binding:
+  owner:
+  max_age_hours:
+  affects_metrics: []
+  last_result: not_run
+evaluation:
+  check_states:
+  - pass
+  - fail
+  - unknown
+  - stale
+  - not_applicable
+  separate_dimensions:
+  - product
+  - data
+  - reporting
+  precedence:
+  - critical
+  - unknown
+  - degraded
+  - healthy
+  critical: Any fresh failed required critical check.
+  unknown: No known critical failure, but any required check is unbound, missing,
+    stale or cannot execute.
+  degraded: All required checks have fresh conclusive evidence, but at least one noncritical
+    check fails.
+  healthy: Every required applicable check has fresh passing evidence.
+  not_applicable: Requires an explicit reason and review; never use it to hide an
+    unconfigured required check.
+  rule: Evaluate each dimension independently and retain all failures and unknowns
+    even when showing an overall status. Status is a rule result, not an average score.
+result_contract:
+  location: Dated health results alongside the existing project reporting history;
+    definitions stay in this YAML.
+  required_fields:
+  - run_id
+  - project_id
+  - check_id
+  - status
+  - checked_at
+  - evidence_observed_at
+  - evidence_reference
+  - failure_reason
+  - affected_metric_ids
+  - next_action
+  - owner
+  rule: Never overwrite history with only the latest status; keep credentials and
+    personal records out of evidence excerpts.
+report_gate:
+  product_failure: Prioritize critical customer impact before increasing acquisition.
+    Other independently verified data can still be reported.
+  data_failure: Mark only affected metrics unavailable or partial; optionally show
+    the last verified value with its original date. Suppress unsupported trends and
+    target-health claims.
+  report_failure: Distinguish report/Sheet delivery failure from product failure.
+    Surface the failure through an already authorized channel.
+  unknown: Report that health is unverified and identify the missing binding or evidence.
+    Do not report GREEN.
+  recovery: Require a fresh passing check before declaring recovery; preserve the
+    incident and its resolution evidence.
+execution:
+  mode: read_only_setup
+  defaults: Read-only. This file does not authorize production writes, test-account
+    creation, purchases, payments or external messages.
+  retry: One retry for a transient read failure, then record the failure and continue
+    independent checks.
+  synthetics: Specify the test environment, account, allowed actions, cleanup and
+    analytics exclusions before running any synthetic that writes data.
+  alerts: Recommend an immediate alert for a new verified critical issue through an
+    authorized channel; deduplicate unchanged incidents and report verified recovery.

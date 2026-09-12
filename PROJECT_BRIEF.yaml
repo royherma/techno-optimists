@@ -1,0 +1,132 @@
+---
+schema_version: 1
+project_id: techno_optimists
+project_name: Techno Optimists
+status: approved_pending_measurement_setup
+updated_at: '2026-09-12'
+intended_repository: "/Users/royhermannn_new/Desktop/Development/techguyver-side-projects/techno-optimists"
+purpose:
+  audience: Curious people, people experiencing real problems, and people who can
+    help
+  value: Discover interesting real-world problems and contribute to understanding
+    or solving them
+  business_model: Unvalidated; prioritize genuine browsing value and participation.
+    No revenue target for this stage.
+objective:
+  outcome: Establish genuine participation beyond team-created content
+  metric_id: weekly_contributors
+  target_status: approved_initial_target_not_forecast
+  starts_at:
+  deadline:
+  approved_by: Roy
+  target: 5
+  horizon_days_after_measurement_setup: 30
+  start_rule: Set starts_at and deadline after verified baseline and source bindings;
+    the approved 30-day measurement period begins then.
+funnel:
+  acquisition:
+    audience: Curious people, people experiencing real problems, and people who can
+      help
+    channel:
+    selection_rule: Choose one channel after baseline and audience review; record
+      the channel and tracking before launch.
+  aha_moment: Discover a thread about a problem you care about and see a clear way
+    to follow or help.
+  activation: Unique non-team visitors following a thread, publishing a thread or
+    making a meaningful contribution / unique eligible visitors in the same trailing
+    7-day window
+  retention_question: Do people return to receive the core value again? Establish
+    a matured 7-day return cohort before claiming retention.
+metrics:
+- id: eligible_visitors
+  definition: Unique human non-team visitors in the trailing 7 days; exclude known
+    bots and test traffic; disclose identity and bot-filter limitations.
+  unit: people
+  window: trailing_7_days
+  source:
+  baseline:
+- id: activation_rate
+  definition: Unique non-team visitors following a thread, publishing a thread or
+    making a meaningful contribution / unique eligible visitors in the same trailing
+    7-day window
+  unit: ratio
+  window: as_defined_above
+  source:
+  baseline:
+- id: weekly_contributors
+  definition: Unique non-team humans publishing a genuine thread or substantive contribution
+    in the trailing 7 days; exclude seeded content, bots, tests and team accounts
+  unit: people
+  window: trailing_7_days
+  source:
+  baseline:
+focus:
+  bottleneck: Acquisition is the working hypothesis; verify the first-use journey
+    and measure the funnel before confirming.
+  evidence_status: unverified_hypothesis
+  context: The sheet reports nine challenges and thin engagement; the product document
+    describes seeded content. Establish provenance before claiming traction. Public
+    product terminology is Thread.
+  evidence: []
+experiment:
+  status: proposed
+  action: Classify existing threads as seeded, team-created or external; verify browsing
+    and contributing; prepare one distribution test around a compelling real problem.
+  hypothesis: A clear first-use journey and focused distribution can produce genuine
+    activation.
+  channel:
+  owner:
+  max_agent_hours_proposed: 4
+  max_spend_usd: 0
+  review_after_days: 7
+  success_threshold:
+  stop_rule: Stop at the time or spend limit, on customer harm, or if the core journey
+    fails. Do not claim growth results without a verified measurement source.
+autonomy:
+  mode: measurement_setup
+  scope: Roy approved these operating definitions. Read-only measurement setup is
+    authorized; other actions remain subject to existing authorization.
+  proposed_routine_work:
+  - Read analytics and operational evidence
+  - Identify and reproduce funnel failures
+  - Prepare and test reversible fixes locally
+  - Draft one distribution experiment
+  - Record verified outcomes and prepare decisions
+  requires_explicit_authorization:
+  - External outreach and publishing
+  - Spending or new subscriptions
+  - Production changes outside an existing release authorization
+  - Changing goals, metric definitions or approved targets
+  escalation_format:
+  - decision_needed
+  - recommendation
+  - evidence
+  - consequence_of_waiting
+  while_blocked: Continue independent authorized work; do not repeatedly retry the
+    same failure or send unchanged approval requests.
+reporting:
+  brief_is_authority_for: Approved strategy, metric definitions and operating boundaries
+  actuals_location: 'Existing Google Sheet: project tab plus dated history'
+  required_actual_fields:
+  - metric_id
+  - value
+  - period_start
+  - period_end
+  - observed_at
+  - source
+  - quality
+  quality_values:
+  - verified
+  - partial
+  - stale
+  - unavailable
+  rules:
+  - Unknown is null, never zero. A zero denominator produces an unavailable rate.
+  - Show activation numerator and denominator, not just percentage.
+  - Compare matching periods; label overlapping rolling windows.
+  - Report returning users separately; contributors or Apply visitors do not establish
+    retention.
+  - Separate completed work from customer outcomes.
+  - Never change targets or definitions to improve apparent performance.
+source_documents:
+- "/Users/royhermannn_new/Desktop/Development/techguyver-side-projects/techno-optimists/PRODUCT.md"
