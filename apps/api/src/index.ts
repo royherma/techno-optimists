@@ -1,3 +1,4 @@
+import { SCOUT_FEEDS, recentSourceRuns, sourceRunPage, summarizeSources } from './scout-sources'
 import { runScout, SCOUT_CRON } from './scout-cloudflare'
 import { appendScoutRows, ScoutInputError } from './scout-import'
 import { Hono } from 'hono'
@@ -1133,6 +1134,18 @@ app.post('/api/auth/signout', async (c) => {
   // has to survive that reload - see signalCookie in auth.ts.
   c.header('set-cookie', signalCookie('signed_out', secure), { append: true })
   return c.json({ ok: true })
+})
+
+app.get('/api/scout/sources', async (c) => {
+  const days = Number(c.req.query('days') ?? 30)
+  if (![7, 30, 90].includes(days)) return c.json({ error: 'days_must_be_7_30_or_90' }, 400)
+  const history = c.env.CACHE ? await recentSourceRuns(c.env.CACHE, days) : { runs: [], truncated: false }
+  return c.json({ window_days: days, truncated: history.truncated, sources: summarizeSources(SCOUT_FEEDS, history.runs),
+    policy: { max_articles_per_run: 2, runs_per_day: 4, exploration_fraction: 0.25, minimum_evaluated: 20, minimum_runs: 5, automatic_retirement: false } }, 200, { 'Cache-Control': 'public, max-age=60' })
+})
+app.get('/api/scout/source-runs', async (c) => {
+  const page = c.env.CACHE ? await sourceRunPage(c.env.CACHE, c.req.query('cursor')) : { runs: [], next_cursor: null }
+  return c.json(page, 200, { 'Cache-Control': 'public, max-age=60' })
 })
 
 app.get('/api/scout/status', async (c) => {

@@ -172,8 +172,10 @@ Ollama service, session cookie, paid search key or additional database schema is
 required. Cloudflare may take up to 15 minutes to propagate trigger changes.
 Set `SCOUT_ENABLED: "false"` and deploy to pause ingestion.
 
-The remote runner alternates Nepali Times and Mongabay RSS feeds, fetching at most
-two new articles per six-hour slot. It classifies type, stage, reach and severity
+The remote runner selects from the registry in `apps/api/src/scout-sources.ts`,
+fetching at most two new articles per six-hour slot. The initial registry includes
+Nepali Times, Mongabay, Mongabay India, The Better India, Global Voices, Rest of
+World, Hackaday and CleanTechnica. It classifies type, stage, reach and severity
 with Workers AI Llama 3.3 70B (8,000 source characters maximum), requires a fresh publication date and an exact measurement quote,
 and audits the full narrative in a separate inference. Uncertain drafts go to
 private KV keys `scout:review:*`; transient failures retry after a day. The audit
@@ -181,9 +183,12 @@ is automated evidence checking, not independent fact verification. Status is
 explicitly as reported on the source date; this feed-only path does not conduct
 a wider web search for subsequent solutions. Use the local research CLI for that.
 
-Accepted drafts are geocoded through Nominatim, illustrated using FLUX.1 Schnell
-at its native dimensions, stored in R2, and appended through the same insert-only
-D1 helper as the CLI. Images are generated, never copied from publishers. Existing
+Accepted drafts are geocoded through Nominatim and use the publisher-supplied
+RSS cover first, then the article Open Graph/Twitter cover. The selected image is
+stored in R2 with its original URL and publisher credit; attribution also appears
+in source provenance. Downloaded JPEG/PNG/WebP covers must pass host, size and
+dimension checks. Only when neither supplied cover works does FLUX.1 Schnell
+generate an illustration. Insertion uses the same append-only D1 helper as the CLI. Existing
 threads and subsequent community edits are preserved. Source URLs and stable
 place/problem slugs suppress duplicates; semantic duplicates can still need review.
 
@@ -201,6 +206,44 @@ run's timestamps, counts and errors. Detailed run reports are private KV keys
 `scout:run:*` (90 days), and Worker logs contain `scout_run` events. R2 slot claims
 are tiny permanent records; keep them to preserve replay protection. New content
 uses the site's existing dynamic thread routes, so each run needs no site deploy.
+
+### Compare, rotate and retire sources
+
+```sh
+npm run scout:audit -- --days 30 --out outputs/scout-audit.md
+npm run scout:audit -- --days 90 --json
+```
+
+The [source comparison API](https://technooptimists.org/api/scout/sources?days=30)
+accepts 7, 30 or 90 days. It reports checked/readable articles, approved drafts,
+publications, duplicate/seen skips, rejection categories, feed/fetch/model/delivery
+errors, text/image calls, cover availability, supplied covers used and generated
+images used. Approval yield excludes model failures from its denominator; it is
+an automated acceptance metric, not a human quality rating. Publications may be
+lower because delivery failed or a duplicate was found. A missing sample is shown
+as unknown, never as 0% quality.
+
+Cold starts rotate through the least recently tried feeds. Once a source has at
+least 20 evaluated articles across 5 runs, ordinary turns favor its Wilson lower
+confidence bound for approval yield. Every fourth turn explores a less recently
+tried source; feeds left unvisited for 14 days also get a turn. Three consecutive
+feed-level failures trigger a 72-hour cooldown before another probe. Model and
+image failures do not trigger that source cooldown. Zero approvals after enough
+evidence raises `review_for_replacement`; it does not silently remove a feed.
+
+To add a source, add a stable ID, feed URL, publisher hosts and image CDN hosts in
+`apps/api/src/scout-sources.ts`, test its feed/article/cover, and deploy. To pause
+or retire it, set `enabled: false` and retain the entry and ID. Resume by setting
+it true. History survives either change. Broader feed coverage does not increase
+the per-run AI allowance.
+
+Each completed attempt has a deterministic `scout:source-run:*` KV record with
+**no expiration**, including source ID, counters, reasons, article outcomes,
+publication slugs and selection strategy. Rewriting a run cannot double-count it.
+The [run history API](https://technooptimists.org/api/scout/source-runs) returns
+compact metrics with `next_cursor` pagination for audits beyond 90 days. Full
+article-level records stay in private KV. Counters start with this source-tracking
+version; older `scout:run:*` logs remain available for their original retention.
 
 ### Optional local runner
 
