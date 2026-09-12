@@ -1,3 +1,4 @@
+import { runScout, SCOUT_CRON } from './scout-cloudflare'
 import { appendScoutRows, ScoutInputError } from './scout-import'
 import { Hono } from 'hono'
 import { z } from 'zod'
@@ -18,6 +19,8 @@ import {
 } from '../../../packages/types/index'
 
 type Env = {
+  AI?: Cloudflare.Env['AI']
+  SCOUT_ENABLED?: string
   DB: D1Database
   /**
    * Provisioned before there was anything to write and never wired up - the
@@ -1132,6 +1135,11 @@ app.post('/api/auth/signout', async (c) => {
   return c.json({ ok: true })
 })
 
+app.get('/api/scout/status', async (c) => {
+  const last = await c.env.CACHE?.get('scout:last-run', 'json')
+  return c.json({ enabled: c.env.SCOUT_ENABLED === 'true', schedule: SCOUT_CRON, timezone: 'UTC', last_run: last ?? null }, 200, { 'Cache-Control': 'no-store' })
+})
+
 app.get('/api/health', async (c) => {
   const r = await c.env.DB.prepare('SELECT COUNT(*) n FROM challenges').first<{ n: number }>()
   return c.json({ ok: true, challenges: r?.n ?? 0 })
@@ -1341,6 +1349,9 @@ const secured = (res: Response, req: Request): Response => {
 
 export { app, secured }
 export default {
+  async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(runScout(env, controller.scheduledTime))
+  },
   /**
    * One call site for traffic, rather than a track() in every route: this is
    * the only place every request passes through, and it is the only place that

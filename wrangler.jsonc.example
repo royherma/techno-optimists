@@ -108,7 +108,9 @@
         { "pattern": "www.<your-domain>", "custom_domain": true }
       ],
       "observability": { "enabled": true },
-      "vars": { "ENVIRONMENT": "prod" },
+      "vars": { "ENVIRONMENT": "prod", "SCOUT_ENABLED": "true" },
+      "ai": { "binding": "AI" },
+      "triggers": { "crons": ["17 */6 * * *"] },
       "assets": {
         "directory": "apps/web/dist",
         "binding": "ASSETS",
