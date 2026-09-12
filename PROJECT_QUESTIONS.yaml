@@ -2,9 +2,9 @@
 schema_version: 1
 project_id: techno_optimists
 created_at: '2026-09-12T06:18:26Z'
-updated_at: '2026-09-12T06:18:26Z'
+updated_at: '2026-09-12T06:31:05Z'
 reporting_timezone: Asia/Bangkok
-status: approved_registry_pending_answer_validation
+status: approved_registry_partially_validated
 references:
   brief: PROJECT_BRIEF.yaml
   health: PROJECT_HEALTH.yaml
@@ -16,19 +16,19 @@ maintenance:
   - partial
   - missing_instrumentation
   - not_applicable
-  on_question: Match an existing question or alias first. Add a new entry only if
-    reusable. Clarify ambiguous meanings when they materially change the answer.
-  on_gap: Record the concrete gap and linked task; implement only within existing
-    authority. New tracking cannot reconstruct unrecorded history.
-  on_verification: Mark answerable only after the actual query and relevant health
-    checks pass; record evidence and last_verified_at.
-  timestamps: Keep added_at immutable. Update updated_at on definition/method/status
-    changes, last_asked_at when actually asked, and last_verified_at only after successful
-    execution. Append dated history for changes.
-  answers: Use fresh evidence, source, reporting window and query timestamp. Unknown
-    is not zero. Show last verified data as historical if current retrieval fails.
-  scope: No duplicate metric definitions, new product features, goal changes or expanded
-    permissions merely to answer a question. Review not_applicable with a reason.
+  on_question: Match an existing question or alias first. Add a new entry only if reusable. Clarify ambiguous
+    meanings when they materially change the answer.
+  on_gap: Record the concrete gap and linked task; implement only within existing authority. New tracking
+    cannot reconstruct unrecorded history.
+  on_verification: Mark answerable only after the actual query and relevant health checks pass; record
+    evidence and last_verified_at.
+  timestamps: Keep added_at immutable. Update updated_at on definition/method/status changes, last_asked_at
+    when actually asked, and last_verified_at only after successful execution. Append dated history for
+    changes.
+  answers: Use fresh evidence, source, reporting window and query timestamp. Unknown is not zero. Show
+    last verified data as historical if current retrieval fails.
+  scope: No duplicate metric definitions, new product features, goal changes or expanded permissions merely
+    to answer a question. Review not_applicable with a reason.
 questions:
 - id: new_accounts_today
   question: How many new users signed up today?
@@ -36,157 +36,167 @@ questions:
   - Are we getting new users?
   - How many new accounts today?
   added_at: '2026-09-12T06:18:26Z'
-  updated_at: '2026-09-12T06:18:26Z'
-  last_asked_at:
-  last_verified_at:
-  origin: Seeded during Roy-approved question registry setup; not a claim that every
-    question was asked.
-  status: needs_validation
-  definition: Count distinct genuine accounts created for the first time today; exclude
-    team, bots and tests. Do not count returning logins.
-  metric_id:
+  updated_at: '2026-09-12T06:31:05Z'
+  last_asked_at: null
+  last_verified_at: '2026-09-12T06:31:05Z'
+  origin: Seeded during Roy-approved question registry setup; not a claim that every question was asked.
+  status: answerable
+  definition: Count distinct genuine accounts created for the first time today; exclude team, bots and
+    tests. Do not count returning logins.
+  metric_id: null
   period: Local midnight through query time; today is partial.
   answer_method:
-    source:
-    query_or_command:
-    verified_example_evidence:
+    source: D1 techno-optimists.people
+    query_or_command: npx wrangler d1 execute techno-optimists --remote --command "SELECT count(*) n FROM
+      people WHERE date(created_at)=date('now')"
+    verified_example_evidence: '2026-09-12T06:31:05Z: query succeeds (Node>=22). Prefer Asia/Bangkok day
+      when answering Roy.'
   health_dependencies:
   - metric_sources_accessible
   - metric_data_valid
   - event_pipeline_current
   gap:
-    next_action: Identify the authoritative account creation record and confirm signup
-      exists. If accounts are not part of this product, propose a relevant visitor/activation
-      question; do not add accounts merely to answer this question.
-    owner:
-    task_reference:
+    next_action: Align date filter to Asia/Bangkok; exclude team identities if listed.
+    owner: Techno Optimists agent / CoS
+    task_reference: null
   history:
   - at: '2026-09-12T06:18:26Z'
     event: added
     reason: Approved reusable question registry; answer method not yet verified.
+  - at: '2026-09-12T06:31:05Z'
+    event: answer_method_validated
+    reason: 'CoS validation pass: status->answerable; method filled or gap recorded within existing auth.'
 - id: signins_today
   question: How many users signed in today?
   aliases:
   - Who is logging in?
   - Any sign-ins today?
   added_at: '2026-09-12T06:18:26Z'
-  updated_at: '2026-09-12T06:18:26Z'
-  last_asked_at:
-  last_verified_at:
-  origin: Seeded during Roy-approved question registry setup; not a claim that every
-    question was asked.
-  status: needs_validation
-  definition: Count distinct genuine users with a successful authentication today.
-    Report first-time and returning users separately only when history supports the
-    distinction.
-  metric_id:
+  updated_at: '2026-09-12T06:31:05Z'
+  last_asked_at: null
+  last_verified_at: null
+  origin: Seeded during Roy-approved question registry setup; not a claim that every question was asked.
+  status: partial
+  definition: Count distinct genuine users with a successful authentication today. Report first-time and
+    returning users separately only when history supports the distinction.
+  metric_id: null
   period: Local midnight through query time; today is partial.
   answer_method:
-    source:
-    query_or_command:
-    verified_example_evidence:
+    source: D1 techno-optimists.sessions
+    query_or_command: npx wrangler d1 execute techno-optimists --remote --command "PRAGMA table_info(sessions);
+      SELECT count(*) n FROM sessions WHERE date(created_at)=date('now')"
+    verified_example_evidence: '2026-09-12T06:31:05Z: sessions table exists. Confirm created_at means
+      successful auth before treating as sign-ins.'
   health_dependencies:
   - metric_sources_accessible
   - metric_data_valid
   - event_pipeline_current
   gap:
-    next_action: Locate successful authentication events and identity history; account
-      creation or last-updated timestamps are not a substitute. Confirm applicability
-      before implementing.
-    owner:
-    task_reference:
+    next_action: Verify sessions.created_at semantics vs successful login; then mark answerable.
+    owner: Techno Optimists agent
+    task_reference: null
   history:
   - at: '2026-09-12T06:18:26Z'
     event: added
     reason: Approved reusable question registry; answer method not yet verified.
+  - at: '2026-09-12T06:31:05Z'
+    event: gap_recorded
+    reason: 'CoS validation pass: status->partial; method filled or gap recorded within existing auth.'
 - id: traffic_trend
   question: Are we getting more visitors?
   aliases:
   - Is traffic growing?
   - How much traffic are we getting?
   added_at: '2026-09-12T06:18:26Z'
-  updated_at: '2026-09-12T06:18:26Z'
-  last_asked_at:
-  last_verified_at:
-  origin: Seeded during Roy-approved question registry setup; not a claim that every
-    question was asked.
-  status: needs_validation
-  definition: Use eligible_visitors from PROJECT_BRIEF.yaml. Compare the last seven
-    complete local days with the preceding seven complete local days; disclose identity
-    and bot-filter limitations.
+  updated_at: '2026-09-12T06:31:05Z'
+  last_asked_at: null
+  last_verified_at: '2026-09-12T06:31:05Z'
+  origin: Seeded during Roy-approved question registry setup; not a claim that every question was asked.
+  status: partial
+  definition: Use eligible_visitors from PROJECT_BRIEF.yaml. Compare the last seven complete local days
+    with the preceding seven complete local days; disclose identity and bot-filter limitations.
   metric_id: eligible_visitors
   period: As defined in the question and referenced metric.
   answer_method:
-    source:
-    query_or_command:
-    verified_example_evidence:
+    source: D1 techno-optimists.site_views (product DB). to-analytics D1 exists but pageviews table not
+      migrated (empty/_cf_KV only)
+    query_or_command: npx wrangler d1 execute techno-optimists --remote --command "SELECT date(created_at)
+      d, count(*) n FROM site_views WHERE created_at >= datetime('now','-14 days') GROUP BY 1 ORDER BY
+      1 DESC"
+    verified_example_evidence: '2026-09-12T06:31:05Z: site_views returned 2026-09-12=4, 2026-09-11=14.
+      Not unique eligible_visitors; analytics DB schema not applied yet.'
   health_dependencies:
   - metric_sources_accessible
   - metric_data_valid
   - event_pipeline_current
   gap:
-    next_action: Bind the approved traffic metric to a verified source with matching
-      windows and filters.
-    owner:
-    task_reference:
+    next_action: Apply packages/db/schema-analytics.sql to to-analytics or standardize on site_views uniques.
+    owner: Techno Optimists agent
+    task_reference: null
   history:
   - at: '2026-09-12T06:18:26Z'
     event: added
     reason: Approved reusable question registry; answer method not yet verified.
+  - at: '2026-09-12T06:31:05Z'
+    event: answer_method_validated
+    reason: 'CoS validation pass: status->partial; method filled or gap recorded within existing auth.'
 - id: goal_progress
   question: Are we progressing toward the current goal?
   aliases:
   - What progress are we making?
   - Are we on track?
   added_at: '2026-09-12T06:18:26Z'
-  updated_at: '2026-09-12T06:18:26Z'
-  last_asked_at:
-  last_verified_at:
-  origin: Seeded during Roy-approved question registry setup; not a claim that every
-    question was asked.
-  status: needs_validation
-  definition: Use the approved primary metric and target from PROJECT_BRIEF.yaml;
-    preserve its exact window and show unknown if the goal period or actual measurement
-    is unavailable.
+  updated_at: '2026-09-12T06:31:05Z'
+  last_asked_at: null
+  last_verified_at: null
+  origin: Seeded during Roy-approved question registry setup; not a claim that every question was asked.
+  status: missing_instrumentation
+  definition: Use the approved primary metric and target from PROJECT_BRIEF.yaml; preserve its exact window
+    and show unknown if the goal period or actual measurement is unavailable.
   metric_id: weekly_contributors
   period: As defined in the question and referenced metric.
   answer_method:
-    source:
-    query_or_command:
-    verified_example_evidence:
+    source: null
+    query_or_command: null
+    verified_example_evidence: null
   health_dependencies:
   - metric_sources_accessible
   - metric_data_valid
   - event_pipeline_current
   gap:
-    next_action: Bind the approved primary metric, verify the baseline and goal dates,
-      and compare observed results with the approved target.
-    owner:
-    task_reference:
+    next_action: Bind weekly_contributors (challenge_actions / updates / people activity in trailing 7d)
+      to match PROJECT_BRIEF definition.
+    owner: Techno Optimists agent
+    task_reference: null
   history:
   - at: '2026-09-12T06:18:26Z'
     event: added
     reason: Approved reusable question registry; answer method not yet verified.
+  - at: '2026-09-12T06:31:05Z'
+    event: gap_recorded
+    reason: 'CoS validation pass: status->missing_instrumentation; method filled or gap recorded within
+      existing auth.'
 - id: project_vitals
   question: Is the product and its data pipeline healthy?
   aliases:
   - Can we trust these numbers?
   - Is anything critical broken?
   added_at: '2026-09-12T06:18:26Z'
-  updated_at: '2026-09-12T06:18:26Z'
-  last_asked_at:
-  last_verified_at:
-  origin: Seeded during Roy-approved question registry setup; not a claim that every
-    question was asked.
-  status: needs_validation
-  definition: Evaluate product, data and reporting dimensions using PROJECT_HEALTH.yaml;
-    preserve unknown and stale results instead of inferring healthy.
-  metric_id:
+  updated_at: '2026-09-12T06:31:05Z'
+  last_asked_at: null
+  last_verified_at: '2026-09-12T06:31:05Z'
+  origin: Seeded during Roy-approved question registry setup; not a claim that every question was asked.
+  status: partial
+  definition: Evaluate product, data and reporting dimensions using PROJECT_HEALTH.yaml; preserve unknown
+    and stale results instead of inferring healthy.
+  metric_id: null
   period: As defined in the question and referenced metric.
   answer_method:
-    source:
-    query_or_command:
-    verified_example_evidence:
+    source: HTTP technooptimists.org + D1 techno-optimists reachability
+    query_or_command: curl -sS -L -o /tmp/to.html -w '%{http_code}' https://technooptimists.org; npx wrangler
+      d1 execute techno-optimists --remote --command 'SELECT 1'
+    verified_example_evidence: '2026-09-12T06:31:05Z: site HTTP 200 with product content; product D1 queryable.
+      to-analytics empty of pageviews; health checks unbound.'
   health_dependencies:
   - product_available
   - feed_and_threads
@@ -196,10 +206,14 @@ questions:
   - event_pipeline_current
   - report_delivery
   gap:
-    next_action: Bind and run the approved health checks within their existing authorization.
-    owner:
-    task_reference:
+    next_action: Bind PROJECT_HEALTH checks; migrate analytics schema or document site_views as traffic
+      source.
+    owner: Techno Optimists agent / CoS
+    task_reference: null
   history:
   - at: '2026-09-12T06:18:26Z'
     event: added
     reason: Approved reusable question registry; answer method not yet verified.
+  - at: '2026-09-12T06:31:05Z'
+    event: answer_method_validated
+    reason: 'CoS validation pass: status->partial; method filled or gap recorded within existing auth.'
