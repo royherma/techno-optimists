@@ -2,6 +2,7 @@ import type { Challenge } from '../../../../../packages/types'
 import LocalMap from './LocalMap'
 import PagedContent from './PagedContent'
 import { formatDate } from '../../lib/dates'
+import { stageColor } from '../../lib/vocab'
 
 export default function SourcePlace({ challenge: c }: { challenge: Challenge }) {
   const placed = c.lat != null && c.lng != null && Number.isFinite(c.lat) && Number.isFinite(c.lng)
@@ -13,7 +14,7 @@ export default function SourcePlace({ challenge: c }: { challenge: Challenge }) 
     <div className="np-source-columns"><div className="np-place-content" aria-label="Place">
         <h3>Place</h3>
         <p>{mapUrl ? <a href={mapUrl} target="_blank" rel="noopener noreferrer">{c.location || 'Reported location'} ↗</a> : c.location || 'No location provided.'}</p>
-        {placed && <LocalMap lat={c.lat!} lng={c.lng!} label={c.location || 'Reported location'} href={mapUrl!} />}
+        {placed && <LocalMap lat={c.lat!} lng={c.lng!} label={c.location || 'Reported location'} href={mapUrl!} color={stageColor(c.stage)} />}
 
         {!mapUrl && <p>No map coordinates provided.</p>}
       </div><div className="np-source-content"><h3>Source</h3><PagedContent compact label="Source">
