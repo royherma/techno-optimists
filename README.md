@@ -210,6 +210,23 @@ A separate permanent R2 claim allows **two manual runs per UTC day**, each with 
 is saved under ignored `outputs/scout-manual/`. No manual-trigger route is exposed
 on the deployed website. Scheduled and manual history keys cannot overwrite each other.
 
+For a targeted end-to-end check, set `SCOUT_SOURCE` and `SCOUT_VERIFY_URL` when
+running the operator command. This fetches one specific article from an enabled
+publisher and reruns the normal writer, evidence gate, audit, geocoder, image and
+append-only insert, even if a previous draft was rejected. Database deduplication
+still applies. Verification has a separate 1,000-neuron daily allowance: R2 compare-
+and-swap reserves the remaining allowance before each probe and refunds only measured
+unused allowance after completion. An interrupted probe does not get a refund.
+This operator-only diagnostic adds to the normal account usage; it is not part of
+the cron's free-allocation target and should only be run for an intentional check.
+
+Rejected eligible drafts get at most one corrective writer pass before the factual
+audit, charged to the same run allowance. Article outcomes and counts are checkpointed
+after each attempt (at least 1.1 seconds between KV writes). A `running` status with
+no checkpoint for 15 minutes is reported as `interrupted`, with partial counts;
+it never claims successful completion. Approved drafts are retained privately for
+seven days under `scout:approved:*` to make delivery failures inspectable.
+
 The scheduled allowance totals 8,000 neurons/day; including both optional manual runs
 makes 10,000. This is a per-job accounting guard at current rates, not a guaranteed
 $0 bill: Workers AI's free allocation is shared across the account, pricing can

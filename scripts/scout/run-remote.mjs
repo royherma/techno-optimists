@@ -31,7 +31,10 @@ try {
   worker = await unstable_dev(resolve('scripts/scout/remote-entry.ts'), { config: path, ip: '127.0.0.1', port: 0, logLevel: 'error', experimental: { disableExperimentalWarning: true, watch: false } });
   const sourceIndex = process.argv.indexOf('--source');
   const source = sourceIndex >= 0 ? process.argv[sourceIndex + 1] : process.env.SCOUT_SOURCE;
-  const result = await worker.fetch(source ? `/?source=${encodeURIComponent(source)}` : '/', { method: 'POST', headers: { 'x-operator-run-token': token } });
+  const params = new URLSearchParams();
+  if (source) params.set('source', source);
+  if (process.env.SCOUT_VERIFY_URL) params.set('article', process.env.SCOUT_VERIFY_URL);
+  const result = await worker.fetch(`/?${params}`,  { method: 'POST', headers: { 'x-operator-run-token': token } });
   const body = await result.text();
   await writeFile(resolve(dir, 'report.json'), body);
   console.log(body);

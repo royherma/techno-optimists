@@ -29,15 +29,20 @@ export type Draft = z.infer<typeof draftSchema>
 const auditFields = ['headline_supported', 'body_supported', 'location_supported', 'impact_supported', 'status_supported', 'stage_supported'] as const
 const auditSchema = z.object({ approved: z.boolean(), reasons: z.array(z.string().max(240)).max(10), headline_supported: z.boolean(), body_supported: z.boolean(), location_supported: z.boolean(), impact_supported: z.boolean(), status_supported: z.boolean(), stage_supported: z.boolean() })
 
+export function measurementNumbers(text: string): string[] {
+  const words = ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen','twenty']
+  return (text.match(/\d+(?:[,.]\d+)*|\b(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)\b/gi) ?? []).map(n => words.includes(n.toLowerCase()) ? String(words.indexOf(n.toLowerCase())) : n)
+}
+
 export function evidenceGate(card: Draft, source: Source, now: number): string[] {
   const reasons: string[] = []
   if (!card.eligible) reasons.push('not_eligible')
   const date = Date.parse(source.date)
   if (!/^\d{4}-\d{2}-\d{2}$/.test(source.date) || !Number.isFinite(date) || new Date(date).toISOString().slice(0, 10) !== source.date || date > now || now - date > 90 * 86400_000) reasons.push('missing_or_stale_source_date')
   if (!/^this\b/i.test(card.headline) || card.headline.split(/\s+/).length > 14) reasons.push('headline_formula')
-  const numbers = card.headline.match(/\d+(?:[,.]\d+)*/g) ?? []
-  const quotedNumbers: string[] = card.confirms.match(/\d+(?:[,.]\d+)*/g) ?? []
-  const sourceNumbers: string[] = source.text.match(/\d+(?:[,.]\d+)*/g) ?? []
+  const numbers = measurementNumbers(card.headline)
+  const quotedNumbers: string[] = measurementNumbers(card.confirms)
+  const sourceNumbers: string[] = measurementNumbers(source.text)
   if (!numbers.length || !numbers.some(n => quotedNumbers.includes(n)) || numbers.some(n => !sourceNumbers.includes(n))) reasons.push('measurement_not_quoted')
   if (card.confirms.split(/\s+/).length > 15 || !normalize(source.text).includes(normalize(card.confirms))) reasons.push('quote_not_exact')
   if (!source.text.toLowerCase().includes(card.place.toLowerCase()) || card.place.toLowerCase() === card.country.toLowerCase()) reasons.push('local_place_not_grounded')
@@ -49,13 +54,13 @@ export function evidenceGate(card: Draft, source: Source, now: number): string[]
  * the headline or its numbers; the independent audit must still support them. */
 export function groundQuote(card: Draft, source: Source): Draft {
   if (normalize(source.text).includes(normalize(card.confirms)) && card.confirms.split(/\s+/).length <= 15) return card
-  const numbers = card.headline.match(/\d+(?:[,.]\d+)*/g) ?? []
+  const numbers = measurementNumbers(card.headline)
   if (!numbers.length) return card
   const words = normalize(source.text).split(' ')
   const candidates: string[] = []
   for (let i = 0; i < words.length; i++) {
     const quote = words.slice(i, i + 15).join(' ')
-    const found: string[] = quote.match(/\d+(?:[,.]\d+)*/g) ?? []
+    const found: string[] = measurementNumbers(quote)
     if (numbers.some(n => found.includes(n))) candidates.push(quote)
   }
   const hints = new Set((card.confirms + ' ' + card.headline).toLowerCase().match(/[a-z]{4,}/g) ?? [])
@@ -173,8 +178,8 @@ export async function auditDraft(ai: Ai, source: Source, card: Draft, budget?: S
   return !audit.approved || audit.reasons.length || auditFields.some(k => audit[k] !== true)
     ? ['content_audit_failed', ...audit.reasons] : []
 }
-export async function draftSource(ai: Ai, source: Source, budget?: ScoutBudget): Promise<Draft> {
-  return draftSchema.parse(await ask(ai, WRITER, source, 800, z.toJSONSchema(draftSchema), budget))
+export async function draftSource(ai: Ai, source: Source, budget?: ScoutBudget, repair?: { draft: Draft; reasons: string[] }): Promise<Draft> {
+  return draftSchema.parse(await ask(ai, WRITER, repair ? { source, repair, instruction: 'Correct the rejected draft. Use a digit-form measurement literally present in source.text, not a number inferred from a spelled-out quantity. Preserve who did what: totals across several ponds must not be attributed to one pond. Prefer one measurement and an accurate physical subject. Keep the fix as build/experiment/idea when documented.' } : source, 800, z.toJSONSchema(draftSchema), budget))
 }
 async function hash(s: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))
@@ -201,20 +206,43 @@ async function locate(card: Draft): Promise<{lat: number; lng: number}> {
   url.search = new URLSearchParams({ q: `${card.place}, ${card.country}`, format: 'jsonv2', limit: '5', 'accept-language': 'en' }).toString()
   return chooseGeocode(JSON.parse(await fetchText(url.href, new Set([url.hostname]), 20_000)), card.place)
 }
-export async function runScout(env: Bindings, scheduledTime: number, mode: 'scheduled' | 'manual' = 'scheduled', sourceId?: string) {
+export async function runScout(env: Bindings, scheduledTime: number, mode: 'scheduled' | 'manual' | 'verification' = 'scheduled', sourceId?: string, verificationUrl?: string) {
   if (env.SCOUT_ENABLED !== 'true') return { status: 'disabled' }
   const { AI: ai, MEDIA: media, CACHE: cache, DB: db } = env
   if (!ai || !media || !cache) throw new Error('scout_bindings_missing')
   const now = Date.now(), slot = Math.floor(now / SIX_HOURS)
   // R2 conditional writes are strongly consistent. Even replays or overlapping
   // cron invocations cannot multiply the inference budget. Never delete claims.
-  const claimKey = mode === 'manual' ? `scout-manual/${new Date(now).toISOString().slice(0, 10)}` : `scout-slots/${slot}`
+  if (mode === 'verification' && (!verificationUrl || !sourceId || !SCOUT_FEEDS.some(f => f.id === sourceId && f.enabled && f.hosts.includes(new URL(verificationUrl).hostname)))) throw new Error('verification_source_required')
+  const claimKey = mode === 'verification' ? `scout-verification/${new Date(now).toISOString().slice(0, 10)}` : mode === 'manual' ? `scout-manual/${new Date(now).toISOString().slice(0, 10)}` : `scout-slots/${slot}`
   const claimOptions = { onlyIf: { etagDoesNotMatch: '*' }, httpMetadata: { contentType: 'application/json' } }
-  let claim = await media.put(claimKey, JSON.stringify({ scheduledTime, started_at: now }), claimOptions)
+  let verificationAllowance = 1000
+  let claim: R2Object | null
+  if (mode === 'verification') {
+    const previous = await media.get(claimKey)
+    if (previous) {
+      const state = await previous.json<{ remaining?: number; started_at: number }>()
+      let remaining = state.remaining
+      // Recover the unspent allowance from a completed pre-checkpoint probe.
+      // An active/crashed reservation never refunds without its exact final report.
+      if (remaining === undefined) {
+        const oldSlot = Math.floor(state.started_at / SIX_HOURS)
+        const old = await cache.get<{status:string;budget:{limit:number;used:number}}>(`scout:run:${oldSlot}:verification:${state.started_at}`, 'json')
+        remaining = old && ['completed','completed_with_errors'].includes(old.status) && old.budget.limit === 1000 && Number.isFinite(old.budget.used) ? Math.max(0, 1000 - old.budget.used) : 0
+      }
+      verificationAllowance = Math.min(1000, Math.max(0, remaining))
+      if (!Number.isFinite(verificationAllowance) || verificationAllowance < 1) return { status: 'verification_allowance_exhausted' }
+      claim = await media.put(claimKey, JSON.stringify({ remaining: 0, reserved: verificationAllowance, started_at: now }), { ...claimOptions, onlyIf: { etagMatches: previous.etag } })
+    } else {
+      claim = await media.put(claimKey, JSON.stringify({ remaining: 0, reserved: 1000, started_at: now }), claimOptions)
+    }
+  } else {
+    claim = await media.put(claimKey, JSON.stringify({ scheduledTime, started_at: now }), claimOptions)
+  }
   if (!claim && mode === 'manual') claim = await media.put(`${claimKey}:2`, JSON.stringify({ scheduledTime, started_at: now }), claimOptions)
   if (!claim) return { status: mode === 'manual' ? 'already_ran_manual_today' : 'already_ran_this_slot' }
   const history = await recentSourceRuns(cache, 90, now)
-  const candidates = mode === 'manual' && sourceId ? SCOUT_FEEDS.filter(f => f.id === sourceId) : SCOUT_FEEDS
+  const candidates = mode !== 'scheduled' && sourceId ? SCOUT_FEEDS.filter(f => f.id === sourceId) : SCOUT_FEEDS
   const selected = selectSource(candidates, history.runs, slot, now)
   if (!selected) {
     const idle = { status: 'idle', started_at: new Date(now).toISOString(), reason: 'All feeds are paused or cooling down' }
@@ -224,24 +252,25 @@ export async function runScout(env: Bindings, scheduledTime: number, mode: 'sche
   const { feed, reason: selection } = selected
   const stats = sourceRun(feed, slot, now, selection)
   stats.mode = mode
-  if (mode === 'manual') stats.manual_started_at = now
-  const budget = new ScoutBudget(mode === 'manual' ? SCOUT_LIMITS.manual_neurons_per_run : SCOUT_LIMITS.neurons_per_run)
+  if (mode !== 'scheduled') stats.manual_started_at = now
+  const budget = new ScoutBudget(mode === 'verification' ? verificationAllowance : mode === 'manual' ? SCOUT_LIMITS.manual_neurons_per_run : SCOUT_LIMITS.neurons_per_run)
   const allowed = new Set(feed.hosts)
-  const report = { mode, budget, limits: SCOUT_LIMITS, source_id: feed.id, source_name: feed.name, selection, metrics: stats.counts, status: 'running', started_at: new Date(now).toISOString(), finished_at: '', processed: 0, created: 0, rejected: 0, errors: [] as string[] }
+  const report = { updated_at: new Date(now).toISOString(), counts_partial: true, mode, budget, limits: SCOUT_LIMITS, source_id: feed.id, source_name: feed.name, selection, metrics: stats.counts, status: 'running', started_at: new Date(now).toISOString(), finished_at: '', processed: 0, created: 0, rejected: 0, errors: [] as string[] }
   await cache.put('scout:last-run', JSON.stringify(report))
+  let lastCheckpoint = Date.now()
   try {
     const author = await db.prepare('SELECT id FROM people WHERE handle = ?').bind('atlas').first<{id: string}>()
     if (!author) throw new Error('scout_author_missing')
     let entries: ReturnType<typeof feedEntries>
     try {
-      entries = prioritizeEntries(feedEntries(await fetchText(feed.url, allowed), allowed))
+      entries = mode === 'verification' ? [{ url: sourceIdentity(verificationUrl!) }] : prioritizeEntries(feedEntries(await fetchText(feed.url, allowed), allowed))
       if (!entries.length) throw new Error('feed_has_no_supported_articles')
     } catch (error) { stats.counts.feed_errors++; throw error }
     for (const entry of entries) {
       const { url } = entry
       if (report.processed >= SCOUT_LIMITS.max_fetches_per_run || stats.counts.readable >= SCOUT_LIMITS.max_articles_per_run) break
       const key = await hash(url)
-      if (await cache.get(`scout:seen:${key}`)) { stats.counts.seen++; continue }
+      if (mode !== 'verification' && await cache.get(`scout:seen:${key}`)) { stats.counts.seen++; continue }
       if (await db.prepare("SELECT id FROM challenges WHERE rtrim(source_url, '/') = ? LIMIT 1").bind(url).first()) { stats.counts.duplicates++; continue }
       report.processed++; stats.counts.checked++
       let phase: 'fetch' | 'model' | 'delivery' | 'storage' = 'fetch'
@@ -259,8 +288,19 @@ export async function runScout(env: Bindings, scheduledTime: number, mode: 'sche
           continue
         }
         stats.counts.readable++; phase = 'model'; stats.counts.model_calls++
-        const card = groundQuote(await draftSource(ai, source, budget), source)
-        const reasons = evidenceGate(card, source, now)
+        const prior = mode === 'verification' ? await cache.get<{ draft?: unknown; source?: {url:string} }>(`scout:review:${key}`, 'json') : null
+        const reusable = prior?.source?.url === url ? draftSchema.safeParse(prior.draft) : null
+        let card: Draft
+        if (reusable?.success) {
+          stats.counts.model_calls--
+          card = groundQuote(reusable.data, source)
+        } else card = groundQuote(await draftSource(ai, source, budget), source)
+        let reasons = evidenceGate(card, source, now)
+        if (card.eligible && reasons.length && !reasons.includes('missing_or_stale_source_date')) {
+          stats.counts.model_calls++
+          card = groundQuote(await draftSource(ai, source, budget, { draft: card, reasons }), source)
+          reasons = evidenceGate(card, source, now)
+        }
         if (!reasons.length) {
           stats.counts.model_calls++
           reasons.push(...await auditDraft(ai, source, card, budget))
@@ -273,7 +313,9 @@ export async function runScout(env: Bindings, scheduledTime: number, mode: 'sche
           await cache.put(`scout:seen:${key}`, 'rejected', { expirationTtl: 30 * 86400 })
           continue
         }
-        stats.counts.approved++; phase = 'delivery'
+        stats.counts.approved++; phase = 'storage'
+        await cache.put(`scout:approved:${key}`, JSON.stringify({ source_id: feed.id, source, draft: card, covers, approved_at: new Date().toISOString() }), { expirationTtl: 7 * 86400 })
+        phase = 'delivery'
         const slug = `scout-${await hash(normalize(`${card.country}|${card.place}|${card.problem_key}`).toLowerCase())}`
         if (await db.prepare('SELECT id FROM challenges WHERE slug = ?').bind(slug).first()) {
           stats.counts.duplicates++; stats.articles.push({ url, outcome: 'duplicate', slug })
@@ -310,15 +352,28 @@ export async function runScout(env: Bindings, scheduledTime: number, mode: 'sche
         if (phase === 'model' && (error instanceof z.ZodError || error instanceof SyntaxError)) recordReasons(stats, ['invalid_model_output'])
         // A bad or blocked source should not starve the rest of a feed forever.
         await cache.put(`scout:seen:${key}`, 'retry_later', { expirationTtl: 86400 })
+      } finally {
+        if (Date.now() - lastCheckpoint >= 1100) {
+          report.updated_at = new Date().toISOString()
+          stats.duration_ms = Date.now() - now
+          await saveSourceRun(cache, stats)
+          await cache.put('scout:last-run', JSON.stringify(report))
+          lastCheckpoint = Date.now()
+        }
       }
     }
     report.status = report.errors.length ? 'completed_with_errors' : 'completed'
   } catch (error) { report.status = 'failed'; report.errors.push(message(error)) }
+  report.counts_partial = false
   report.finished_at = new Date().toISOString()
+  report.updated_at = report.finished_at
   stats.duration_ms = Date.now() - now
+  const checkpointGap = 1100 - (Date.now() - lastCheckpoint)
+  if (checkpointGap > 0) await new Promise(resolve => setTimeout(resolve, checkpointGap))
   await saveSourceRun(cache, stats)
   await cache.put('scout:last-run', JSON.stringify(report))
-  await cache.put(`scout:run:${slot}${mode === 'manual' ? `:manual:${now}` : ''}`, JSON.stringify(report), { expirationTtl: 90 * 86400 })
+  await cache.put(`scout:run:${slot}${mode !== 'scheduled' ? `:${mode}:${now}` : ''}`, JSON.stringify(report), { expirationTtl: 90 * 86400 })
+  if (mode === 'verification') await media.put(claimKey, JSON.stringify({ remaining: Math.max(0, budget.limit - budget.used), started_at: now, finished_at: report.finished_at }), { ...claimOptions, onlyIf: { etagMatches: claim.etag } })
   console.log(JSON.stringify({ event: 'scout_run', ...report }))
   if (report.status === 'failed') throw new Error(report.errors.join('; '))
   return report

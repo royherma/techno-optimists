@@ -1,3 +1,4 @@
+import { scoutRunStatus } from './scout-status'
 import { SCOUT_LIMITS } from './scout-budget'
 import { SCOUT_FEEDS, recentSourceRuns, sourceRunPage, summarizeSources } from './scout-sources'
 import { runScout, SCOUT_CRON } from './scout-cloudflare'
@@ -1151,7 +1152,7 @@ app.get('/api/scout/source-runs', async (c) => {
 
 app.get('/api/scout/status', async (c) => {
   const last = await c.env.CACHE?.get('scout:last-run', 'json')
-  return c.json({ enabled: c.env.SCOUT_ENABLED === 'true', schedule: SCOUT_CRON, timezone: 'UTC', limits: SCOUT_LIMITS, last_run: last ?? null }, 200, { 'Cache-Control': 'no-store' })
+  return c.json({ enabled: c.env.SCOUT_ENABLED === 'true', schedule: SCOUT_CRON, timezone: 'UTC', limits: SCOUT_LIMITS, last_run: scoutRunStatus(last ?? null) }, 200, { 'Cache-Control': 'no-store' })
 })
 
 app.get('/api/health', async (c) => {
