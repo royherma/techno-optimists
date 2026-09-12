@@ -333,3 +333,10 @@ job does not use that approval workflow.
 
 Provider references: [Ollama chat](https://docs.ollama.com/api/chat),
 [Brave web search](https://api-dashboard.search.brave.com/api-reference/web/search/get).
+
+## Project operations
+
+- [Project brief](PROJECT_BRIEF.yaml): approved goals, funnel metrics, focus and operating boundaries.
+- [Project health](PROJECT_HEALTH.yaml): product, data and reporting check definitions.
+
+Measurement setup is pending. Unconfigured checks mean unknown health; these files do not prove the product or pipeline is healthy. Document the verified check command here once implemented.
