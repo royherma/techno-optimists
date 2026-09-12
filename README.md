@@ -162,7 +162,48 @@ reporting. Details in [CONTRIBUTING.md](CONTRIBUTING.md#reporting-a-security-iss
 MIT — see [LICENSE](LICENSE). Use it, fork it, ship it commercially, no permission
 needed. Copyright 2026 Techguyver Labs, LLC.
 
-## Scheduled Challenge discovery
+## Scheduled thread discovery on Cloudflare
+
+The production Worker runs `apps/api/src/scout-cloudflare.ts` on the Cloudflare
+Cron Trigger `17 */6 * * *` (00:17, 06:17, 12:17 and 18:17 UTC). Add the `AI`
+binding, `SCOUT_ENABLED: "true"` and `triggers.crons` from `wrangler.jsonc.example`
+to your ignored production config, then use `npm run deploy:prod`. No laptop,
+Ollama service, session cookie, paid search key or additional database schema is
+required. Cloudflare may take up to 15 minutes to propagate trigger changes.
+Set `SCOUT_ENABLED: "false"` and deploy to pause ingestion.
+
+The remote runner alternates Nepali Times and Mongabay RSS feeds, fetching at most
+two new articles per six-hour slot. It classifies type, stage, reach and severity
+with Workers AI, requires a fresh publication date and an exact measurement quote,
+and audits the full narrative in a separate inference. Uncertain drafts go to
+private KV keys `scout:review:*`; transient failures retry after a day. The audit
+is automated evidence checking, not independent fact verification. Status is
+explicitly as reported on the source date; this feed-only path does not conduct
+a wider web search for subsequent solutions. Use the local research CLI for that.
+
+Accepted drafts are geocoded through Nominatim, illustrated using FLUX.1 Schnell
+at its native dimensions, stored in R2, and appended through the same insert-only
+D1 helper as the CLI. Images are generated, never copied from publishers. Existing
+threads and subsequent community edits are preserved. Source URLs and stable
+place/problem slugs suppress duplicates; semantic duplicates can still need review.
+
+Strongly consistent R2 conditional slot claims cap overlapping/replayed runs at
+four text inferences (1,000 output tokens per draft, 400 per audit) and two four-step
+images per six-hour slot. A failed run consumes its slot and resumes next slot;
+there is no unbounded retry loop. These limits keep this job well below Workers
+AI's 10,000-neuron daily free allocation at current rates, but the allocation is
+account-wide: an existing paid account can incur overages from combined usage.
+This code does not change billing plans or impose an account-wide billing cap.
+See [Cloudflare pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/).
+
+Check [live Scout status](https://technooptimists.org/api/scout/status) for the last
+run's timestamps, counts and errors. Detailed run reports are private KV keys
+`scout:run:*` (90 days), and Worker logs contain `scout_run` events. R2 slot claims
+are tiny permanent records; keep them to preserve replay protection. New content
+uses the site's existing dynamic thread routes, so each run needs no site deploy.
+
+### Optional local runner
+
 
 Run one bounded enrichment job from cron, a system timer, or a task runner:
 
@@ -171,16 +212,16 @@ npm ci --prefix scripts/scout
 npm run scout:cron -- --write --env-file .env
 ```
 
-The job reads news feeds and optional web searches, drafts Challenges, classifies
+The job reads news feeds and optional web searches, drafts threads, classifies
 impact and severity, runs mechanical evidence checks plus a separate content audit,
 generates local illustrations, uploads them to R2 through the API, and inserts
-eligible Challenges. There is no approval-file step. Uncertain drafts are saved
+eligible threads. There is no approval-file step. Uncertain drafts are saved
 for inspection and skipped; one unsuitable article does not stop the batch.
 Omit `--write` for a complete discovery dry run with no database or image writes.
 
 Configure `scripts/scout/cron.yaml`: API base, existing author handle, RSS feeds,
 themes, places, source-page limit and publication limit. Defaults process up to 12
-pages and publish at most 5 Challenges per run. Feeds work without a search key;
+pages and publish at most 5 threads per run. Feeds work without a search key;
 `BRAVE_SEARCH_API_KEY` adds rotating web queries. Sources and feeds come from trusted
 operator configuration, never from model instructions. PDFs are queued as unsupported.
 
@@ -202,7 +243,7 @@ refuses a server that does not explicitly confirm `create_only` support.
 
 For example, a scheduler can invoke the same command every six hours. Set its
 working directory to this checkout and provide a PATH containing Node, npm and
-Python, or use their absolute paths. No schedule is installed by the repo.
+Python, or use their absolute paths. The local runner does not install a machine schedule; production scheduling is handled by the Worker above.
 
 The default durable state is `outputs/scout-job/state.json`. Keep it across runs
 and use a separate state directory per database. Each run also saves its JSON
@@ -215,9 +256,9 @@ runs and community edits. Semantic duplicates with different descriptions can
 still need editorial cleanup. The shared process lock returns exit code 75 when
 another coordinated operation is running; the scheduler can retry later.
 
-Images upload through `/api/uploads`, so new Challenges need no static asset deploy.
+Images upload through `/api/uploads`, so new threads need no static asset deploy.
 Set `images: false` for text-only ingestion. Failed image or API operations remain
-pending rather than creating a Challenge with a broken image. Existing Challenges
+pending rather than creating a thread with a broken image. Existing threads
 are never overwritten by this job; it grows the database with new sourced material.
 
 ```sh
