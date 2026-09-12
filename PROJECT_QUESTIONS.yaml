@@ -1,0 +1,205 @@
+---
+schema_version: 1
+project_id: techno_optimists
+created_at: '2026-09-12T06:18:26Z'
+updated_at: '2026-09-12T06:18:26Z'
+reporting_timezone: Asia/Bangkok
+status: approved_registry_pending_answer_validation
+references:
+  brief: PROJECT_BRIEF.yaml
+  health: PROJECT_HEALTH.yaml
+maintenance:
+  purpose: Store reusable verified answer methods, not stale answers.
+  status_values:
+  - needs_validation
+  - answerable
+  - partial
+  - missing_instrumentation
+  - not_applicable
+  on_question: Match an existing question or alias first. Add a new entry only if
+    reusable. Clarify ambiguous meanings when they materially change the answer.
+  on_gap: Record the concrete gap and linked task; implement only within existing
+    authority. New tracking cannot reconstruct unrecorded history.
+  on_verification: Mark answerable only after the actual query and relevant health
+    checks pass; record evidence and last_verified_at.
+  timestamps: Keep added_at immutable. Update updated_at on definition/method/status
+    changes, last_asked_at when actually asked, and last_verified_at only after successful
+    execution. Append dated history for changes.
+  answers: Use fresh evidence, source, reporting window and query timestamp. Unknown
+    is not zero. Show last verified data as historical if current retrieval fails.
+  scope: No duplicate metric definitions, new product features, goal changes or expanded
+    permissions merely to answer a question. Review not_applicable with a reason.
+questions:
+- id: new_accounts_today
+  question: How many new users signed up today?
+  aliases:
+  - Are we getting new users?
+  - How many new accounts today?
+  added_at: '2026-09-12T06:18:26Z'
+  updated_at: '2026-09-12T06:18:26Z'
+  last_asked_at:
+  last_verified_at:
+  origin: Seeded during Roy-approved question registry setup; not a claim that every
+    question was asked.
+  status: needs_validation
+  definition: Count distinct genuine accounts created for the first time today; exclude
+    team, bots and tests. Do not count returning logins.
+  metric_id:
+  period: Local midnight through query time; today is partial.
+  answer_method:
+    source:
+    query_or_command:
+    verified_example_evidence:
+  health_dependencies:
+  - metric_sources_accessible
+  - metric_data_valid
+  - event_pipeline_current
+  gap:
+    next_action: Identify the authoritative account creation record and confirm signup
+      exists. If accounts are not part of this product, propose a relevant visitor/activation
+      question; do not add accounts merely to answer this question.
+    owner:
+    task_reference:
+  history:
+  - at: '2026-09-12T06:18:26Z'
+    event: added
+    reason: Approved reusable question registry; answer method not yet verified.
+- id: signins_today
+  question: How many users signed in today?
+  aliases:
+  - Who is logging in?
+  - Any sign-ins today?
+  added_at: '2026-09-12T06:18:26Z'
+  updated_at: '2026-09-12T06:18:26Z'
+  last_asked_at:
+  last_verified_at:
+  origin: Seeded during Roy-approved question registry setup; not a claim that every
+    question was asked.
+  status: needs_validation
+  definition: Count distinct genuine users with a successful authentication today.
+    Report first-time and returning users separately only when history supports the
+    distinction.
+  metric_id:
+  period: Local midnight through query time; today is partial.
+  answer_method:
+    source:
+    query_or_command:
+    verified_example_evidence:
+  health_dependencies:
+  - metric_sources_accessible
+  - metric_data_valid
+  - event_pipeline_current
+  gap:
+    next_action: Locate successful authentication events and identity history; account
+      creation or last-updated timestamps are not a substitute. Confirm applicability
+      before implementing.
+    owner:
+    task_reference:
+  history:
+  - at: '2026-09-12T06:18:26Z'
+    event: added
+    reason: Approved reusable question registry; answer method not yet verified.
+- id: traffic_trend
+  question: Are we getting more visitors?
+  aliases:
+  - Is traffic growing?
+  - How much traffic are we getting?
+  added_at: '2026-09-12T06:18:26Z'
+  updated_at: '2026-09-12T06:18:26Z'
+  last_asked_at:
+  last_verified_at:
+  origin: Seeded during Roy-approved question registry setup; not a claim that every
+    question was asked.
+  status: needs_validation
+  definition: Use eligible_visitors from PROJECT_BRIEF.yaml. Compare the last seven
+    complete local days with the preceding seven complete local days; disclose identity
+    and bot-filter limitations.
+  metric_id: eligible_visitors
+  period: As defined in the question and referenced metric.
+  answer_method:
+    source:
+    query_or_command:
+    verified_example_evidence:
+  health_dependencies:
+  - metric_sources_accessible
+  - metric_data_valid
+  - event_pipeline_current
+  gap:
+    next_action: Bind the approved traffic metric to a verified source with matching
+      windows and filters.
+    owner:
+    task_reference:
+  history:
+  - at: '2026-09-12T06:18:26Z'
+    event: added
+    reason: Approved reusable question registry; answer method not yet verified.
+- id: goal_progress
+  question: Are we progressing toward the current goal?
+  aliases:
+  - What progress are we making?
+  - Are we on track?
+  added_at: '2026-09-12T06:18:26Z'
+  updated_at: '2026-09-12T06:18:26Z'
+  last_asked_at:
+  last_verified_at:
+  origin: Seeded during Roy-approved question registry setup; not a claim that every
+    question was asked.
+  status: needs_validation
+  definition: Use the approved primary metric and target from PROJECT_BRIEF.yaml;
+    preserve its exact window and show unknown if the goal period or actual measurement
+    is unavailable.
+  metric_id: weekly_contributors
+  period: As defined in the question and referenced metric.
+  answer_method:
+    source:
+    query_or_command:
+    verified_example_evidence:
+  health_dependencies:
+  - metric_sources_accessible
+  - metric_data_valid
+  - event_pipeline_current
+  gap:
+    next_action: Bind the approved primary metric, verify the baseline and goal dates,
+      and compare observed results with the approved target.
+    owner:
+    task_reference:
+  history:
+  - at: '2026-09-12T06:18:26Z'
+    event: added
+    reason: Approved reusable question registry; answer method not yet verified.
+- id: project_vitals
+  question: Is the product and its data pipeline healthy?
+  aliases:
+  - Can we trust these numbers?
+  - Is anything critical broken?
+  added_at: '2026-09-12T06:18:26Z'
+  updated_at: '2026-09-12T06:18:26Z'
+  last_asked_at:
+  last_verified_at:
+  origin: Seeded during Roy-approved question registry setup; not a claim that every
+    question was asked.
+  status: needs_validation
+  definition: Evaluate product, data and reporting dimensions using PROJECT_HEALTH.yaml;
+    preserve unknown and stale results instead of inferring healthy.
+  metric_id:
+  period: As defined in the question and referenced metric.
+  answer_method:
+    source:
+    query_or_command:
+    verified_example_evidence:
+  health_dependencies:
+  - product_available
+  - feed_and_threads
+  - core_journey
+  - metric_sources_accessible
+  - metric_data_valid
+  - event_pipeline_current
+  - report_delivery
+  gap:
+    next_action: Bind and run the approved health checks within their existing authorization.
+    owner:
+    task_reference:
+  history:
+  - at: '2026-09-12T06:18:26Z'
+    event: added
+    reason: Approved reusable question registry; answer method not yet verified.
