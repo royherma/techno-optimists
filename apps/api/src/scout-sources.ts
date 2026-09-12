@@ -14,7 +14,7 @@ export const COUNTERS = ['checked', 'readable', 'approved', 'published', 'reject
 export type Counts = Record<typeof COUNTERS[number], number>
 export const emptyCounts = (): Counts => Object.fromEntries(COUNTERS.map(k => [k, 0])) as Counts
 export type SourceRun = {
-  mode?: 'scheduled' | 'manual'; manual_started_at?: number; version: 2; slot: number; source_id: string; started_at: number; duration_ms: number;
+  mode?: 'scheduled' | 'manual' | 'verification'; manual_started_at?: number; version: 2; slot: number; source_id: string; started_at: number; duration_ms: number;
   counts: Counts; reasons: Record<string, number>; selection: string;
   articles: { url: string; outcome: string; reasons?: string[]; slug?: string }[];
 }
@@ -28,7 +28,7 @@ export function recordReasons(run: SourceRun, reasons: string[]) {
 }
 type RunMeta = { v: 2; id: string; slot: number; t: number; d: number; c: number[]; r: Record<string, number> }
 export function runKey(run: Pick<SourceRun, 'slot' | 'source_id' | 'mode' | 'manual_started_at'>): string {
-  return `scout:source-run:${String(9_999_999_999 - run.slot).padStart(10, '0')}:${run.source_id}${run.mode === 'manual' ? `:manual:${run.manual_started_at ?? 0}` : ''}`
+  return `scout:source-run:${String(9_999_999_999 - run.slot).padStart(10, '0')}:${run.source_id}${run.mode && run.mode !== 'scheduled' ? `:${run.mode}:${run.manual_started_at ?? 0}` : ''}`
 }
 export async function saveSourceRun(cache: KVNamespace, run: SourceRun) {
   const metadata: RunMeta = { v: 2, id: run.source_id, slot: run.slot, t: run.started_at, d: run.duration_ms, c: COUNTERS.map(k => run.counts[k]), r: run.reasons }

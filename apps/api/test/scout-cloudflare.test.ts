@@ -72,6 +72,11 @@ describe('remote Scout evidence and network boundaries', () => {
   expect(()=>chooseGeocode([city,{...district,type:'national_park'}],'Jaipur')).toThrow('ambiguous_geocode')
   expect(()=>chooseGeocode([city,{...district,boundingbox:['10','20','70','80']}],'Jaipur')).toThrow('ambiguous_geocode')
  })
+ it('recognizes a spelled-out quantity while retaining the exact source quotation', () => {
+  const s={...source,text:'In Nepalganj the classroom holds five pupils.'}
+  expect(evidenceGate({...card,headline:'This classroom holds 5 pupils',confirms:'holds five pupils'},s,Date.parse('2026-09-12'))).toEqual([])
+  expect(evidenceGate({...card,headline:'This classroom holds 6 pupils',confirms:'holds five pupils'},s,Date.parse('2026-09-12'))).toContain('measurement_not_quoted')
+ })
  it('supports several headline measurements when the short quote backs one and the source backs all', () => {
   const s={...source,text:source.text+' The school has 25 pupils.'}
   expect(evidenceGate({...card,headline:'This classroom reaches 39.8 degrees for 25 pupils'},s,Date.parse('2026-09-12'))).toEqual([])
