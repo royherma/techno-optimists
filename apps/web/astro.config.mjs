@@ -54,8 +54,9 @@ export default defineConfig({
         // from gstatic. Both are in Base.astro's <head>.
         'font-src https://fonts.gstatic.com',
         // R2 media is served same-origin through /media/*, so 'self' covers it.
-        // data: is for the inline SVGs the map draws.
-        "img-src 'self' data: https://tile.openstreetmap.org",
+        // data: is for the inline SVGs the map draws. Every map on the site is
+        // drawn from lib/atlas now, so no tile host belongs here.
+        "img-src 'self' data:",
         "connect-src 'self'",
         "form-action 'self'",
         "base-uri 'self'",

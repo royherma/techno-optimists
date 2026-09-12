@@ -37,9 +37,18 @@
 .text-control:disabled { color: var(--color-ink-soft); cursor: default; }
 .composer-note { font-size: 12px; line-height: 1.6; margin-top: 10px; }
 .form-error { color: oklch(42% 0.16 27); font-size: 14px; line-height: 1.6; margin-block: 14px; }
-.discussion-list { margin-top: 12px; }
-.discussion-list > li { padding: 22px 0 10px; border-bottom: 1px solid var(--color-rule); }
+/* Responses read as people talking, not as article paragraphs: a tinted block
+ * per response, square-cornered so the page still looks printed rather than
+ * borrowed from a messaging app. Rules between responses would fight the tint,
+ * so the ground does the separating. */
+.discussion-list { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.discussion-list > li { padding: 12px 14px; background: var(--color-selected); border: 1px solid var(--color-rule); border-radius: 2px; }
 .discussion-list > li.is-reply { margin-left: 24px; }
+/* The reader's own responses, marked by ground rather than by side: an
+ * alternating layout breaks down the moment a thread nests. */
+.discussion-list > li.is-mine { background: var(--color-paper-sunk); border-color: var(--color-rule-soft); }
+.discussion-list > li > .response-body { margin-top: 6px; }
+.discussion-list > li > .text-control { padding: 4px 0; min-height: 0; }
 .update-byline time { margin-left: auto; color: var(--color-ink-soft); }
 .response-kind { padding: 3px 8px; border-radius: 6px; color: var(--color-accent); background: var(--color-selected); }
 .response-body { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 15px; line-height: 1.75; margin-top: 10px; max-width: 72ch; }
