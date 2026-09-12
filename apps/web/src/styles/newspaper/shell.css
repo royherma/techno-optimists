@@ -12,6 +12,11 @@
   --color-ink-soft: var(--np-muted);
   --color-rule: var(--np-rule);
   --color-rule-soft: var(--np-rule);
+  /* Without this the shared tint falls through to the global blue-grey, which
+   * lands cold on warm paper. --np-selected is defined alongside the other
+   * edition controls; this is the bridge for components styled in the wide
+   * layout's token names. */
+  --color-selected: #e8e5da;
   --color-grid-line: #dddacf;
   height: 100svh;
   min-height: 400px;
@@ -84,7 +89,20 @@ body:has(.newspaper) { background: #f7f4eb; }
 .np-latest img { width: 42px; height: 42px; object-fit: cover; }
 .np-latest span { font: 14px/1.2 Georgia,serif; }
 .np-legend-tabs { display: none; }
-@media(max-height:950px) { .np-legend-world,.np-legend-quote { display:none; } }
+/* The world plate is the rail's anchor, not its first casualty. Under 950px of
+ * viewport height the quote goes and the sections tighten, but the map stays -
+ * a short rail with no map reads as unfinished, which is what the dead space
+ * below the stage list used to look like. */
+@media(max-height:950px) {
+  .np-legend-quote { display:none; }
+  .np-legend { gap:9px; }
+  .np-legend section { padding-bottom:8px; }
+  .np-legend h3 { margin-bottom:6px; }
+  .np-legend-stages li { padding-block:1px; }
+  .np-rings-scale svg { width:30px; height:30px; }
+  .np-legend-world { margin-top:auto; border-bottom:0; padding-bottom:0; }
+  .np-legend-world svg { max-height:132px; }
+}
 @media(max-width:1399px) {
   .np-masthead { grid-template-columns: 100px minmax(0,1fr) 125px 65px; gap: 16px; }
   .np-masthead blockquote { font-size: 16px; }

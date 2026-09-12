@@ -209,7 +209,7 @@ export default function Discussion({ slug, me, sessionReady, paged = false, pane
     {!loading && !error && !comments.length && <p className="quiet-empty">Start the conversation. A useful question is a contribution too.</p>}
     <ol className="discussion-list">{comments.map((comment) => {
       const repliedTo = comments.find((c) => c.id === comment.parent_id)
-      return <li id={`response-${comment.id}`} key={comment.id} className={comment.parent_id ? 'is-reply' : ''}>
+      return <li id={`response-${comment.id}`} key={comment.id} className={[comment.parent_id ? 'is-reply' : '', me && comment.author.id === me.id ? 'is-mine' : ''].filter(Boolean).join(' ')}>
         <div className="update-byline"><a href={`/people?handle=${encodeURIComponent(comment.author.handle)}`}><strong>@{comment.author.handle}</strong></a>
           {comment.kind !== 'comment' && <span className="response-kind">{LABEL[comment.kind]}</span>}
           <time dateTime={dateISO(comment.created_at)} title={formatDateTime(comment.created_at)}>{ago(comment.created_at)}</time></div>
