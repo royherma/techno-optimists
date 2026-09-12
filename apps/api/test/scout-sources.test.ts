@@ -20,6 +20,11 @@ describe('source history and adaptive rotation', () => {
     const page = await sourceRunPage(cache)
     expect(summarizeSources(feeds,page.runs,now).find(s=>s.id===feeds[0].id)?.counts.published).toBe(1)
     expect(runKey({...r,slot:101}) < runKey(r)).toBe(true)
+    expect(runKey({...r,mode:'manual'})).not.toBe(runKey(r))
+  })
+  it('decodes historical metrics recorded before the budget counter existed', async () => {
+    const cache={list:async()=>({keys:[{metadata:{v:2,id:feeds[0].id,slot:10,t:now,d:1,c:Array(18).fill(0),r:{}}}],list_complete:true})} as unknown as KVNamespace
+    expect((await sourceRunPage(cache)).runs[0].counts.budget_deferred).toBe(0)
   })
   it('paused and removed sources retain report history but are not selected', () => {
     const r = sample(0)

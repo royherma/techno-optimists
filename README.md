@@ -173,10 +173,10 @@ required. Cloudflare may take up to 15 minutes to propagate trigger changes.
 Set `SCOUT_ENABLED: "false"` and deploy to pause ingestion.
 
 The remote runner selects from the registry in `apps/api/src/scout-sources.ts`,
-fetching at most two new articles per six-hour slot. The initial registry includes
+fetching up to 24 new articles and reviewing up to 8 readable articles per six-hour slot (96 fetches / 32 AI reviews per day, before the budget guard). Practical water, heat, farming, repair and infrastructure headlines get first consideration; other entries remain eligible. The initial registry includes
 Nepali Times, Mongabay, Mongabay India, The Better India, Global Voices, Rest of
 World, Hackaday and CleanTechnica. It classifies type, stage, reach and severity
-with Workers AI Llama 3.3 70B (8,000 source characters maximum), requires a fresh publication date and an exact measurement quote,
+with Workers AI Llama 3.3 70B (8,000 source characters maximum), requires a fresh publication date and an exact measurement quote (a paraphrased draft quote can be replaced with an exact 15-word excerpt containing its unchanged headline numbers),
 and audits the full narrative in a separate inference. Uncertain drafts go to
 private KV keys `scout:review:*`; transient failures retry after a day. The audit
 is automated evidence checking, not independent fact verification. Status is
@@ -192,13 +192,29 @@ generate an illustration. Insertion uses the same append-only D1 helper as the C
 threads and subsequent community edits are preserved. Source URLs and stable
 place/problem slugs suppress duplicates; semantic duplicates can still need review.
 
-Strongly consistent R2 conditional slot claims cap overlapping/replayed runs at
-four text inferences (1,000 output tokens per draft, 400 per audit) and two four-step
-images per six-hour slot. A failed run consumes its slot and resumes next slot;
-there is no unbounded retry loop. These limits keep this job well below Workers
-AI's 10,000-neuron daily free allocation at current rates, but the allocation is
-account-wide: an existing paid account can incur overages from combined usage.
-This code does not change billing plans or impose an account-wide billing cap.
+Strongly consistent R2 conditional slot claims prevent overlapping/replayed runs
+from multiplying the allowance. Each scheduled run has a 2,000-neuron guard shared
+by drafting, auditing and fallback images. Text calls reserve conservatively from
+UTF-8 input size and the output-token limit (800 draft, 300 audit), then settle
+against reported token usage when available. Failed requests or missing usage keep
+the full reservation; image generation reserves 58 neurons. The guard can stop a
+run before eight reviews. Deferred articles stay unseen for a later attempt and
+are excluded from source-quality evaluations. Rates are fixed in
+`apps/api/src/scout-budget.ts` and need checking when Cloudflare changes pricing.
+
+For an immediate operator batch, run `npm run scout:run:remote`. It uses the same
+pipeline with real production bindings through an authenticated Wrangler session,
+a localhost-only harness and the repository operation lock. It can publish data.
+A separate permanent R2 claim allows **two manual runs per UTC day**, each with a
+1,000-neuron allowance, without consuming the next scheduled slot. Set `SCOUT_SOURCE=better-india` to probe a particular enabled feed. Its JSON report
+is saved under ignored `outputs/scout-manual/`. No manual-trigger route is exposed
+on the deployed website. Scheduled and manual history keys cannot overwrite each other.
+
+The scheduled allowance totals 8,000 neurons/day; including both optional manual runs
+makes 10,000. This is a per-job accounting guard at current rates, not a guaranteed
+$0 bill: Workers AI's free allocation is shared across the account, pricing can
+change, and an existing paid account can incur combined-usage overages. This code
+does not change billing plans or impose an account-wide billing cap.
 See [Cloudflare pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/).
 
 Check [live Scout status](https://technooptimists.org/api/scout/status) for the last

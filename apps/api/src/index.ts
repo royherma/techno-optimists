@@ -1,3 +1,4 @@
+import { SCOUT_LIMITS } from './scout-budget'
 import { SCOUT_FEEDS, recentSourceRuns, sourceRunPage, summarizeSources } from './scout-sources'
 import { runScout, SCOUT_CRON } from './scout-cloudflare'
 import { appendScoutRows, ScoutInputError } from './scout-import'
@@ -1141,7 +1142,7 @@ app.get('/api/scout/sources', async (c) => {
   if (![7, 30, 90].includes(days)) return c.json({ error: 'days_must_be_7_30_or_90' }, 400)
   const history = c.env.CACHE ? await recentSourceRuns(c.env.CACHE, days) : { runs: [], truncated: false }
   return c.json({ window_days: days, truncated: history.truncated, sources: summarizeSources(SCOUT_FEEDS, history.runs),
-    policy: { max_articles_per_run: 2, runs_per_day: 4, exploration_fraction: 0.25, minimum_evaluated: 20, minimum_runs: 5, automatic_retirement: false } }, 200, { 'Cache-Control': 'public, max-age=60' })
+    policy: { ...SCOUT_LIMITS, exploration_fraction: 0.25, minimum_evaluated: 20, minimum_runs: 5, automatic_retirement: false } }, 200, { 'Cache-Control': 'public, max-age=60' })
 })
 app.get('/api/scout/source-runs', async (c) => {
   const page = c.env.CACHE ? await sourceRunPage(c.env.CACHE, c.req.query('cursor')) : { runs: [], next_cursor: null }
@@ -1150,7 +1151,7 @@ app.get('/api/scout/source-runs', async (c) => {
 
 app.get('/api/scout/status', async (c) => {
   const last = await c.env.CACHE?.get('scout:last-run', 'json')
-  return c.json({ enabled: c.env.SCOUT_ENABLED === 'true', schedule: SCOUT_CRON, timezone: 'UTC', last_run: last ?? null }, 200, { 'Cache-Control': 'no-store' })
+  return c.json({ enabled: c.env.SCOUT_ENABLED === 'true', schedule: SCOUT_CRON, timezone: 'UTC', limits: SCOUT_LIMITS, last_run: last ?? null }, 200, { 'Cache-Control': 'no-store' })
 })
 
 app.get('/api/health', async (c) => {

@@ -10,11 +10,11 @@ export const SCOUT_FEEDS: ScoutFeed[] = [
   { id: 'hackaday', name: 'Hackaday', url: 'https://hackaday.com/blog/feed/', hosts: ['hackaday.com'], image_hosts: [], enabled: true, focus: 'Working builds and engineering experiments' },
   { id: 'cleantechnica', name: 'CleanTechnica', url: 'https://cleantechnica.com/feed/', hosts: ['cleantechnica.com'], image_hosts: [], enabled: true, focus: 'Energy, transport and deployed solutions' },
 ]
-export const COUNTERS = ['checked', 'readable', 'approved', 'published', 'rejected', 'duplicates', 'seen', 'feed_errors', 'fetch_errors', 'model_errors', 'delivery_errors', 'storage_errors', 'model_calls', 'image_calls', 'covers_available', 'covers_used', 'cover_failures', 'generated_used'] as const
+export const COUNTERS = ['checked', 'readable', 'approved', 'published', 'rejected', 'duplicates', 'seen', 'feed_errors', 'fetch_errors', 'model_errors', 'delivery_errors', 'storage_errors', 'model_calls', 'image_calls', 'covers_available', 'covers_used', 'cover_failures', 'generated_used', 'budget_deferred'] as const
 export type Counts = Record<typeof COUNTERS[number], number>
 export const emptyCounts = (): Counts => Object.fromEntries(COUNTERS.map(k => [k, 0])) as Counts
 export type SourceRun = {
-  version: 2; slot: number; source_id: string; started_at: number; duration_ms: number;
+  mode?: 'scheduled' | 'manual'; manual_started_at?: number; version: 2; slot: number; source_id: string; started_at: number; duration_ms: number;
   counts: Counts; reasons: Record<string, number>; selection: string;
   articles: { url: string; outcome: string; reasons?: string[]; slug?: string }[];
 }
@@ -27,8 +27,8 @@ export function recordReasons(run: SourceRun, reasons: string[]) {
   for (const reason of new Set(reasons.map(r => REASONS.has(r) ? r : 'other_evidence_failure'))) run.reasons[reason] = (run.reasons[reason] ?? 0) + 1
 }
 type RunMeta = { v: 2; id: string; slot: number; t: number; d: number; c: number[]; r: Record<string, number> }
-export function runKey(run: Pick<SourceRun, 'slot' | 'source_id'>): string {
-  return `scout:source-run:${String(9_999_999_999 - run.slot).padStart(10, '0')}:${run.source_id}`
+export function runKey(run: Pick<SourceRun, 'slot' | 'source_id' | 'mode' | 'manual_started_at'>): string {
+  return `scout:source-run:${String(9_999_999_999 - run.slot).padStart(10, '0')}:${run.source_id}${run.mode === 'manual' ? `:manual:${run.manual_started_at ?? 0}` : ''}`
 }
 export async function saveSourceRun(cache: KVNamespace, run: SourceRun) {
   const metadata: RunMeta = { v: 2, id: run.source_id, slot: run.slot, t: run.started_at, d: run.duration_ms, c: COUNTERS.map(k => run.counts[k]), r: run.reasons }
@@ -42,18 +42,24 @@ export async function sourceRunPage(cache: KVNamespace, cursor?: string) {
   const page = await cache.list<RunMeta>({ prefix: 'scout:source-run:', limit: 500, ...(cursor ? { cursor } : {}) })
   const runs: SourceSample[] = page.keys.flatMap(k => {
     const m = k.metadata
-    if (!m || m.v !== 2 || m.c.length !== COUNTERS.length) return []
-    return [{ slot: m.slot, source_id: m.id, started_at: m.t, duration_ms: m.d, counts: Object.fromEntries(COUNTERS.map((n, i) => [n, m.c[i]])) as Counts, reasons: m.r }]
+    if (!m || m.v !== 2 || m.c.length < COUNTERS.length - 1) return []
+    return [{ slot: m.slot, source_id: m.id, started_at: m.t, duration_ms: m.d, counts: Object.fromEntries(COUNTERS.map((n, i) => [n, m.c[i] ?? 0])) as Counts, reasons: m.r }]
   })
   return { runs, next_cursor: page.list_complete ? null : page.cursor }
 }
 export async function recentSourceRuns(cache: KVNamespace, days: number, now = Date.now()) {
   const cutoff = now - days * 86400_000
-  const page = await sourceRunPage(cache)
-  // At most four runs/day: 500 records comfortably cover the 90-day API window.
-  // Surface truncation if a future schedule or importer increases that volume.
-  const truncated = !!page.next_cursor && (!page.runs.length || page.runs.at(-1)!.started_at >= cutoff)
-  return { runs: page.runs.filter(r => r.started_at >= cutoff), truncated }
+  const runs: SourceSample[] = []
+  let cursor: string | undefined
+  // Six daily runs fit in two pages over 90 days. Bound unexpected imports,
+  // and surface truncation rather than silently reporting a complete window.
+  for (let i = 0; i < 4; i++) {
+    const page = await sourceRunPage(cache, cursor)
+    runs.push(...page.runs.filter(r => r.started_at >= cutoff))
+    if (!page.next_cursor || (page.runs.length && page.runs.every(r => r.started_at < cutoff))) return { runs, truncated: false }
+    cursor = page.next_cursor
+  }
+  return { runs, truncated: true }
 }
 export function wilsonLower(success: number, total: number): number {
   if (!total) return 0
@@ -70,7 +76,7 @@ export function summarizeSources(feeds: ScoutFeed[], runs: SourceSample[], now =
       for (const key of COUNTERS) counts[key] += run.counts[key]
       for (const [key, n] of Object.entries(run.reasons)) reasons[key] = (reasons[key] ?? 0) + n
     }
-    const evaluated = Math.max(0, counts.readable - counts.model_errors)
+    const evaluated = Math.max(0, counts.readable - counts.model_errors - counts.budget_deferred)
     const enough = evaluated >= 20 && history.length >= 5
     let consecutiveFeedErrors = 0
     for (const run of history) { if (!run.counts.feed_errors) break; consecutiveFeedErrors++ }
