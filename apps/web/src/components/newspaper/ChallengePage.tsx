@@ -50,8 +50,8 @@ function PrizeBlock({ prize }: { prize: NonNullable<Challenge['prize']> }) {
       acts on it. This is a legal relationship they need, not a status report -
       see the copy rules in CLAUDE.md.
     */}
-    {prize.sponsor && <p className="np-prize-legal">Run by {prize.sponsor}. Enter on their site - Techno Optimists is not involved in judging or payment.</p>}
-    {enterable && <a className="np-prize-link" href={prize.url!} target="_blank" rel="noopener noreferrer">Enter on {prize.sponsor || 'the sponsor'}&rsquo;s site ↗</a>}
+    {prize.sponsor && <p className="np-prize-legal">{`Run by ${prize.sponsor}. Enter on their site - Techno Optimists is not involved in judging or payment.`}</p>}
+    {enterable && <a className="np-prize-link" href={prize.url!} target="_blank" rel="noopener noreferrer">{`Enter on ${prize.sponsor || 'the sponsor'}’s site`} ↗</a>}
   </div>
 }
 
