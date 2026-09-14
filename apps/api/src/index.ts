@@ -7,9 +7,14 @@ import { Hono } from 'hono'
 import { z } from 'zod'
 import {
   HANDLE_MAX, HANDLE_MIN, SESSION_COOKIE, clearCookie, cookie, currentPerson,
-  handleFromEmail, handleProblem, hashToken, linkExpiry, mintToken, nameFromEmail,
+  handleFromEmail, handleProblem, hashToken, iso, linkExpiry, mintToken, nameFromEmail,
   normalizeEmail, normalizeHandle, readCookie, sessionExpiry, signalCookie,
 } from './auth'
+import {
+  DEFAULT_PROVIDER, ProviderError, challengeOf, disconnectAccount, isAiAction,
+  markRevoked, mintVerifier, providerOf, publicAccount, runAction, saveAccount,
+  usableAccount,
+} from './ai-accounts'
 import { isAdminEmail } from './admin'
 import { track } from './analytics'
 import { community } from './community'
@@ -60,6 +65,13 @@ type Env = {
    * skips that channel rather than defaulting to another, so a half-configured
    * env is quiet instead of noisy in the wrong place.
    */
+  /**
+   * AES-GCM key material for connected AI accounts (src/ai-accounts.ts). Must
+   * differ between dev and prod, so a dev database leak cannot decrypt a prod
+   * donor's key. Unset means connecting fails loudly rather than storing a key
+   * in the clear.
+   */
+  AI_KEY_SECRET?: string
   SLACK_BOT_TOKEN?: string
   SLACK_CHANNEL_GROWTH?: string
   SLACK_CHANNEL_PRODUCT?: string
@@ -1145,6 +1157,225 @@ app.get('/api/people/:handle', async (c) => {
  * was taken, and there is no other way to reach a 60-day cookie sitting on a
  * phone they no longer hold.
  */
+// ---------------------------------------------------------------------------
+// Donated inference. A reader connects their own AI account and spends their
+// own credits on a thread. See apps/api/src/ai-accounts.ts for the provider
+// seam and docs/2026-09-14-donated-inference.md for why it is shaped this way.
+//
+// The rule that decides the whole design: connecting an AI account is NEVER a
+// sign-in path. The PKCE exchange returns `{ key }` and no identity claim, so
+// treating it as a login would let anyone holding any provider account take
+// over a site account. Email magic-link stays the only way to become a person;
+// connecting is something a person who already exists does.
+// ---------------------------------------------------------------------------
+
+/** How long a started OAuth attempt stays redeemable. The provider's own code
+ *  expires in 10 minutes, so a longer window here would only produce a
+ *  confusing second failure after ours had already passed. */
+const AI_ATTEMPT_MINUTES = 15
+
+/** Runs one person may donate per hour, and runs a thread may receive per day.
+ *  Both protect the donor's wallet, which is why they are enforced even though
+ *  the money is theirs: a loop that spends a stranger's balance is the failure
+ *  mode that ends this feature permanently. */
+const AI_RUNS_PER_PERSON_HOUR = 12
+const AI_RUNS_PER_CHALLENGE_DAY = 8
+
+/**
+ * Adds one param to a site-relative path, keeping any fragment last.
+ *
+ * Naive concatenation produces `/settings#compute?connected=1`, where the query
+ * is INSIDE the fragment: the browser never sends it, URLSearchParams never
+ * sees it, and the panel silently shows no outcome. The fragment must stay at
+ * the end, which is what this splits off and re-appends.
+ */
+const withParam = (path: string, key: string, value: string) => {
+  const hash = path.indexOf('#')
+  const base = hash === -1 ? path : path.slice(0, hash)
+  const frag = hash === -1 ? '' : path.slice(hash)
+  return `${base}${base.includes('?') ? '&' : '?'}${key}=${encodeURIComponent(value)}${frag}`
+}
+
+app.get('/api/ai/connect', async (c) => {
+  const me = await currentPerson(c)
+  const next = safeNext(c.req.query('next')) ?? '/settings#compute'
+  // Not an error: a signed-out reader who clicked "connect" on a thread is
+  // told to sign in and returned here afterwards, so nothing is lost.
+  if (!me) return c.redirect(`/signin?next=${encodeURIComponent(`/api/ai/connect?next=${next}`)}`, 302)
+
+  const provider = providerOf(DEFAULT_PROVIDER)
+  const state = mintToken()
+  const verifier = mintVerifier()
+
+  // The verifier stays server-side. A verifier in a cookie is a verifier the
+  // browser can be tricked into replaying.
+  await c.env.DB.prepare(
+    'INSERT INTO ai_oauth_attempts (state, person_id, provider, verifier, next, expires_at) VALUES (?, ?, ?, ?, ?, ?)',
+  ).bind(state, me.id, provider.id, verifier, next, iso(AI_ATTEMPT_MINUTES * 60_000)).run()
+
+  const callback = `${new URL(c.req.url).origin}/api/ai/callback?state=${state}`
+  return c.redirect(provider.authorizeUrl({ callback, challenge: await challengeOf(verifier) }), 302)
+})
+
+app.get('/api/ai/callback', async (c) => {
+  const url = new URL(c.req.url)
+  const state = url.searchParams.get('state')
+  const code = url.searchParams.get('code')
+  const fail = (reason: string, next = '/settings#compute') =>
+    c.redirect(withParam(next, 'ai_error', reason), 302)
+
+  if (!state || !code) return fail('missing')
+
+  const attempt = await c.env.DB.prepare(
+    'SELECT person_id, provider, verifier, next, used_at FROM ai_oauth_attempts WHERE state = ?',
+  ).bind(state).first<{ person_id: string; provider: string; verifier: string; next: string | null; used_at: string | null }>()
+
+  // No attempt row, or a session that died mid-flow. Do NOT try the exchange:
+  // without a verifier it cannot succeed, and burning the code makes the
+  // retry fail too.
+  if (!attempt) return fail('unknown')
+  // Back button after a successful connect re-sends a spent code. That is not
+  // an error to show anyone - they are connected.
+  if (attempt.used_at) return c.redirect(withParam(safeNext(attempt.next ?? undefined) ?? '/settings#compute', 'connected', '1'), 302)
+
+  const next = safeNext(attempt.next ?? undefined) ?? '/settings#compute'
+
+  // Claim and test in one statement, same reason as the magic-link callback:
+  // two clicks a few hundred ms apart must not both run an exchange.
+  const claim = await c.env.DB.prepare(
+    "UPDATE ai_oauth_attempts SET used_at = datetime('now') WHERE state = ? AND used_at IS NULL AND expires_at > datetime('now')",
+  ).bind(state).run()
+  if (claim.meta.changes !== 1) return fail('expired', next)
+
+  try {
+    const provider = providerOf(attempt.provider)
+    const { key, label } = await provider.exchange({ code, verifier: attempt.verifier })
+    await saveAccount(c.env, attempt.person_id, provider.id, key, label)
+    const who = await c.env.DB.prepare('SELECT handle FROM people WHERE id = ?')
+      .bind(attempt.person_id).first<{ handle: string }>()
+    notify(c, 'ai_account_connected', { handle: who?.handle ?? 'unknown', provider: provider.name })
+  } catch (err) {
+    if (err instanceof ProviderError) return fail(err.kind, next)
+    throw err
+  }
+
+  return c.redirect(withParam(next, 'connected', '1'), 302)
+})
+
+app.get('/api/ai/account', async (c) => {
+  const me = await currentPerson(c)
+  if (!me) return c.json({ account: null })
+  return c.json({ account: await publicAccount(c.env, me.id) })
+})
+
+app.post('/api/ai/disconnect', async (c) => {
+  const me = await currentPerson(c)
+  if (!me) return c.json({ error: 'signin_required' }, 401)
+  await disconnectAccount(c.env, me.id)
+  return c.json({ ok: true })
+})
+
+/**
+ * Runs an AI action on the caller's own connected account.
+ *
+ * Never falls back to the site's credits when the donor's balance is empty:
+ * that would spend the house's money without asking and make the "on their own
+ * credits" attribution a lie.
+ */
+app.post('/api/challenges/:slug/ai/:action', async (c) => {
+  const me = await currentPerson(c)
+  if (!me) return c.json({ error: 'signin_required' }, 401)
+
+  const action = c.req.param('action')
+  if (!isAiAction(action)) return c.json({ error: 'unknown_action' }, 400)
+
+  const challenge = await c.env.DB.prepare(
+    'SELECT id, title, summary, problem, why_unsolved, evidence FROM challenges WHERE slug = ?',
+  ).bind(c.req.param('slug')).first<{
+    id: string; title: string; summary: string | null; problem: string | null
+    why_unsolved: string | null; evidence: string | null
+  }>()
+  if (!challenge) return c.json({ error: 'not_found' }, 404)
+
+  const account = await usableAccount(c.env, me.id)
+  if (!account) return c.json({ error: 'no_account' }, 402)
+
+  const [perPerson, perChallenge] = await Promise.all([
+    c.env.DB.prepare(
+      "SELECT COUNT(*) n FROM ai_runs WHERE person_id = ? AND created_at > datetime('now', '-1 hour')",
+    ).bind(me.id).first<{ n: number }>(),
+    c.env.DB.prepare(
+      "SELECT COUNT(*) n FROM ai_runs WHERE challenge_id = ? AND created_at > datetime('now', '-1 day')",
+    ).bind(challenge.id).first<{ n: number }>(),
+  ])
+  if ((perPerson?.n ?? 0) >= AI_RUNS_PER_PERSON_HOUR) return c.json({ error: 'rate_limited_person' }, 429)
+  if ((perChallenge?.n ?? 0) >= AI_RUNS_PER_CHALLENGE_DAY) return c.json({ error: 'rate_limited_challenge' }, 429)
+
+  // Thread fields are concatenated as plain data. The system prompt in
+  // ai-accounts.ts is fixed and says so; nothing here interpolates thread text
+  // into an instruction.
+  const threadText = [
+    `Title: ${challenge.title}`,
+    challenge.summary && `Summary: ${challenge.summary}`,
+    challenge.problem && `Problem: ${challenge.problem}`,
+    challenge.why_unsolved && `Why it is unsolved: ${challenge.why_unsolved}`,
+    challenge.evidence && `Evidence: ${challenge.evidence}`,
+  ].filter(Boolean).join('\n\n')
+
+  let result
+  try {
+    result = await runAction(account, action, threadText)
+  } catch (err) {
+    if (err instanceof ProviderError) {
+      // A 401 is the provider telling us the donor revoked the key on their
+      // side. Record that so the settings page says "reconnect".
+      if (err.kind === 'revoked') await markRevoked(c.env, me.id)
+      const status = err.kind === 'no_credit' || err.kind === 'revoked' ? 402 : 502
+      return c.json({ error: err.kind }, status)
+    }
+    throw err
+  }
+
+  const runId = `air_${mintToken().slice(0, 16)}`
+  await c.env.DB.batch([
+    c.env.DB.prepare(
+      'INSERT INTO ai_runs (id, challenge_id, person_id, action, model, provider, cost_usd, output) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    ).bind(runId, challenge.id, me.id, action, result.model, account.provider, result.cost_usd, result.text),
+    c.env.DB.prepare("UPDATE ai_accounts SET last_used_at = datetime('now') WHERE person_id = ?").bind(me.id),
+  ])
+
+  track(c.env, 'ai_run', new URL(c.req.url).pathname)
+  return c.json({
+    run: {
+      id: runId, action, model: result.model, output: result.text,
+      cost_usd: result.cost_usd, by_handle: me.handle, by_name: me.name,
+    },
+  })
+})
+
+/** Runs donated to one thread, newest first. Public: attribution is the point. */
+app.get('/api/challenges/:slug/ai/runs', async (c) => {
+  const challenge = await c.env.DB.prepare('SELECT id FROM challenges WHERE slug = ?')
+    .bind(c.req.param('slug')).first<{ id: string }>()
+  if (!challenge) return c.json({ error: 'not_found' }, 404)
+
+  const rows = await c.env.DB.prepare(
+    `SELECT r.id, r.action, r.model, r.output, r.created_at, p.handle, p.name, p.avatar_url
+     FROM ai_runs r JOIN people p ON p.id = r.person_id
+     WHERE r.challenge_id = ? ORDER BY r.created_at DESC LIMIT 20`,
+  ).bind(challenge.id).all()
+
+  // cost_usd is deliberately not returned: what a donor spent is between them
+  // and their provider, and a public price tag turns a gift into a leaderboard.
+  return c.json({
+    runs: (rows.results ?? []).map((r: Row) => ({
+      id: String(r.id), action: String(r.action), model: String(r.model),
+      output: String(r.output), created_at: String(r.created_at),
+      by: { handle: String(r.handle), name: String(r.name), avatar_url: r.avatar_url == null ? null : String(r.avatar_url) },
+    })),
+  })
+})
+
 app.post('/api/auth/signout', async (c) => {
   const token = readCookie(c.req.header('cookie'), SESSION_COOKIE)
   const everywhere = (await c.req.json().catch(() => null))?.everywhere === true

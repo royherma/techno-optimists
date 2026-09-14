@@ -54,3 +54,65 @@ CREATE TABLE IF NOT EXISTS site_views (
 -- This index serves "views per day" without scanning, for the day the question
 -- stops being a single total.
 CREATE INDEX IF NOT EXISTS site_views_day ON site_views(viewed_on);
+
+-- ---------------------------------------------------------------------------
+-- Donated inference. A person connects their own AI provider account and the
+-- site spends their credits on work they initiate. See
+-- docs/2026-09-14-donated-inference.md and apps/api/src/ai-accounts.ts.
+-- ---------------------------------------------------------------------------
+
+-- One connected account per person. `provider` is a column and not an assumed
+-- constant because OpenRouter is the only consumer OAuth flow that exists
+-- today, not the only one that ever will.
+CREATE TABLE IF NOT EXISTS ai_accounts (
+  person_id     TEXT PRIMARY KEY REFERENCES people(id) ON DELETE CASCADE,
+  provider      TEXT NOT NULL DEFAULT 'openrouter',
+  -- AES-GCM, `iv.ciphertext` in base64url. The AES key is derived from the
+  -- AI_KEY_SECRET Worker secret, so a database dump cannot bill anyone.
+  key_encrypted TEXT NOT NULL,
+  -- What the provider shows the donor in their own key list, so the charge on
+  -- their side is identifiable rather than anonymous.
+  label         TEXT,
+  connected_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  last_used_at  TEXT,
+  -- Set when the provider rejects the key with a 401. The row is kept rather
+  -- than deleted so the settings page can say "reconnect", not "connect".
+  revoked_at    TEXT
+);
+
+-- A pending OAuth attempt. The PKCE verifier never reaches the browser: it is
+-- held here against a random state value, and the callback looks it up by
+-- state. Keyed by state rather than by person so a donor who starts the flow
+-- twice does not have their first attempt silently overwritten.
+CREATE TABLE IF NOT EXISTS ai_oauth_attempts (
+  state      TEXT PRIMARY KEY,
+  person_id  TEXT NOT NULL REFERENCES people(id) ON DELETE CASCADE,
+  provider   TEXT NOT NULL,
+  verifier   TEXT NOT NULL,
+  next       TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  expires_at TEXT NOT NULL,
+  used_at    TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_ai_attempts_person ON ai_oauth_attempts(person_id, created_at DESC);
+
+-- One row per run, on the donor's key. This table is what makes the donation
+-- visible: attribution is per-run and not a single sponsor field on a thread,
+-- because three people can each donate a run to the same thread.
+CREATE TABLE IF NOT EXISTS ai_runs (
+  id           TEXT PRIMARY KEY,
+  challenge_id TEXT NOT NULL REFERENCES challenges(id) ON DELETE CASCADE,
+  person_id    TEXT NOT NULL REFERENCES people(id) ON DELETE CASCADE,
+  action       TEXT NOT NULL,
+  model        TEXT NOT NULL,
+  provider     TEXT NOT NULL DEFAULT 'openrouter',
+  -- Reported by the provider. Nullable: a provider that does not return a cost
+  -- still produced a real run, and guessing a number would be worse than none.
+  cost_usd     REAL,
+  output       TEXT NOT NULL,
+  created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_ai_runs_challenge ON ai_runs(challenge_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_ai_runs_person ON ai_runs(person_id, created_at DESC);
