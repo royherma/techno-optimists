@@ -278,30 +278,21 @@
 }
 .np-briefing-evidence::before { content:'\201C'; }
 .np-briefing-evidence::after { content:'\201D'; }
-/* Closes the briefing when nothing is solved yet: the reader has just been told
- * what is wrong and why it is stuck, which is the one moment they know enough
- * to have an idea. It opens the composer already labelled Idea rather than
- * sending them to find the discussion themselves. */
-.np-briefing-cta {
-  margin:12px 0 0; padding-top:9px;
-  border-top:1px solid var(--np-rule);
-  font:15px/1.4 Georgia,serif; color:var(--np-muted);
+/* Rides the byline row, which is the one line always on page one of the
+ * paginated story column. Floated rather than laid out with flex: the column is
+ * fragmented by CSS multi-column, where a flex row is an unbreakable block and
+ * would push the whole briefing to the next page. Padding matches
+ * .np-story-author so the two sit on the same line. */
+.np-briefing-cta-inline {
+  float:right; margin:0; padding-block:8px; padding-left:14px; border:0;
+  font:11px/1.5 system-ui,sans-serif;
 }
-.np-briefing-cta button {
+.np-briefing-cta-inline button {
   font:inherit; font-weight:bold; color:var(--np-ink);
   background:none; border:0; padding:0; cursor:pointer;
   text-decoration:underline; text-underline-offset:2px;
 }
-.np-briefing-cta button:hover { color:var(--np-accent,var(--np-ink)); }
-/* On the heading row instead of below the section. The story column is
- * paginated by CSS multi-column fragmentation, and a flex or grid row is an
- * unbreakable block there - making the heading one pushed the entire briefing
- * into the next column. A float keeps the heading in normal flow, so the
- * fragmenter breaks exactly where it did before this CTA existed. */
-.np-briefing-cta-inline {
-  float:right; margin:0 0 0 14px; padding:0; border:0;
-  font:12px/1.55 system-ui,sans-serif; letter-spacing:.02em;
-}
+.np-briefing-cta-inline button:hover { color:var(--np-accent,var(--np-ink)); }
 @media(max-width:1399px) {
   .np-briefing-part p { font-size:15px; }
   .np-briefing-part h2 { font-size:18px; }
@@ -312,6 +303,5 @@
   .np-briefing-part h2 { font-size:16px; }
   .np-briefing-part p { font-size:13.5px; line-height:1.4; }
   .np-briefing-evidence { font-size:12.5px; margin-top:8px; }
-  .np-briefing-cta { font-size:13px; margin-top:9px; }
-  .np-briefing-cta-inline { font-size:11px; margin:0; }
+  .np-briefing-cta-inline { font-size:10.5px; }
 }

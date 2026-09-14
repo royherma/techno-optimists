@@ -88,29 +88,20 @@ function Briefing({ briefing, type }: { briefing: NonNullable<Challenge['briefin
 }
 
 /**
- * The invitation to answer, offered on every thread. A reader who has just
- * finished reading the problem is at the moment they are most likely to have
- * something to say, so it sits at the end of the story column rather than only
- * in the panel beside it.
+ * The invitation to answer, on every thread.
  *
- * It lives outside Briefing because a thread with no briefing rows still takes
- * contributions - gating the ask on the presence of imported problem text would
- * silently drop it on exactly the threads a person wrote themselves.
+ * It sits on the byline row because the story column is paginated: anything
+ * placed after the prose can land on page two or three depending on how tall
+ * the column happens to be, and a reader should never have to page through a
+ * thread to find out how to contribute. The byline is always on page one.
  *
- * Only the lead sentence varies: "nobody has solved this" is a claim the other
- * states cannot make.
+ * Floated, so it precedes the byline in source order.
  */
-function BriefingCta({ briefing, type, inline }: { briefing: Challenge['briefing']; type: Challenge['type']; inline?: boolean }) {
-  const isFix = type === 'build' || type === 'idea' || type === 'experiment'
-  const open = !isFix && (briefing?.status === 'unsolved' || briefing?.status === 'partially_solved')
-  const button = <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('compose-idea', { detail: { kind: 'idea' } }))}>
-    {inline ? 'Have an idea? →' : 'Have an idea? Suggest a solution →'}
-  </button>
-  // Beside a heading there is no room for a lead sentence, and none is needed:
-  // the heading it sits on already says what the idea would be about.
-  if (inline) return <p className="np-briefing-cta np-briefing-cta-inline">{button}</p>
-  return <p className="np-briefing-cta">
-    {open ? 'Nobody has solved this yet.' : isFix ? 'Seen something like this?' : 'Know something about this?'} {button}
+function BriefingCta({ type }: { type: Challenge['type'] }) {
+  return <p className="np-briefing-cta-inline">
+    <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('compose-idea', { detail: { kind: 'idea' } }))}>
+      {type === 'build' || type === 'idea' || type === 'experiment' ? 'Seen this? Add an idea →' : 'Have an idea? →'}
+    </button>
   </p>
 }
 
@@ -171,7 +162,7 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
             {/* The byline is the last thing before the story pages, so it is the
               * only place guaranteed to be on page one whatever the column
               * height. Floated, so it must come first in source order. */}
-            <BriefingCta briefing={c.briefing} type={c.type} inline />
+            <BriefingCta type={c.type} />
             <p className="np-story-author">Shared by <a href={'/people?handle=' + encodeURIComponent(c.author.handle)}>@{c.author.handle}</a> · Posted {relativeDate(dateStr)} ({formatDate(dateStr)}) <ViewsCount count={c.views_count ?? 0} title={c.title} /></p>
             {c.briefing && <Briefing briefing={c.briefing} type={c.type} />}
             {c.body && c.body.split(/\n\s*\n/).map((p, i) => {
