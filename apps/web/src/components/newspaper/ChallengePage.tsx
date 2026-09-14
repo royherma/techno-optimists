@@ -76,7 +76,12 @@ function Briefing({ briefing, type }: { briefing: NonNullable<Challenge['briefin
   if (!briefing.problem && !briefing.why_unsolved && !briefing.evidence) return null
   return <div className="np-briefing">
     {briefing.problem && <div className="np-briefing-part">
-      <h2>{isFix ? 'What this solves' : 'The problem'}</h2>
+      {/* The ask rides the heading rather than closing the section, so a reader
+        * who only ever sees the first page of the story still has it. */}
+      <div className="np-briefing-part-head">
+        <h2>{isFix ? 'What this solves' : 'The problem'}</h2>
+        <BriefingCta briefing={briefing} type={type} inline />
+      </div>
       <p>{briefing.problem}</p>
     </div>}
     {briefing.why_unsolved && <div className="np-briefing-part">
@@ -100,11 +105,17 @@ function Briefing({ briefing, type }: { briefing: NonNullable<Challenge['briefin
  * Only the lead sentence varies: "nobody has solved this" is a claim the other
  * states cannot make.
  */
-function BriefingCta({ briefing, type }: { briefing: Challenge['briefing']; type: Challenge['type'] }) {
+function BriefingCta({ briefing, type, inline }: { briefing: Challenge['briefing']; type: Challenge['type']; inline?: boolean }) {
   const isFix = type === 'build' || type === 'idea' || type === 'experiment'
   const open = !isFix && (briefing?.status === 'unsolved' || briefing?.status === 'partially_solved')
+  const button = <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('compose-idea', { detail: { kind: 'idea' } }))}>
+    {inline ? 'Have an idea? →' : 'Have an idea? Suggest a solution →'}
+  </button>
+  // Beside a heading there is no room for a lead sentence, and none is needed:
+  // the heading it sits on already says what the idea would be about.
+  if (inline) return <p className="np-briefing-cta np-briefing-cta-inline">{button}</p>
   return <p className="np-briefing-cta">
-    {open ? 'Nobody has solved this yet.' : isFix ? 'Seen something like this?' : 'Know something about this?'} <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('compose-idea', { detail: { kind: 'idea' } }))}>Have an idea? Suggest a solution →</button>
+    {open ? 'Nobody has solved this yet.' : isFix ? 'Seen something like this?' : 'Know something about this?'} {button}
   </p>
 }
 
@@ -174,7 +185,9 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
               }
               return <p key={i}>{p}</p>
             })}
-            <BriefingCta briefing={c.briefing} type={c.type} />
+            {/* Only where the heading row did not already carry it, so a thread
+              * with no imported problem text still gets the ask. */}
+            {!c.briefing?.problem && <BriefingCta briefing={c.briefing} type={c.type} />}
             {c.prize && <PrizeBlock prize={c.prize} />}
             {(c.source?.note || c.source?.url || c.source?.name) && (
               <div className="np-article-briefing">
