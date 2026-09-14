@@ -248,3 +248,38 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+/* The problem, and why it is still open. Sits under the deck, above the fold of
+ * the reading column, because a reader who cannot answer "what is wrong" has no
+ * reason to read further. Each part is a real heading rather than a bold run-in,
+ * so the two questions are answered as two answers, not one paragraph. */
+.np-briefing { margin:14px 0 4px; border-top:1px solid var(--np-ink); }
+.np-briefing-part { margin-top:11px; }
+.np-briefing-part h2 {
+  font:700 10px/1.3 system-ui,sans-serif;
+  text-transform:uppercase; letter-spacing:.09em;
+  color:var(--np-muted); margin:0 0 3px;
+}
+/* Slightly larger than body copy: this is the answer, not supporting text. The
+ * !important matches .np-briefing-note above - .np-page-flow p sets a margin on
+ * every descendant paragraph and would otherwise win here too. */
+.np-briefing-part p { font:16px/1.45 Georgia,serif; color:var(--np-ink); margin:0 !important; }
+/* The line from the article that carries the measurement. Indented rather than
+ * italicised - these are often long, and a full italic paragraph reads as an
+ * aside when it is the evidence. */
+.np-briefing-evidence {
+  margin:11px 0 0; padding:1px 0 1px 11px;
+  border-left:2px solid var(--np-rule);
+  font:14px/1.45 Georgia,serif; color:var(--np-muted);
+}
+.np-briefing-evidence::before { content:'\201C'; }
+.np-briefing-evidence::after { content:'\201D'; }
+@media(max-width:1399px) {
+  .np-briefing-part p { font-size:15px; }
+}
+@media(max-width:759px) {
+  .np-briefing { margin-top:10px; }
+  .np-briefing-part { margin-top:8px; }
+  .np-briefing-part p { font-size:13.5px; line-height:1.4; }
+  .np-briefing-evidence { font-size:12.5px; margin-top:8px; }
+}

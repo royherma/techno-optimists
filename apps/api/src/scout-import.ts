@@ -4,8 +4,29 @@ export type ScoutRow = {
   body?: string; media: unknown[]; location?: string; lat?: number; lng?: number;
   tags: string[]; impact?: number; source_url?: string; source_name?: string;
   source_note?: string; created_at?: string; last_activity_at?: string;
+  // Kept as columns rather than folded into source_note. The blob form lost the
+  // boundaries between them and the page could not show a problem statement.
+  problem?: string; why_unsolved?: string; evidence?: string;
+  solve_status?: string; severity?: string;
 }
 export class ScoutInputError extends Error {}
+
+/**
+ * Empty string and known filler both become NULL, so the page's "render the
+ * section only when there is something in it" check is a plain null test.
+ *
+ * The stub list is not paranoia: every one of these came back from the model in
+ * the `status_note` field on real published rows - "No effective solution in
+ * place", "Ongoing investigations", "Assessing damage and rescue efforts
+ * ongoing". They pass a length check and tell a reader nothing, which is the
+ * exact failure a "why is this unsolved" section exists to avoid.
+ */
+const STUB = /^(ongoing|no |none|n\/a|unknown|unclear|tbd|assessing|under (review|investigation)|investigation)/i
+export function meaningful(value: string | undefined): string | null {
+  const text = value?.trim()
+  if (!text || text.length < 12 || STUB.test(text)) return null
+  return text
+}
 
 export function sourceIdentity(raw: string): string {
   let u: URL
@@ -31,13 +52,17 @@ export async function appendScoutRows(db: D1Database, author: string, rows: Scou
     // after the read above. No UPDATE ever runs, even after a lost response.
     statements.push(db.prepare(`INSERT INTO challenges
       (id,slug,type,stage,title,summary,body,media,location,lat,lng,tags,author_id,impact,
-       source_url,source_name,source_note,created_at,last_activity_at,imported_at)
-      SELECT ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime(?),datetime(?),datetime('now')
+       source_url,source_name,source_note,problem,why_unsolved,evidence,solve_status,severity,
+       created_at,last_activity_at,imported_at)
+      SELECT ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime(?),datetime(?),datetime('now')
       WHERE NOT EXISTS (SELECT 1 FROM challenges WHERE slug = ? OR rtrim(source_url, '/') = ?)
       ON CONFLICT(slug) DO NOTHING`).bind(
         `c_${crypto.randomUUID()}`,row.slug,row.type,row.stage,row.title,row.summary,row.body??null,
         JSON.stringify(row.media),row.location??null,row.lat??null,row.lng??null,JSON.stringify(row.tags),author,row.impact??null,
-        source,row.source_name??null,row.source_note??null,row.created_at,row.last_activity_at??row.created_at,row.slug,source,
+        source,row.source_name??null,row.source_note??null,
+        meaningful(row.problem),meaningful(row.why_unsolved),row.evidence?.trim()||null,
+        row.solve_status??null,row.severity??null,
+        row.created_at,row.last_activity_at??row.created_at,row.slug,source,
       ))
   }
   if (dryRun) return planned
