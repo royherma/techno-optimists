@@ -36,9 +36,25 @@ const query = (sql) => {
 // the page than no reason at all, because it occupies the slot that answers the
 // reader's question.
 const STUB = /^(ongoing|no |none|n\/a|unknown|unclear|tbd|assessing|under (review|investigation)|investigation)/i
-const meaningful = (value) => {
+
+// The old field was `status_note` - "what is the state of this" - and only some
+// of its values happen to answer "why is this still open". The dry run made the
+// difference plain: "despite National Green Tribunal directions in 2015" is a
+// reason, "Temporary burial started" and "family has been celebrating
+// sustainably for 31 years" are progress notes that would read as nonsense
+// under a "Why it isn't solved" heading.
+//
+// So the bar for reusing one is that it reads as a cause: it either opens with
+// a causal connective, or names an obstacle. Everything else stays NULL and
+// waits for a re-scout, which asks the model the right question directly.
+// Erring toward NULL is deliberate - an absent section is honest, a mislabelled
+// one is not.
+const CAUSAL = /^(because|since|despite|without|due to|lack|no funding|not enough|too (few|expensive|costly)|awaiting|blocked|delays?|cost|funding|access)\b/i
+const OBSTACLE = /\b(cannot|can't|unable|no (money|funds|parts?|staff|road|access)|lacks?|shortage|unaffordable|too expensive|not reached|washed out|inaccessible|disputed|contested|stalled|unresolved|pending approval)\b/i
+const reasonLike = (value) => {
   const text = value?.trim()
-  return !text || text.length < 12 || STUB.test(text) ? null : text
+  if (!text || text.length < 12 || STUB.test(text)) return null
+  return CAUSAL.test(text) || OBSTACLE.test(text) ? text : null
 }
 
 const ENTITIES = {
@@ -66,7 +82,7 @@ export function parseScoutNote(note) {
   return {
     evidence: decode(parts[0]),
     solve_status: status[1],
-    why_unsolved: meaningful(decode(status[2])),
+    why_unsolved: reasonLike(decode(status[2])),
     severity: reach[2],
     // What is left is provenance: how it was checked, where the cover came from.
     source_note: `Automated source checks; reported ${head[1]}. ${decode(reach[3])}`.trim(),
@@ -88,7 +104,7 @@ for (const row of rows) {
   parsed++
   console.log(`${row.slug}
   status   ${fields.solve_status} / ${fields.severity}
-  why      ${fields.why_unsolved ?? '(none - left NULL, stub rejected)'}
+  why      ${fields.why_unsolved ?? '(none - left NULL, not a reason)'}
   evidence ${fields.evidence.slice(0, 90)}${fields.evidence.length > 90 ? '…' : ''}`)
   if (apply) {
     run(['--command', `UPDATE challenges SET
