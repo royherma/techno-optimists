@@ -55,6 +55,38 @@ function PrizeBlock({ prize }: { prize: NonNullable<Challenge['prize']> }) {
   </div>
 }
 
+/**
+ * What is wrong, and why it is still open.
+ *
+ * This sits directly under the deck because that is where a reader looks for it
+ * and where it was missing: the facts existed but arrived pipe-joined inside the
+ * source note, so the page answered "what is this about" and never "what is the
+ * problem".
+ *
+ * Two rules hold the section honest, and both are why it can be trusted:
+ * a heading only prints when its own text is present, and the whole block
+ * disappears when there is nothing to say. A build that works is not a problem
+ * with blank fields - it gets the need it answers, under its own heading, and
+ * no "why this is unsolved" at all.
+ */
+function Briefing({ briefing, type }: { briefing: NonNullable<Challenge['briefing']>; type: Challenge['type'] }) {
+  // A fix already exists on these, so "the problem" would be the wrong word for
+  // something nobody is still stuck on.
+  const isFix = type === 'build' || type === 'idea' || type === 'experiment'
+  if (!briefing.problem && !briefing.why_unsolved && !briefing.evidence) return null
+  return <div className="np-briefing">
+    {briefing.problem && <div className="np-briefing-part">
+      <h2>{isFix ? 'What this solves' : 'The problem'}</h2>
+      <p>{briefing.problem}</p>
+    </div>}
+    {briefing.why_unsolved && <div className="np-briefing-part">
+      <h2>{isFix ? 'What stands in the way' : "Why it isn't solved"}</h2>
+      <p>{briefing.why_unsolved}</p>
+    </div>}
+    {briefing.evidence && <blockquote className="np-briefing-evidence">{briefing.evidence}</blockquote>}
+  </div>
+}
+
 export default function ChallengePage({ initial }: { initial?: ChallengeData }) {
   const [data, setData] = useState(initial)
   const [me, setMe] = useState<Me | null>(null)
@@ -110,6 +142,7 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
             <h1>{c.title}</h1>
             <p className="np-deck">{c.summary}</p>
             <p className="np-story-author">Shared by <a href={'/people?handle=' + encodeURIComponent(c.author.handle)}>@{c.author.handle}</a> · Posted {relativeDate(dateStr)} ({formatDate(dateStr)}) <ViewsCount count={c.views_count ?? 0} title={c.title} /></p>
+            {c.briefing && <Briefing briefing={c.briefing} type={c.type} />}
             {c.body && c.body.split(/\n\s*\n/).map((p, i) => {
               if (p.includes('\n- ')) {
                 const parts = p.split('\n- ')
@@ -124,9 +157,16 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
             {(c.source?.note || c.source?.url || c.source?.name) && (
               <div className="np-article-briefing">
                 <div className="np-briefing-header">
-                  <span className="np-briefing-badge">Article &amp; Source Context</span>
+                  <span className="np-briefing-badge">Source</span>
                   {c.source?.name && <span className="np-briefing-outlet">Reported by <strong>{c.source.name}</strong></span>}
                 </div>
+                {/*
+                  Provenance only - how the row was checked and where the cover
+                  came from. The problem, the reason and the quote moved up into
+                  Briefing, where they can be read as separate answers. Older
+                  rows still carry the pipe-joined blob here until the backfill
+                  splits them, so this stays a plain paragraph.
+                */}
                 {c.source?.note && <p className="np-briefing-note">{c.source.note}</p>}
                 {c.source?.url && (
                   <a href={c.source.url} target="_blank" rel="noopener noreferrer" className="np-briefing-link">
