@@ -1186,6 +1186,30 @@ app.get('/api/scout/status', async (c) => {
   return c.json({ enabled: c.env.SCOUT_ENABLED === 'true', schedule: SCOUT_CRON, timezone: 'UTC', limits: SCOUT_LIMITS, last_run: last ?? null }, 200, { 'Cache-Control': 'no-store' })
 })
 
+/**
+ * Run the Scout now instead of waiting for the next cron slot.
+ *
+ * runScout has always taken mode: 'manual' and SCOUT_LIMITS has always carried
+ * manual_runs_per_day - nothing reached them, so the only way to see a Scout
+ * change take effect was to wait up to six hours. The spend guard is not new
+ * either: the same strongly-consistent R2 claim that stops a replayed cron
+ * stops this, keyed per day, so two manual runs a day is the ceiling however
+ * many times this is called. A third returns already_ran_manual_today.
+ *
+ * waitUntil, not await: a full run is well past a request's patience, so this
+ * returns the accepted status and the caller polls /api/scout/status.
+ */
+app.post('/api/scout/run', async (c) => {
+  const me = await currentPerson(c)
+  if (!me) return c.json({ error: 'sign_in_required' }, 401)
+  if (!me.is_admin) return c.json({ error: 'admin_only' }, 403)
+  if (c.env.SCOUT_ENABLED !== 'true') return c.json({ error: 'scout_disabled' }, 409)
+  const source = c.req.query('source') ?? undefined
+  if (source && !SCOUT_FEEDS.some(f => f.id === source)) return c.json({ error: 'unknown_source' }, 400)
+  c.executionCtx.waitUntil(runScout(c.env, Date.now(), 'manual', source))
+  return c.json({ started: true, mode: 'manual', source: source ?? 'auto-selected', poll: '/api/scout/status' }, 202)
+})
+
 app.get('/api/health', async (c) => {
   const r = await c.env.DB.prepare('SELECT COUNT(*) n FROM challenges').first<{ n: number }>()
   return c.json({ ok: true, challenges: r?.n ?? 0 })
