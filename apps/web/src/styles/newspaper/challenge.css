@@ -293,13 +293,14 @@
   text-decoration:underline; text-underline-offset:2px;
 }
 .np-briefing-cta button:hover { color:var(--np-accent,var(--np-ink)); }
-/* On the heading row instead of below the section. Baseline-aligned with the
- * heading and allowed to shrink away before the heading does. */
-.np-briefing-part-head { display:flex; align-items:baseline; justify-content:space-between; gap:14px; }
-.np-briefing-part-head h2 { min-width:0; }
+/* On the heading row instead of below the section. The story column is
+ * paginated by CSS multi-column fragmentation, and a flex or grid row is an
+ * unbreakable block there - making the heading one pushed the entire briefing
+ * into the next column. A float keeps the heading in normal flow, so the
+ * fragmenter breaks exactly where it did before this CTA existed. */
 .np-briefing-cta-inline {
-  margin:0; padding:0; border:0; flex:0 0 auto;
-  font:12px/1.3 system-ui,sans-serif; letter-spacing:.02em;
+  float:right; margin:0 0 0 14px; padding:0; border:0;
+  font:12px/1.55 system-ui,sans-serif; letter-spacing:.02em;
 }
 @media(max-width:1399px) {
   .np-briefing-part p { font-size:15px; }
