@@ -1,0 +1,130 @@
+/* Contribute compute: the floating offer on a thread, and its panel.
+   See apps/web/src/components/challenge/ContributeCompute.tsx. */
+
+.compute-fab {
+  position: fixed;
+  right: clamp(0.75rem, 3vw, 2rem);
+  bottom: clamp(0.75rem, 3vw, 2rem);
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.15rem;
+  border: 1px solid #1b1b1b;
+  border-radius: 999px;
+  background: #1b1b1b;
+  color: #fdfcf7;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 6px 22px rgb(0 0 0 / 22%);
+}
+
+.compute-fab:hover { background: #000; }
+.compute-fab:focus-visible { outline: 3px solid #b4432b; outline-offset: 2px; }
+
+.compute-panel {
+  position: fixed;
+  right: clamp(0.75rem, 3vw, 2rem);
+  bottom: calc(clamp(0.75rem, 3vw, 2rem) + 3.5rem);
+  z-index: 41;
+  width: min(30rem, calc(100vw - 1.5rem));
+  /* The panel scrolls rather than growing past the viewport: a thread with
+     several contributed runs would otherwise push its own close button off
+     the top of the screen. */
+  max-height: min(34rem, calc(100vh - 7rem));
+  overflow-y: auto;
+  padding: 1.25rem;
+  border: 1px solid #d8d2c3;
+  border-radius: 0.4rem;
+  background: #fdfcf7;
+  box-shadow: 0 10px 34px rgb(0 0 0 / 18%);
+}
+
+.compute-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.compute-head h2 { margin: 0; font-size: 1.05rem; line-height: 1.3; }
+
+.compute-close {
+  border: 0; background: none; font-size: 1.5rem; line-height: 1;
+  padding: 0 0.25rem; cursor: pointer; color: #6b6455;
+}
+.compute-close:hover { color: #1b1b1b; }
+
+.compute-lede { margin: 0.6rem 0 1rem; font-size: 0.9rem; line-height: 1.5; color: #4a4437; }
+
+.compute-problem {
+  margin: 0 0 0.9rem;
+  padding: 0.6rem 0.75rem;
+  border-left: 3px solid #b4432b;
+  background: #faf2ef;
+  font-size: 0.87rem;
+  line-height: 1.45;
+}
+
+.compute-go {
+  display: inline-block;
+  padding: 0.6rem 1.1rem;
+  border: 1px solid #1b1b1b;
+  border-radius: 0.25rem;
+  background: #1b1b1b;
+  color: #fdfcf7;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.compute-go:hover { background: #000; }
+.compute-go[disabled] { opacity: 0.6; cursor: default; }
+
+.compute-runs { margin-top: 1.25rem; border-top: 1px solid #e4dfd2; padding-top: 1rem; }
+.compute-run + .compute-run { margin-top: 1.25rem; }
+.compute-run h3 { margin: 0 0 0.45rem; font-size: 0.85rem; font-weight: 600; color: #4a4437; }
+
+.compute-run pre {
+  margin: 0;
+  /* The model returns plain text with real line breaks. `pre-wrap` keeps those
+     breaks and still wraps long lines, which `pre` alone would send sideways. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: #241f17;
+}
+
+.compute-model { margin: 0.4rem 0 0; font-size: 0.75rem; color: #8a8271; }
+
+/* The account settings panel, same feature, different surface. */
+.ai-panel h2 { margin: 0 0 0.5rem; font-size: 1.15rem; }
+.ai-lede { margin: 0 0 1.1rem; max-width: 34rem; line-height: 1.55; color: #4a4437; }
+.ai-notice, .ai-problem {
+  margin: 0 0 1rem; padding: 0.6rem 0.75rem; font-size: 0.88rem; line-height: 1.45;
+}
+.ai-notice { border-left: 3px solid #2f6f4f; background: #f0f6f2; }
+.ai-problem { border-left: 3px solid #b4432b; background: #faf2ef; }
+
+.ai-facts { margin: 0 0 1.1rem; display: grid; gap: 0.55rem; }
+.ai-facts > div { display: flex; gap: 0.6rem; font-size: 0.9rem; }
+.ai-facts dt { min-width: 6.5rem; color: #6b6455; }
+.ai-facts dd { margin: 0; color: #241f17; }
+
+.ai-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+
+.ai-primary, .ai-secondary {
+  display: inline-block; padding: 0.6rem 1.1rem; border-radius: 0.25rem;
+  font: inherit; font-size: 0.9rem; font-weight: 600; text-decoration: none; cursor: pointer;
+}
+.ai-primary { border: 1px solid #1b1b1b; background: #1b1b1b; color: #fdfcf7; }
+.ai-primary:hover { background: #000; }
+.ai-secondary { border: 1px solid #c9c2b1; background: #fdfcf7; color: #241f17; }
+.ai-secondary:hover { border-color: #1b1b1b; }
+.ai-secondary[disabled] { opacity: 0.6; cursor: default; }
+
+.ai-fine { margin: 0.9rem 0 0; max-width: 34rem; font-size: 0.8rem; line-height: 1.5; color: #6b6455; }
+
+@media print {
+  .compute-fab, .compute-panel { display: none; }
+}

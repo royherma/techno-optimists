@@ -72,6 +72,14 @@ const EVENTS = {
     text: (p: { slug: string; kind: string; author: string; preview: string }) =>
       `💬 ${p.kind === 'idea' ? 'Idea' : 'Response'} on *<${SITE}/c/${p.slug}|${p.slug}>* by ${p.author}\n> ${p.preview}`,
   },
+  // Someone pointed their own AI credits at this site. Growth, not product:
+  // it is a person deciding to fund other people's problems, which is the
+  // single strongest signal the idea works.
+  ai_account_connected: {
+    channel: 'growth',
+    text: (p: { handle: string; provider: string }) =>
+      `🔌 AI account connected — ${chip('@' + p.handle)} · ${p.provider} · runs on their own credits`,
+  },
   import_failed: {
     channel: 'alerts',
     text: (p: { failures: string[] }) =>
