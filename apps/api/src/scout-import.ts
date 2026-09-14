@@ -28,6 +28,25 @@ export function meaningful(value: string | undefined): string | null {
   return text
 }
 
+/**
+ * A problem statement that is one short clause is the thinness this field was
+ * added to fix, so it is rejected rather than stored. The model returned
+ * "Idols left after festivals harm the environment" and "Seniors struggle with
+ * digital literacy" against a prompt that asked for 90 characters and a place:
+ * asking is not enforcing, and the page cannot tell a stub from an answer.
+ *
+ * 60 is roughly one short clause. Below it the sentence cannot carry both where
+ * this happens and what it does to whom, which is the whole job. NULL hides the
+ * section, which is honest; a one-liner under a heading is not.
+ *
+ * Deliberately not applied to why_unsolved: "The road washed out" is a complete
+ * reason at 20 characters.
+ */
+export function statedProblem(value: string | undefined): string | null {
+  const text = meaningful(value)
+  return text && text.length >= 60 ? text : null
+}
+
 export function sourceIdentity(raw: string): string {
   let u: URL
   try { u = new URL(raw) } catch { throw new ScoutInputError('invalid_source') }
@@ -60,7 +79,7 @@ export async function appendScoutRows(db: D1Database, author: string, rows: Scou
         `c_${crypto.randomUUID()}`,row.slug,row.type,row.stage,row.title,row.summary,row.body??null,
         JSON.stringify(row.media),row.location??null,row.lat??null,row.lng??null,JSON.stringify(row.tags),author,row.impact??null,
         source,row.source_name??null,row.source_note??null,
-        meaningful(row.problem),meaningful(row.why_unsolved),row.evidence?.trim()||null,
+        statedProblem(row.problem),meaningful(row.why_unsolved),row.evidence?.trim()||null,
         row.solve_status??null,row.severity??null,
         row.created_at,row.last_activity_at??row.created_at,row.slug,source,
       ))
