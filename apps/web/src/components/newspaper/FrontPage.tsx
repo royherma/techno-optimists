@@ -31,12 +31,27 @@ export default function FrontPage({ initial }: { initial: Challenge[] }) {
   const [rowSize, setRowSize] = useState(8)
   const [measured, setMeasured] = useState(false)
   const frame = useRef<HTMLDivElement>(null)
+  /**
+   * How many rows fit, measured from a rendered row. The first list render has no
+   * row to measure, so this runs again once rows exist; `.np-news-list` is a fixed
+   * flex child with overflow hidden, so its height does not move when the count
+   * does and the second pass settles rather than oscillating.
+   */
+  const measureRows = () => {
+    const box = frame.current
+    if (!box) return
+    const list = box.querySelector('.np-news-list')
+    const row = box.querySelector<HTMLElement>('.np-row:not(.np-row-head)')
+    const head = box.querySelector<HTMLElement>('.np-row-head')
+    const rowH = row?.getBoundingClientRect().height || 55
+    const available = (list?.clientHeight || box.clientHeight) - (head?.getBoundingClientRect().height || 25)
+    setRowSize(Math.max(3, Math.floor(available / rowH)))
+  }
   useEffect(() => {
     const resize = () => {
       const box = frame.current!
       setSize(box.clientWidth >= 980 && box.clientHeight >= 580 ? 5 : box.clientWidth >= 680 && box.clientHeight >= 440 ? 3 : 1)
-      // 46px is one row plus its rule; the tools bar and page controls take the rest.
-      setRowSize(Math.max(3, Math.floor((box.clientHeight - 96) / 46)))
+      measureRows()
       setPage(0); setMeasured(true)
     }
     const observer = new ResizeObserver(resize); observer.observe(frame.current!)
@@ -56,6 +71,10 @@ export default function FrontPage({ initial }: { initial: Challenge[] }) {
   const pages = Math.max(1, Math.ceil(filtered.length / perPage)), current = Math.min(page, pages - 1)
   const stories = filtered.slice(current * perPage, (current + 1) * perPage)
   const pending = !measured || loading
+  // Rows only exist after the list has painted once, so the first measurement
+  // used the fallback height. Re-measure against a real row now.
+  const listLive = view === 'list' && !pending
+  useEffect(() => { if (listLive) measureRows() }, [listLive])
   const empty = <div className="np-empty"><h2>{query || type !== 'all' ? 'A different angle, perhaps?' : 'What could be better?'}</h2><p>{query || type !== 'all' ? 'No threads match your search. Try another search or return to all threads.' : 'A real problem. An unfinished idea. Something worth figuring out together.'}</p><a href="/">All threads →</a><a href="/post">Share a thread →</a></div>
   return <div className="np-front" ref={frame}>
     <div className="np-front-tools"><h1>{type === 'all' ? 'Explore threads' : type.charAt(0).toUpperCase() + type.slice(1) + 's'}</h1>

@@ -320,8 +320,9 @@
 .np-view-toggle button { padding:4px 10px; font:10px system-ui,sans-serif; text-transform:uppercase; letter-spacing:.06em; }
 .np-view-toggle button+button { border-left:1px solid var(--np-rule); }
 .np-view-toggle button[aria-pressed=true] { background:var(--np-ink); color:var(--np-paper); }
-.np-news-list { flex:1; min-height:0; display:flex; flex-direction:column; }
-.np-row { display:grid; grid-template-columns:78px 104px minmax(0,1fr) 128px 84px 92px 176px; align-items:center; gap:14px; padding:9px 2px; border-bottom:1px solid var(--np-rule); font-size:11px; }
+.np-news-list { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; justify-content:space-between; }
+.np-row-head { flex:0 0 auto; }
+.np-row { display:grid; grid-template-columns:72px 100px minmax(0,1fr) 110px 76px 74px 158px; align-items:center; gap:12px; padding:9px 2px; border-bottom:1px solid var(--np-rule); font-size:11px; flex:0 0 auto; min-height:0; }
 .np-row-head { font-size:9px; text-transform:uppercase; letter-spacing:.07em; opacity:.62; padding-block:5px; }
 .np-row-type { font-weight:650; font-size:10px; text-transform:uppercase; letter-spacing:.045em; }
 .np-row-title { font:bold 15px/1.25 Georgia,serif; letter-spacing:-.01em; min-width:0; margin:0; display:flex; flex-direction:column; gap:2px; }
@@ -338,17 +339,22 @@
 .np-news-list .np-skeleton .np-skeleton-headline { gap:0; margin:0; }
 .np-news-list .np-skeleton .np-skeleton-headline i { height:12px; width:88%; }
 .np-news-list .np-empty { margin:auto; }
-@media(max-width:1399px) {
+/* Columns drop by the width of the feed column itself, not the window: the
+ * field-guide sidebar takes ~340px, so a 1280px window leaves a 940px list.
+ */
+@container edition (max-width:900px) {
   .np-row { grid-template-columns:70px 96px minmax(0,1fr) 104px 76px 158px; gap:12px; }
   .np-row-prize,.np-row-head>span:nth-child(6) { display:none; }
 }
-@media(max-width:999px) {
+@container edition (max-width:720px) {
   .np-row { grid-template-columns:66px minmax(0,1fr) 140px; gap:10px; }
   .np-row-stage,.np-row-place,.np-row-date,.np-row-head>span:nth-child(2),.np-row-head>span:nth-child(4),.np-row-head>span:nth-child(5) { display:none; }
 }
-@media(max-width:759px) {
+@container edition (max-width:520px) {
   .np-front-controls { gap:10px; }
   .np-row { grid-template-columns:minmax(0,1fr) auto; gap:8px; }
+  /* Two columns left: the header's labels no longer line up with anything. */
+  .np-row-head { display:none; }
   .np-row-type { display:none; }
   .np-row-signals { gap:9px; }
   .np-row-summary { display:none; }
