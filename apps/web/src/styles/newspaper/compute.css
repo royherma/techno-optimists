@@ -30,7 +30,7 @@
   right: clamp(0.75rem, 3vw, 2rem);
   bottom: calc(clamp(0.75rem, 3vw, 2rem) + 3.5rem);
   z-index: 41;
-  width: min(30rem, calc(100vw - 1.5rem));
+  width: min(34rem, calc(100vw - 1.5rem));
   /* The panel scrolls rather than growing past the viewport: a thread with
      several contributed runs would otherwise push its own close button off
      the top of the screen. */
@@ -79,19 +79,43 @@
 .compute-go:hover { background: #000; }
 .compute-go[disabled] { opacity: 0.6; cursor: default; }
 
-.compute-runs { margin-top: 1.25rem; border-top: 1px solid #e4dfd2; padding-top: 1rem; }
-.compute-run + .compute-run { margin-top: 1.25rem; }
-.compute-run h3 { margin: 0 0 0.45rem; font-size: 0.85rem; font-weight: 600; color: #4a4437; }
+.compute-notice {
+  margin: 0 0 0.9rem;
+  padding: 0.6rem 0.75rem;
+  border-left: 3px solid #2f6f4f;
+  background: #f0f6f2;
+  font-size: 0.87rem;
+  line-height: 1.45;
+}
 
-.compute-run pre {
-  margin: 0;
+/* What pressing the button actually produces. The lede argues for the feature;
+   this says what lands on the page, which is the part that was missing. */
+.compute-produces { margin: 0 0 1rem; }
+.compute-produces-head { margin: 0 0 0.4rem; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; color: #8a8271; }
+.compute-produces ul { margin: 0; padding-left: 1.1rem; }
+.compute-produces li { font-size: 0.87rem; line-height: 1.5; color: #4a4437; }
+
+.compute-waiting { margin: 0.7rem 0 0; font-size: 0.82rem; line-height: 1.45; color: #6b6455; }
+
+.compute-runs { margin-top: 1.25rem; border-top: 1px solid #e4dfd2; padding-top: 1rem; }
+.compute-runs-head { margin: 0 0 0.75rem; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; color: #8a8271; }
+.compute-run + .compute-run { margin-top: 1.25rem; }
+.compute-by { margin: 0 0 0.5rem; font-size: 0.8rem; color: #6b6455; }
+
+/* The answer is the thing the donor paid for, so it reads as a document on the
+   page rather than a log line: its own card, body type, real line breaks. */
+.compute-output {
+  padding: 0.9rem 1rem;
+  border: 1px solid #e4dfd2;
+  border-left: 3px solid #1b1b1b;
+  border-radius: 0.25rem;
+  background: #fffdf8;
   /* The model returns plain text with real line breaks. `pre-wrap` keeps those
      breaks and still wraps long lines, which `pre` alone would send sideways. */
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  font: inherit;
-  font-size: 0.88rem;
-  line-height: 1.55;
+  font-size: 0.9rem;
+  line-height: 1.6;
   color: #241f17;
 }
 

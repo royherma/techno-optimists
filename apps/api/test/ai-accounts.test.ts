@@ -97,6 +97,14 @@ describe('provider seam', () => {
     expect(url).toContain(encodeURIComponent('https://technooptimists.org/api/ai/callback?state=abc'))
   })
 
+  it('names the app on the consent screen instead of leaving it "An app"', () => {
+    // A donor is about to let a stranger's site spend their money. An unnamed
+    // authorize page is the sentence that makes them cancel, and an unnamed
+    // key is the one they cannot find later to revoke.
+    const url = providerOf('openrouter').authorizeUrl({ callback: 'https://technooptimists.org/api/ai/callback', challenge: 'x' })
+    expect(url).toContain(`key_label=${encodeURIComponent('TechnoOptimists.org')}`)
+  })
+
   it('names a provider for readers without leaking the id into copy', () => {
     expect(providerOf('openrouter').name).toBe('OpenRouter')
   })

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import '../../styles/newspaper/compute.css'
 
 /**
@@ -35,11 +35,41 @@ const PROBLEMS: Record<string, string> = {
   not_found: 'This thread could not be found.',
 }
 
+/** What the reader gets back, in their words. Shown before and during a run so
+ *  "Working on it" is never the only thing on screen. */
+const PRODUCES = [
+  'A clear restatement of the problem',
+  'What actually makes it hard',
+  'Where someone should start',
+]
+
+const when = (iso: string) => {
+  const d = new Date(iso.replace(' ', 'T') + 'Z')
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+}
+
 export default function ContributeCompute({ slug }: { slug: string }) {
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
   const [runs, setRuns] = useState<Run[]>([])
+  const [connected, setConnected] = useState(false)
+  const latest = useRef<HTMLElement | null>(null)
+
+  // Coming back from the provider lands on the thread with ?connected=1. The
+  // panel must open by itself: a reader who just authorized an account and
+  // sees an unchanged page assumes it failed. Strip the param so a refresh
+  // does not replay it.
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    if (params.get('connected')) {
+      setOpen(true)
+      setConnected(true)
+      params.delete('connected')
+      const q = params.toString()
+      history.replaceState(null, '', `${location.pathname}${q ? `?${q}` : ''}${location.hash}`)
+    }
+  }, [])
 
   // Past runs are public and load with the thread: the attribution is the point
   // of the feature, and a thread that already shows donated work is the best
@@ -54,7 +84,7 @@ export default function ContributeCompute({ slug }: { slug: string }) {
   }, [slug])
 
   async function run() {
-    setBusy(true); setProblem(null)
+    setBusy(true); setProblem(null); setConnected(false)
     try {
       // The community router mounted at /api/challenges (apps/api/src/index.ts)
       // rejects any non-GET without a JSON content-type, before the handler
@@ -72,7 +102,21 @@ export default function ContributeCompute({ slug }: { slug: string }) {
         // step, so the panel offers it rather than only naming it.
         return
       }
-      if (body?.run) setRuns((prev) => [body.run as Run, ...prev])
+      if (body?.run) {
+        const fresh: Run = {
+          id: body.run.id,
+          action: body.run.action,
+          model: body.run.model,
+          output: body.run.output,
+          created_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
+          by: { handle: body.run.by_handle, name: body.run.by_name, avatar_url: null },
+        }
+        setRuns((prev) => [fresh, ...prev])
+        // The answer is the whole point of pressing the button, so put it in
+        // front of the reader instead of leaving it below the fold of a
+        // scrolling panel.
+        requestAnimationFrame(() => latest.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }))
+      }
     } catch {
       setProblem(PROBLEMS.unavailable)
     } finally { setBusy(false) }
@@ -100,25 +144,42 @@ export default function ContributeCompute({ slug }: { slug: string }) {
       </header>
 
       <p className="compute-lede">
-        Run a frontier model over this thread using your own account. It restates the
-        problem, names what makes it hard, and suggests where to start. The thread
+        Run a frontier model over this thread using your own account. The thread
         records that it was you.
       </p>
 
+      {connected && <p className="compute-notice" role="status">
+        Account connected. Run it now - this one is on your credits.
+      </p>}
+
       {problem && <p className="compute-problem" role="alert">{problem}</p>}
+
+      {!needsSignin && !needsAccount && <div className="compute-produces">
+        <p className="compute-produces-head">{busy ? 'Reading the thread and writing:' : 'You get back:'}</p>
+        <ul>{PRODUCES.map((p) => <li key={p}>{p}</li>)}</ul>
+      </div>}
 
       {needsSignin
         ? <a className="compute-go" href={`/signin?next=${encodeURIComponent(`/c/${slug}`)}`}>Sign in to contribute</a>
         : needsAccount
           ? <a className="compute-go" href={`/api/ai/connect?next=${encodeURIComponent(`/c/${slug}`)}`}>Connect an AI account</a>
           : <button type="button" className="compute-go" disabled={busy} onClick={() => void run()}>
-              {busy ? 'Working on it...' : 'Run this on my credits'}
+              {busy ? 'Writing the breakdown...' : 'Write the breakdown on my credits'}
             </button>}
 
+      {busy && <p className="compute-waiting" role="status">
+        A frontier model is reading the thread. This takes about half a minute.
+      </p>}
+
       {runs.length > 0 && <section className="compute-runs" aria-label="Contributed runs">
-        {runs.map((r) => <article key={r.id} className="compute-run">
-          <h3>Structured by @{r.by.handle}, on their own credits</h3>
-          <pre>{r.output}</pre>
+        <h3 className="compute-runs-head">{runs.length === 1 ? 'The breakdown' : 'Breakdowns on this thread'}</h3>
+        {runs.map((r, i) => <article
+          key={r.id}
+          className="compute-run"
+          ref={i === 0 ? (el) => { latest.current = el } : undefined}
+        >
+          <p className="compute-by">Structured by @{r.by.handle}, on their own credits{r.created_at ? ` · ${when(r.created_at)}` : ''}</p>
+          <div className="compute-output">{r.output}</div>
           <p className="compute-model">{r.model}</p>
         </article>)}
       </section>}
