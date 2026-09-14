@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { ActionKind, Challenge } from '../../../../packages/types/index'
+import type { ActionKind, Challenge, CommentKind } from '../../../../packages/types/index'
 import { ACTION_LABEL } from '../lib/vocab'
 import { snack } from '../lib/snack'
 import '../styles/activity.css'
@@ -9,6 +9,25 @@ import '../styles/activity.css'
  * type - offering "I have this problem" on someone's Build is noise.
  */
 const ACTION_ICON: Record<ActionKind, string> = { have_problem: 'plus', want_this: 'plus', have_idea: 'lightbulb', can_help: 'users', will_test: 'play', building_this: 'rocket', follow: 'star' }
+
+/**
+ * Which actions are worth saying something about, and the response label each
+ * one picks. Only the five kinds in COMMENT_KINDS are valid - anything else is
+ * ignored by the composer - so "I can help" lands on comment rather than
+ * inventing an "offer" label the API would reject.
+ *
+ * Absent on purpose: follow (a subscription, nothing to say) and have_problem /
+ * want_this (a show of hands; the count is the point, and forcing a text box
+ * would make the cheapest signal the most expensive one to give).
+ */
+const COMPOSE_KIND: Partial<Record<ActionKind, CommentKind>> = {
+  have_idea: 'idea',
+  can_help: 'comment',
+  // Not test_result: they are offering to run a test, not reporting one they
+  // already ran. The result label belongs on the write-up that comes after.
+  will_test: 'comment',
+  building_this: 'comment',
+}
 
 const FOR_TYPE: Record<Challenge['type'], ActionKind[]> = {
   problem: ['have_problem', 'have_idea', 'can_help', 'will_test', 'follow'],
@@ -69,9 +88,17 @@ export default function ActionBar({ slug, type, actions }: {
   }, [live, slug, retry])
 
   async function act(kind: ActionKind) {
-    if (kind === 'have_idea') {
-      window.dispatchEvent(new Event('compose-idea'))
-      return
+    // A count on its own tells the thread's author that someone can help but
+    // not how, which is the dead end these buttons used to lead to. The ones
+    // that carry something worth writing open the composer with the matching
+    // label chosen. Following is a subscription, not a contribution, so it
+    // stays a silent toggle - the count IS the whole message there.
+    const writes = COMPOSE_KIND[kind]
+    if (writes) {
+      window.dispatchEvent(new CustomEvent('compose-idea', { detail: { kind: writes } }))
+      // have_idea has never been a counted action: the idea itself is the
+      // record. The rest still register, so the author sees the tally too.
+      if (kind === 'have_idea') return
     }
     if (!ready || inFlight.current) return
     inFlight.current = true
@@ -135,7 +162,7 @@ export default function ActionBar({ slug, type, actions }: {
             onClick={() => act(kind)}
             disabled={busy !== null}
             type="button"
-            title={kind === 'have_idea' ? 'Write your idea' : on ? `Undo: ${ACTION_LABEL[kind]}` : ACTION_LABEL[kind]}
+            title={kind === 'have_idea' ? 'Write your idea' : on ? `Undo: ${ACTION_LABEL[kind]}` : COMPOSE_KIND[kind] ? `${ACTION_LABEL[kind]} - and say how` : ACTION_LABEL[kind]}
             aria-pressed={kind === 'have_idea' ? undefined : on}
             className={`feedback-control ink-transition rounded-full border px-4 py-2 text-sm ${
               on

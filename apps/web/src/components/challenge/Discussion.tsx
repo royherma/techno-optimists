@@ -58,14 +58,21 @@ export default function Discussion({ slug, me, sessionReady, paged = false, pane
     setDraft(restored)
     setReady(true)
     void load()
-    const focusIdea = () => {
+    // Opens the composer with the label already chosen. The kind rides on the
+    // event because the sender knows which button was pressed and this does
+    // not: "I can help" and "I'll test this" should not both land on Comment,
+    // which is what made the label look like a form field nobody had to fill.
+    // An unknown or absent kind falls back to comment rather than throwing.
+    const focusCompose = (event: Event) => {
+      const asked = (event as CustomEvent<{ kind?: string }>).detail?.kind
+      const kind: CommentKind = asked && asked in LABEL ? asked as CommentKind : 'comment'
       setView('write')
       setPreview(false)
-      setDraft((d) => ({ ...d, kind: 'idea', parent_id: null, request_id: uuid() }))
+      setDraft((d) => ({ ...d, kind, parent_id: null, request_id: uuid() }))
       requestAnimationFrame(() => { input.current?.focus(); if (!paged && !panel) input.current?.scrollIntoView({ block: 'center', behavior: 'instant' }) })
     }
-    window.addEventListener('compose-idea', focusIdea)
-    return () => window.removeEventListener('compose-idea', focusIdea)
+    window.addEventListener('compose-idea', focusCompose)
+    return () => window.removeEventListener('compose-idea', focusCompose)
   }, [slug])
 
   useEffect(() => {
