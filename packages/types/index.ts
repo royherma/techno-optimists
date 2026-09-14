@@ -104,6 +104,74 @@ export interface Media {
 export const ratioOf = (m: Pick<Media, 'w' | 'h'> | undefined | null): number | null =>
   m?.w && m?.h ? m.w / m.h : null
 
+/**
+ * Where a prize sits in its own cycle, computed at read time from the deadline
+ * rather than stored. A stored status is a status that goes stale silently the
+ * first time a cleanup job stops running, and a prize advertising a deadline
+ * that passed three months ago is worse than no prize at all.
+ *
+ * `rolling` is a real state, not a missing one: some sponsors take entries
+ * continuously, and that is different from a deadline nobody recorded.
+ */
+export const PRIZE_STATUSES = ['open', 'closing_soon', 'closed', 'rolling'] as const
+export type PrizeStatus = (typeof PRIZE_STATUSES)[number]
+
+/** A deadline this close reads as closing_soon. */
+export const PRIZE_CLOSING_SOON_DAYS = 14
+
+export interface Prize {
+  /**
+   * Minor units - cents for USD. An integer, never a float: money in a REAL is
+   * how a $10,000,000 purse renders as $9,999,999.99. Null when the sponsor
+   * publishes a competition without naming an amount, which is common.
+   */
+  amount: number | null
+  /** ISO 4217, uppercase: 'USD', 'EUR'. Null whenever `amount` is null. */
+  currency: string | null
+  /** Who is offering it, named. An unattributed prize is not evidence of anything. */
+  sponsor: string | null
+  /** The sponsor's own entry page. The only place a person can actually enter. */
+  url: string | null
+  /** ISO date. Null means entries are rolling, not that the date is unknown. */
+  deadline: string | null
+  /** Anything the amount alone misstates: 'pool split across 5 finalists'. */
+  note: string | null
+  /** Derived from `deadline` by the API at query time. Never stored. */
+  status: PrizeStatus
+}
+
+/**
+ * The read-time status rule, in one place so the API and any surface that
+ * recomputes it cannot drift apart.
+ */
+export const prizeStatusOf = (deadline: string | null, now: Date = new Date()): PrizeStatus => {
+  if (!deadline) return 'rolling'
+  const due = Date.parse(deadline)
+  if (!Number.isFinite(due)) return 'rolling'
+  const days = (due - now.getTime()) / 86_400_000
+  if (days < 0) return 'closed'
+  return days <= PRIZE_CLOSING_SOON_DAYS ? 'closing_soon' : 'open'
+}
+
+/**
+ * Short money label for a tile: '$15M', '€250K', '$7,500'. Takes minor units,
+ * the way the column stores them.
+ *
+ * Returns null rather than a placeholder when there is no amount, so a caller
+ * renders nothing instead of the string "null" or a misleading $0.
+ */
+export const prizeAmountLabel = (amount: number | null, currency: string | null): string | null => {
+  if (amount == null || !Number.isFinite(amount)) return null
+  const major = amount / 100
+  const symbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : ''
+  const suffix = currency && !symbol ? ` ${currency}` : ''
+  const round = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1))
+  const body = major >= 1_000_000 ? `${round(major / 1_000_000)}M`
+    : major >= 10_000 ? `${round(major / 1000)}K`
+    : major.toLocaleString('en-US', { maximumFractionDigits: 2 })
+  return `${symbol}${body}${suffix}`
+}
+
 export interface Challenge {
   id: string
   slug: string
@@ -152,6 +220,19 @@ export interface Challenge {
    * rendering an anchor.
    */
   source: { url: string | null; name: string | null; note: string | null } | null
+  /**
+   * An externally funded reward someone else is offering for this problem.
+   * Null is the normal case and always will be.
+   *
+   * A prize never creates a thread: it attaches to a thread that was worth
+   * posting anyway, the same shape as `source`. That rule is what keeps the
+   * feed from drifting into a listings board - see
+   * `docs/2026-09-14-prize-threads.md`.
+   *
+   * We are never the payer. `url` is the sponsor's own entry page and the only
+   * place a person can actually enter.
+   */
+  prize: Prize | null
   /** Set when the row arrived through a bulk import rather than the post form. */
   imported_at: string | null
   author: Pick<PublicPerson, 'id' | 'handle' | 'avatar_url' | 'location'>

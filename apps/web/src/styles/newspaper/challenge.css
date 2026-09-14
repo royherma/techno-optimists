@@ -131,3 +131,120 @@
 .np-local-map svg { width:100%; height:100%; display:block; }
 
 @media(max-width:759px) { .np-panel-grid { grid-template-rows:1.3fr 1fr 1fr minmax(120px,1fr); } }
+
+.np-kicker-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .045em;
+  color: var(--np-muted);
+  background: var(--np-selected);
+  padding: 2px 7px;
+  border-radius: 2px;
+  border: 1px solid var(--np-rule);
+}
+
+.np-article-briefing {
+  margin-top: 14px;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  background: #f4efe2;
+  border: 1px solid var(--np-rule);
+  border-left: 3px solid var(--np-ink);
+  font: 13px/1.4 Georgia, serif;
+}
+.np-briefing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-family: system-ui, sans-serif;
+  font-size: 11px;
+}
+.np-briefing-badge {
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-weight: 700;
+  color: var(--np-ink);
+}
+.np-briefing-outlet {
+  color: var(--np-muted);
+}
+.np-briefing-note {
+  margin: 0 0 8px !important;
+  font-style: italic;
+  color: var(--np-ink);
+}
+.np-briefing-link {
+  display: inline-block;
+  font: 600 11px system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  color: var(--np-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.np-body-heading {
+  font: bold 16px/1.2 Georgia, serif;
+  margin: 14px 0 6px !important;
+  color: var(--np-ink);
+}
+.np-body-list {
+  margin-bottom: 12px;
+}
+.np-body-list ul {
+  padding-left: 18px;
+  margin: 4px 0;
+}
+.np-body-list li {
+  font-size: 14px;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+/* Prize block on the thread page. Deliberately the same plate as the source
+   briefing above it, because it is the same kind of thing: a sourced fact about
+   the problem, attributed to whoever is making the claim. It is not an offer
+   from this site, so it must not look like a call to action. */
+.np-prize {
+  margin-top: 14px;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  background: #f4efe2;
+  border: 1px solid var(--np-rule);
+  border-left: 3px solid var(--np-ink);
+  font: 13px/1.4 Georgia, serif;
+}
+/* A closed prize is history, not news: it stays legible and stops competing. */
+.np-prize[data-status="closed"] { opacity: .72; border-left-color: var(--np-muted); }
+.np-prize-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-family: system-ui, sans-serif;
+  font-size: 11px;
+}
+.np-prize-badge {
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-weight: 700;
+  color: var(--np-ink);
+}
+.np-prize-amount { font: 700 17px Georgia, serif; color: var(--np-ink); }
+.np-prize-terms { margin: 0 0 6px !important; color: var(--np-muted); }
+.np-prize-note { margin: 0 0 8px !important; font-style: italic; color: var(--np-ink); }
+.np-prize-legal { margin: 0 0 8px !important; font-size: 12px; color: var(--np-muted); }
+.np-prize-link {
+  display: inline-block;
+  font: 600 11px system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  color: var(--np-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
