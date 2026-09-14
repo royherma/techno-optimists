@@ -77,11 +77,10 @@ function Briefing({ briefing, type }: { briefing: NonNullable<Challenge['briefin
   return <div className="np-briefing">
     {briefing.problem && <div className="np-briefing-part">
       {/* The ask rides the heading rather than closing the section, so a reader
-        * who only ever sees the first page of the story still has it. */}
-      <div className="np-briefing-part-head">
-        <h2>{isFix ? 'What this solves' : 'The problem'}</h2>
-        <BriefingCta briefing={briefing} type={type} inline />
-      </div>
+        * who only ever sees the first page of the story still has it. It is
+        * floated, and so must precede the heading in source order. */}
+      <BriefingCta briefing={briefing} type={type} inline />
+      <h2>{isFix ? 'What this solves' : 'The problem'}</h2>
       <p>{briefing.problem}</p>
     </div>}
     {briefing.why_unsolved && <div className="np-briefing-part">
