@@ -89,9 +89,9 @@ export default function FrontPage({ initial }: { initial: Challenge[] }) {
     {view === 'list'
       ? <div className={`np-news-list ${pending ? '' : 'np-edition-ready'}`} aria-busy={pending}>
           {pending ? Array.from({ length: 8 }, (_, i) => <div key={i} className="np-row np-skeleton" aria-hidden="true">
-            <span className="np-skeleton-meta" /><span className="np-skeleton-meta" /><div className="np-skeleton-headline"><i /></div><span className="np-skeleton-meta" /><span className="np-skeleton-meta" /><span className="np-skeleton-meta" /><span className="np-skeleton-meta" />
+            <span className="np-row-thumb np-skeleton-image" /><span className="np-skeleton-meta" /><span className="np-skeleton-meta" /><div className="np-skeleton-headline"><i /></div><span className="np-skeleton-meta" /><span className="np-skeleton-meta" /><span className="np-skeleton-meta" /><span className="np-skeleton-meta" />
           </div>) : <>
-            <header className="np-row np-row-head" aria-hidden="true"><span>Type</span><span>Stage</span><span>Thread</span><span>Place</span><span>Added</span><span>Prize</span><span>Signals</span></header>
+            <header className="np-row np-row-head" aria-hidden="true"><span /><span>Type</span><span>Stage</span><span>Thread</span><span>Place</span><span>Added</span><span>Prize</span><span>Signals</span></header>
             {stories.map(c => <StoryRow key={c.id} challenge={c} />)}
             {!stories.length && empty}
           </>}
