@@ -21,6 +21,40 @@ function readView(): View {
   return storedView() || 'grid'
 }
 
+/**
+ * Sorting is a list-view affordance. The columns that sort are the ones holding
+ * a value you can rank; the thumbnail is not one, so it stays inert.
+ *
+ * Each key carries its own natural first direction. Clicking Added should show
+ * the newest thread, not the oldest, and clicking Thread should start at A - a
+ * single global default would be wrong for half of these.
+ */
+type SortKey = 'type' | 'stage' | 'title' | 'place' | 'added' | 'prize' | 'signals'
+const SORT_FIRST: Record<SortKey, 'asc' | 'desc'> = { type: 'asc', stage: 'asc', title: 'asc', place: 'asc', added: 'desc', prize: 'desc', signals: 'desc' }
+
+/**
+ * The rank of a row for one key. Strings compare with localeCompare at the call
+ * site; everything here is a number so the comparator stays one shape.
+ *
+ * Missing values (no location, no prize, no date) always sink to the bottom
+ * regardless of direction - a row with nothing to rank is not "the smallest",
+ * it is unrankable, and floating it to the top on an ascending sort would bury
+ * the rows the reader actually asked to see.
+ */
+function sortValue(c: Challenge, key: SortKey): number | string | null {
+  switch (key) {
+    case 'type': return CHALLENGE_TYPES.indexOf(c.type)
+    case 'stage': return STAGE_ORDER.indexOf(c.stage)
+    case 'title': return c.title.toLowerCase()
+    case 'place': return c.location ? c.location.toLowerCase() : null
+    case 'added': { const d = c.imported_at || c.created_at; return d ? Date.parse(d) : null }
+    // Amounts are minor units and may be in different currencies, so this ranks
+    // by the number a sponsor published, not by converted value.
+    case 'prize': return c.prize?.amount ?? null
+    case 'signals': return (c.type === 'problem' ? c.actions.have_problem : c.actions.want_this) + c.actions.have_idea + c.actions.can_help
+  }
+}
+
 export default function FrontPage({ initial }: { initial: Challenge[] }) {
   const { challenges, error, loading } = useFeed(initial)
   const [type, setType] = useState('all')
