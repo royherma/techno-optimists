@@ -229,3 +229,28 @@ CREATE TABLE IF NOT EXISTS site_views (
   PRIMARY KEY (viewer_key, viewed_on)
 );
 CREATE INDEX IF NOT EXISTS site_views_day ON site_views(viewed_on);
+
+-- ---------------------------------------------------------------------------
+-- Externally funded reward attached to this thread. All NULL is the normal case
+-- and always will be: a thread is complete without a prize, and a prize never
+-- creates a thread - it enriches one that already earned its place on the feed,
+-- the same shape as source_url. See docs/2026-09-14-prize-threads.md.
+--
+-- We are never the payer and never hold funds. prize_url is the sponsor's own
+-- entry page and is the only place a person can actually enter.
+--
+-- Added to existing databases by scripts/migrate-community.mjs, which ALTERs
+-- only when the columns are missing.
+-- ---------------------------------------------------------------------------
+-- Minor units as an INTEGER, never a REAL: money in a float column is how a
+-- $10,000,000 purse renders as $9,999,999.99.
+ALTER TABLE challenges ADD COLUMN prize_amount   INTEGER;
+ALTER TABLE challenges ADD COLUMN prize_currency TEXT;     -- ISO 4217, 'USD'
+ALTER TABLE challenges ADD COLUMN prize_sponsor  TEXT;     -- 'XPRIZE Foundation'
+ALTER TABLE challenges ADD COLUMN prize_url      TEXT;     -- official entry page
+ALTER TABLE challenges ADD COLUMN prize_deadline TEXT;     -- ISO date, NULL = rolling
+ALTER TABLE challenges ADD COLUMN prize_note     TEXT;     -- 'pool split across 5 finalists'
+
+-- Partial, so the common NULL row costs nothing.
+CREATE INDEX IF NOT EXISTS idx_challenges_prize ON challenges(prize_deadline)
+  WHERE prize_amount IS NOT NULL;

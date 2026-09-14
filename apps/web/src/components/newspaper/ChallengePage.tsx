@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import type { Challenge, Update } from '../../../../../packages/types'
+import { prizeAmountLabel, type Challenge, type Update } from '../../../../../packages/types'
 import type { DetailPerson } from '../../lib/api'
 import { getMe, type Me } from '../../lib/session'
 import { STAGE_MEANING, STAGE_STAMP, impactLabel } from '../../lib/vocab'
-import { formatDate } from '../../lib/dates'
+import { formatDate, relativeDate } from '../../lib/dates'
 import PagedContent from './PagedContent'
 import StageBadge from './StageBadge'
 import SourcePlace from './SourcePlace'
@@ -23,6 +23,38 @@ function Panel({ name, title, children }: { name: string; title: string; childre
     <PagedContent compact label={title}>{children}</PagedContent>
   </section>
 }
+/**
+ * The full prize statement. This is where someone who is actually interested
+ * arrives, so the fact gets stated properly rather than compressed to a chip.
+ *
+ * A closed prize keeps its block and loses its entry link: the thread stayed
+ * because the problem outlived the competition, and an entry link that leads to
+ * a closed form wastes the reader's time.
+ */
+function PrizeBlock({ prize }: { prize: NonNullable<Challenge['prize']> }) {
+  const amount = prizeAmountLabel(prize.amount, prize.currency)
+  const closed = prize.status === 'closed'
+  const enterable = !closed && prize.url?.startsWith('http')
+  return <div className="np-prize" data-status={prize.status}>
+    <div className="np-prize-header">
+      <span className="np-prize-badge">{closed ? 'Prize closed' : 'Prize offered'}</span>
+      {amount && <strong className="np-prize-amount">{amount}</strong>}
+    </div>
+    <p className="np-prize-terms">
+      {prize.deadline && <span>{closed ? 'Closed' : prize.status === 'closing_soon' ? 'Closes soon -' : 'Entries close'} {formatDate(prize.deadline)}</span>}
+      {!prize.deadline && <span>Entries are rolling</span>}
+    </p>
+    {prize.note && <p className="np-prize-note">{prize.note}</p>}
+    {/*
+      Named sponsor and the hands-off line, stated once at the point the reader
+      acts on it. This is a legal relationship they need, not a status report -
+      see the copy rules in CLAUDE.md.
+    */}
+    {prize.sponsor && <p className="np-prize-legal">Run by {prize.sponsor}. Enter on their site - Techno Optimists is not involved in judging or payment.</p>}
+    {enterable && <a className="np-prize-link" href={prize.url!} target="_blank" rel="noopener noreferrer">Enter on {prize.sponsor || 'the sponsor'}&rsquo;s site ↗</a>}
+  </div>
+}
+
 export default function ChallengePage({ initial }: { initial?: ChallengeData }) {
   const [data, setData] = useState(initial)
   const [me, setMe] = useState<Me | null>(null)
@@ -63,8 +95,9 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
   }, [data?.challenge.slug])
   if (!data) return <div className="np-empty"><h1>{error || 'Opening the thread…'}</h1>{error && <button onClick={() => void refresh().catch(e => setError(e.message))}>Try again</button>}</div>
   const c = data.challenge, image = c.media[Math.min(media, c.media.length - 1)]
+  const dateStr = c.imported_at || c.created_at
   return <div className="np-challenge np-challenge-sheet" data-stage={c.stage}>
-    <div className="np-challenge-kicker"><a href="/">← All threads</a><span className={`type-${c.type}`}>{c.type} <span> / {c.location || 'Around the world'}</span></span><StageBadge stage={c.stage} /><span className="np-relative">{impactLabel(c.impact) ? `Impact: ${impactLabel(c.impact)}` : 'Impact not specified'}</span>{me?.is_admin && <button onClick={() => setEditing(true)}>Edit thread</button>}</div>
+    <div className="np-challenge-kicker"><a href="/">← All threads</a><span className={`type-${c.type}`}>{c.type} <span> / {c.location || 'Around the world'}</span></span><StageBadge stage={c.stage} /><span className="np-relative">{impactLabel(c.impact) ? `Impact: ${impactLabel(c.impact)}` : 'Impact not specified'}</span>{dateStr && <span className="np-kicker-date" title={formatDate(dateStr)}>Posted {relativeDate(dateStr)}</span>}{me?.is_admin && <button onClick={() => setEditing(true)}>Edit thread</button>}</div>
     {error && <p className="np-error" role="alert">{error} <button onClick={() => void refresh().catch(e => setError(e.message))}>Retry</button></p>}
     <div className="np-panel-grid">
       <section className="np-panel np-panel-story" aria-label="thread story">
@@ -72,7 +105,38 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
           {image?.kind === 'video' ? <video src={image.url} controls playsInline /> : image ? <img src={image.url} alt={image.alt || ''} /> : <p>Things can be better.</p>}
           {c.media.length > 1 && <div className="np-media-controls"><button aria-label="Previous image" disabled={media === 0} onClick={() => setMedia(media - 1)}>←</button><span>{media + 1} / {c.media.length}</span><button aria-label="Next image" disabled={media + 1 >= c.media.length} onClick={() => setMedia(media + 1)}>→</button></div>}
         </div>
-        <div className="np-story-reading"><PagedContent compact label="Story"><h1>{c.title}</h1><p className="np-deck">{c.summary}</p><p className="np-story-author">Shared by <a href={'/people?handle=' + encodeURIComponent(c.author.handle)}>@{c.author.handle}</a> · {formatDate(c.imported_at || c.created_at)} <ViewsCount count={c.views_count ?? 0} title={c.title} /></p>{c.body && c.body.split(/\n\s*\n/).map((p, i) => <p key={i}>{p}</p>)}</PagedContent></div>
+        <div className="np-story-reading">
+          <PagedContent compact label="Story">
+            <h1>{c.title}</h1>
+            <p className="np-deck">{c.summary}</p>
+            <p className="np-story-author">Shared by <a href={'/people?handle=' + encodeURIComponent(c.author.handle)}>@{c.author.handle}</a> · Posted {relativeDate(dateStr)} ({formatDate(dateStr)}) <ViewsCount count={c.views_count ?? 0} title={c.title} /></p>
+            {c.body && c.body.split(/\n\s*\n/).map((p, i) => {
+              if (p.includes('\n- ')) {
+                const parts = p.split('\n- ')
+                return <div key={i} className="np-body-list"><p><strong>{parts[0]}</strong></p><ul>{parts.slice(1).map((li, j) => <li key={j}>{li}</li>)}</ul></div>
+              }
+              if (p.endsWith(':')) {
+                return <h3 key={i} className="np-body-heading">{p}</h3>
+              }
+              return <p key={i}>{p}</p>
+            })}
+            {c.prize && <PrizeBlock prize={c.prize} />}
+            {(c.source?.note || c.source?.url || c.source?.name) && (
+              <div className="np-article-briefing">
+                <div className="np-briefing-header">
+                  <span className="np-briefing-badge">Article &amp; Source Context</span>
+                  {c.source?.name && <span className="np-briefing-outlet">Reported by <strong>{c.source.name}</strong></span>}
+                </div>
+                {c.source?.note && <p className="np-briefing-note">{c.source.note}</p>}
+                {c.source?.url && (
+                  <a href={c.source.url} target="_blank" rel="noopener noreferrer" className="np-briefing-link">
+                    Read original article on {c.source.name || 'source site'} ↗
+                  </a>
+                )}
+              </div>
+            )}
+          </PagedContent>
+        </div>
       </section>
       <Panel name="help" title="How you can help"><ActionBar slug={c.slug} type={c.type} actions={c.actions} /></Panel>
       <Panel name="discussion" title="Discussion"><Discussion panel slug={c.slug} me={me} sessionReady={sessionReady} /></Panel>

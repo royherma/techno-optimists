@@ -17,6 +17,7 @@ import { MAX_BYTES, checkUpload, dimensionsOf, mediaKey, mediaUrl } from './medi
 import { slugify } from './slug'
 import {
   ACTION_KINDS, CHALLENGE_TYPES, EMPTY_ACTIONS, FEED_SORTS, HELP_KINDS, ROLES, STAGES,
+  prizeStatusOf,
   type ActionKind, type Challenge, type Media, type Update,
 } from '../../../packages/types/index'
 
@@ -149,6 +150,23 @@ const toChallenge = (r: Row, actionRows: Row[]): Challenge => {
           url: r.source_url == null ? null : String(r.source_url),
           name: r.source_name == null ? null : String(r.source_name),
           note: r.source_note == null ? null : String(r.source_note),
+        },
+    // Six nullable columns collapse to one nullable object, same shape rule as
+    // `source` above: no prize returns null rather than an object of nulls, so
+    // `c.prize &&` is the only check a surface needs. Keyed off prize_url
+    // because the entry link is the one part a prize is useless without - an
+    // amount with nowhere to enter is not something we should render.
+    // `status` is derived here, never stored: see prizeStatusOf.
+    prize: r.prize_url == null && r.prize_amount == null && r.prize_sponsor == null
+      ? null
+      : {
+          amount: r.prize_amount == null ? null : Number(r.prize_amount),
+          currency: r.prize_currency == null ? null : String(r.prize_currency),
+          sponsor: r.prize_sponsor == null ? null : String(r.prize_sponsor),
+          url: r.prize_url == null ? null : String(r.prize_url),
+          deadline: r.prize_deadline == null ? null : String(r.prize_deadline),
+          note: r.prize_note == null ? null : String(r.prize_note),
+          status: prizeStatusOf(r.prize_deadline == null ? null : String(r.prize_deadline)),
         },
     imported_at: r.imported_at == null ? null : String(r.imported_at),
     // No `name`. The public identity is the handle - see the Person type.
