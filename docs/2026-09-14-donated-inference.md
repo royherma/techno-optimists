@@ -1,6 +1,8 @@
 # Donated inference — connect an AI account, spend your own credits on someone else's problem
 
-Status: PRD. Not built. Dated because it will go stale — read the code for what exists.
+Status: built and live (2026-09-14). This document is the argument and the
+decisions; `apps/api/src/ai-accounts.ts` is what actually runs. Where they
+disagree, the code is right.
 
 ## The idea
 
@@ -40,8 +42,8 @@ Sources: https://community.openai.com/t/feature-request-consumer-delegated-ai-ac
 https://developers.openai.com/plugins/build/auth
 
 So: **one provider at launch, OpenRouter, connected by OAuth.** A paste-your-key
-box is the fallback for people who already have a key, and it shares every code
-path after the key arrives.
+box was planned as a fallback and is NOT built - `saveAccount` takes a key from
+any source, so it is a form and a route when someone asks for it.
 
 ## The single mechanism
 
@@ -58,8 +60,8 @@ OAuth, PKCE, or API key.
 
 1. Signed-in person opens a thread, hits an AI action (Structure this / Research
    this / Translate). If they have no connected account, the button reads
-   **Connect an AI account to run this** and goes to `/settings/ai`.
-2. `/settings/ai` → **Connect OpenRouter**. We generate a `code_verifier`, store
+   **Connect an AI account to run this** and goes to `/settings#compute`.
+2. `/settings#compute` → **Connect an AI account**. We generate a `code_verifier`, store
    it server-side keyed to their session, redirect to `openrouter.ai/auth`.
 3. They authorize. OpenRouter redirects to
    `https://technooptimists.org/api/ai/callback?code=…`.
@@ -90,7 +92,7 @@ That makes the existing/new-user matrix trivial:
 | Who | What happens |
 |---|---|
 | Existing user, signed in | Connect button works immediately. Key attaches to their `person_id`. |
-| Existing user, signed out | `/settings/ai` bounces to `/signin?next=/settings/ai`. After the magic link, they land back on the connect page and continue. |
+| Existing user, signed out | `/settings#compute` bounces to `/signin?next=/settings%23compute`. After the magic link, they land back on the connect page and continue. |
 | New user, never signed in | Same bounce. They enter email, click the link, a person row is created by the existing callback, then they connect. Two steps, both familiar. |
 | New user who clicks "connect" from a thread | `next` carries the thread URL, so after email + connect they are returned to the thread with the action ready to run. Nothing is lost. |
 | Same person, second device | Keys are per-person, not per-session. Already connected. |
@@ -109,7 +111,7 @@ and re-issue, do not show a raw error.
 **The verifier is gone.** Their session expired mid-flow, or they started the
 flow in one browser and finished in another. The callback has a `code` but no
 stored verifier for that session. Do not attempt the exchange — bounce to
-`/signin?next=/settings/ai` with "Sign in and connect again."
+`/signin?next=/settings%23compute` with "Sign in and connect again."
 
 **Their balance is zero.** OpenRouter returns 402 on the inference call, not at
 connect time, so this surfaces mid-action. The account stays connected; the run
@@ -141,14 +143,18 @@ novel into a thread.
 **Rate limits.** Per person per hour, and per thread per day. The limit protects
 the donor's wallet, so it is enforced even though it is their money.
 
-**Concurrency.** Two people hit "Research this" on the same thread at once. Take
-a lock on `(thread, action)`; the loser sees the first person's result rather
-than paying for a duplicate.
+**Concurrency.** Two people hit the same action on the same thread at once.
+NOT yet built: today both runs happen and both are recorded, so two donors can
+each pay for near-identical output. The per-thread daily limit bounds the waste.
+A lock on `(thread, action)` is the fix when a thread ever sees that traffic.
 
 **Non-JS / back button.** The callback is a plain GET redirect chain, so it
 works without JS. Hitting back after connecting re-runs the callback with a
-spent code — detect and redirect to `/settings/ai?connected=1` rather than
-erroring.
+spent code — detect and redirect to `/settings?connected=1#compute` rather than
+erroring. The fragment must stay LAST: `/settings#compute?connected=1` puts the
+query inside the fragment, where `URLSearchParams` never sees it. That is what
+`withParam()` in `apps/api/src/index.ts` exists for, and it was a real bug
+caught by curling the deployed callback, not by the build.
 
 ## Data
 
@@ -220,7 +226,7 @@ No "prototype", no "not built yet", no apology about balances.
 ## Build order
 
 1. Migration + `ai_accounts` table + encryption helper.
-2. `/api/ai/connect` and `/api/ai/callback`, `/settings/ai` page, connect and
+2. `/api/ai/connect` and `/api/ai/callback`, `/settings#compute` page, connect and
    disconnect working end to end. Ship to dev, connect a real account, verify.
 3. One AI action — **Structure this** — on the caller's key, with cost ceiling,
    model allowlist, and the `ai_runs` row.
