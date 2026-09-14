@@ -76,10 +76,6 @@ function Briefing({ briefing, type }: { briefing: NonNullable<Challenge['briefin
   if (!briefing.problem && !briefing.why_unsolved && !briefing.evidence) return null
   return <div className="np-briefing">
     {briefing.problem && <div className="np-briefing-part">
-      {/* The ask rides the heading rather than closing the section, so a reader
-        * who only ever sees the first page of the story still has it. It is
-        * floated, and so must precede the heading in source order. */}
-      <BriefingCta briefing={briefing} type={type} inline />
       <h2>{isFix ? 'What this solves' : 'The problem'}</h2>
       <p>{briefing.problem}</p>
     </div>}
@@ -172,6 +168,10 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
           <PagedContent compact label="Story">
             <h1>{c.title}</h1>
             <p className="np-deck">{c.summary}</p>
+            {/* The byline is the last thing before the story pages, so it is the
+              * only place guaranteed to be on page one whatever the column
+              * height. Floated, so it must come first in source order. */}
+            <BriefingCta briefing={c.briefing} type={c.type} inline />
             <p className="np-story-author">Shared by <a href={'/people?handle=' + encodeURIComponent(c.author.handle)}>@{c.author.handle}</a> · Posted {relativeDate(dateStr)} ({formatDate(dateStr)}) <ViewsCount count={c.views_count ?? 0} title={c.title} /></p>
             {c.briefing && <Briefing briefing={c.briefing} type={c.type} />}
             {c.body && c.body.split(/\n\s*\n/).map((p, i) => {
@@ -184,9 +184,6 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
               }
               return <p key={i}>{p}</p>
             })}
-            {/* Only where the heading row did not already carry it, so a thread
-              * with no imported problem text still gets the ask. */}
-            {!c.briefing?.problem && <BriefingCta briefing={c.briefing} type={c.type} />}
             {c.prize && <PrizeBlock prize={c.prize} />}
             {(c.source?.note || c.source?.url || c.source?.name) && (
               <div className="np-article-briefing">
