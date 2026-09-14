@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { decodeEntities } from '../src/scout-cloudflare'
-import { meaningful } from '../src/scout-import'
+import { meaningful, statedProblem } from '../src/scout-import'
 
 describe('decodeEntities', () => {
   // The bug this exists for: scraped article text carries raw entities, the
@@ -60,5 +60,28 @@ describe('meaningful', () => {
   it('trims rather than rejecting padded real text', () => {
     expect(meaningful('  The pump needs a part nobody stocks locally.  '))
       .toBe('The pump needs a part nobody stocks locally.')
+  })
+})
+
+describe('statedProblem', () => {
+  // Both strings are verbatim model output from the production backfill, against
+  // a prompt that already asked for 90 characters, a place and a consequence.
+  // Asking did not get them; this floor is why they cannot be stored.
+  it('rejects the one-clause restatements the prompt failed to prevent', () => {
+    expect(statedProblem('Idols left after festivals harm the environment')).toBeNull()
+    expect(statedProblem('Seniors struggle with digital literacy')).toBeNull()
+  })
+
+  it('keeps a statement that carries place and consequence', () => {
+    const real = 'Dissolved oxygen in Binmaley fishponds, Pangasinan, crashes before dawn and the milkfish suffocate.'
+    expect(statedProblem(real)).toBe(real)
+  })
+
+  it('still drops the filler meaningful() rejects, however long', () => {
+    expect(statedProblem('No effective solution is currently in place for this particular situation')).toBeNull()
+  })
+
+  it('treats absent input as absent', () => {
+    expect(statedProblem(undefined)).toBeNull()
   })
 })
