@@ -17,6 +17,7 @@ import { z } from 'zod'
 import { ask } from './scout-cloudflare'
 import type { ScoutBudget } from './scout-budget'
 import { fetchSediaPrizes, type PrizeCandidate } from './prize-sources'
+import { fetchHeroxPrizes } from './prize-herox'
 
 /**
  * Matching is model-judged against the thread's own text, with the same
@@ -90,15 +91,27 @@ type Bindings = { DB: D1Database; AI?: Ai }
  * One enrichment run. Pulls live prizes, matches them against threads that do
  * not already carry one, and writes the six columns on a confident match.
  *
- * Expect `{ candidates: 0 }` most days - the EU runs real prizes but they are
- * rare and all currently closed. An empty run is the source telling the truth,
- * not a broken pass.
+ * Two sources, both unauthenticated and both allowed to fail independently:
+ * HeroX carries open competitions run by NASA, NIH and the DOE, and SEDIA
+ * carries EU prizes. Either returning [] is normal and is not an error.
  */
 export async function runPrizeEnrichment(
   env: Bindings, opts: { limit?: number; now?: number; budget?: ScoutBudget } = {},
 ): Promise<{ candidates: number; considered: number; attached: number; reason?: string }> {
   const now = opts.now ?? Date.now()
-  const candidates = await fetchSediaPrizes(100, now)
+  // Settled, not all: one source being down must not discard the other's
+  // prizes, which is the whole reason they are separate adapters.
+  const pulled = await Promise.allSettled([fetchHeroxPrizes(5, now), fetchSediaPrizes(100, now)])
+  const seenUrl = new Set<string>()
+  const candidates: PrizeCandidate[] = []
+  for (const result of pulled) {
+    if (result.status !== 'fulfilled') continue
+    for (const candidate of result.value) {
+      if (seenUrl.has(candidate.url)) continue
+      seenUrl.add(candidate.url)
+      candidates.push(candidate)
+    }
+  }
   if (!candidates.length) return { candidates: 0, considered: 0, attached: 0, reason: 'no_open_prizes' }
   if (!env.AI) return { candidates: candidates.length, considered: 0, attached: 0, reason: 'no_ai_binding' }
 

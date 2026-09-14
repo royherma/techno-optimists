@@ -7,13 +7,23 @@
  * keeps the feed from turning into a listings board. See
  * docs/2026-09-14-prize-threads.md.
  *
- * Source feasibility was tested with curl, not assumed. Every real prize
- * aggregator (XPRIZE, HeroX, Challenge.gov, InnoCentive, Longitude, Nesta, MIT
- * Solve, Grand Challenges) either 404s, publishes no feed, or sits behind a WAF.
- * Grants.gov works but carries no prize instrument - a grant is procurement, a
- * prize is an open invitation, and that is a category difference, not a taste
- * one. EU SEDIA is the one machine-readable source that both works and models a
- * real prize, so it is the only adapter here.
+ * This file is the EU SEDIA adapter. HeroX lives in prize-herox.ts and produces
+ * the same PrizeCandidate shape.
+ *
+ * An earlier version of this comment claimed every prize aggregator "either
+ * 404s, publishes no feed, or sits behind a WAF". Re-tested on 2026-09-14 and
+ * that was wrong about two of them:
+ *
+ *   HeroX        - unauthenticated JSON, 679 challenges. See prize-herox.ts.
+ *   XPRIZE       - answers POST /graphql, but only 1 track was open for
+ *                  registration, so it is not worth an adapter yet.
+ *   Challenge.gov- not a WAF: the platform was sunset on 2026-03-30 and the
+ *                  homepage says so. api.challenge.gov no longer resolves.
+ *   DARPA        - /json/opportunity.json is 156 procurement notices (BAAs,
+ *                  RFIs, Industry Days) and zero prizes.
+ *   Grants.gov   - works, carries no prize instrument. A grant is procurement,
+ *                  a prize is an open invitation; that is a category
+ *                  difference, not a taste one.
  */
 import { z } from 'zod'
 

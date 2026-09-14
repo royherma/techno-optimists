@@ -149,13 +149,32 @@ Nothing new has to pass an evidence gate, because no new thread is created.
 ### Source feasibility - tested 2026-09-14, not assumed
 
 Every candidate below was hit with curl this session. Most prize sites publish
-nothing machine-readable at all:
+nothing machine-readable at all.
+
+**Correction, 2026-09-14, during implementation.** The table below was built by
+guessing feed paths (`/feed`, `/rss`) and concluding from their 404s that the
+source was unreachable. Re-testing the sources themselves rather than their
+hypothetical feeds disproved two rows:
+
+- **HeroX is the best source available and is now wired** (`prize-herox.ts`).
+  The listing page's own bootstrap JSON names its data source in `view.api_url`:
+  `GET https://www.herox.com/async/api-internals/public/challenge/search` returns
+  HTTP 200 and `{"count": 679, ...}` with no key, no auth and no WAF. It carries
+  competitions run by NASA, NIH, the DOE and XPRIZE itself.
+- **XPRIZE answers `POST /graphql`** with `prizes { items { name prizePurse
+  primarySponsor prizeRegistration { endDate isOpenForRegistration } } }`. Real,
+  but only **1 of 36** tracks was open for registration, so no adapter yet.
+- **Challenge.gov was not blocked, it is dead** - sunset 2026-03-30.
+- **DARPA** `/json/opportunity.json` is 156 procurement notices, zero prizes.
+
+The lesson worth keeping: a 404 on a guessed path is evidence about the path,
+never about the source.
 
 | Candidate | Result |
 |---|---|
-| `xprize.org/feed`, `/rss`, `/news/feed`, `/competitions/feed` | 301 to a competition page, then 404. No feed. |
-| `herox.com/blog/feed`, `/rss`, `/crowdsourcing-news/feed` | 404, and the site sits behind an AWS WAF challenge script. Not fetchable by a Worker. |
-| `challenge.gov` `/rss`, `/feed`, `/challenges.xml`, `/api/challenges*` | All 404. Points to `usa.gov/find-active-challenge`, which publishes no feed or API either. |
+| `xprize.org/feed`, `/rss`, `/news/feed`, `/competitions/feed` | 301 to a competition page, then 404. No *feed* - but see the correction below: `POST /graphql` works. |
+| `herox.com/blog/feed`, `/rss`, `/crowdsourcing-news/feed` | 404. **The "AWS WAF" conclusion was wrong** - see the correction below. Only blog RSS paths were tried; the site's own API was never looked for. |
+| `challenge.gov` `/rss`, `/feed`, `/challenges.xml`, `/api/challenges*` | All 404 - but not for the reason assumed. The platform was **sunset on 2026-03-30**; the homepage says so and `api.challenge.gov` no longer resolves. |
 | `innocentive.com/feed/` | 302 to the homepage, `text/html`, zero items. Feed retired. |
 | `grandchallenges.org`, `gcgh.grandchallenges.org` feeds | 404. |
 | `grantsgovprod.wordpress.com/feed/` | Valid RSS2 - but site-admin news ("Grants.gov is retiring its Mobile App"), not opportunities. |
