@@ -324,6 +324,17 @@
 .np-row-head { flex:0 0 auto; }
 .np-row { display:grid; grid-template-columns:54px 72px 100px minmax(0,1fr) 110px 76px 74px 158px; align-items:center; gap:12px; padding:9px 2px; border-bottom:1px solid var(--np-rule); font-size:11px; flex:0 0 auto; min-height:0; }
 .np-row-head { font-size:9px; text-transform:uppercase; letter-spacing:.07em; opacity:.62; padding-block:5px; }
+.np-row-head>span { min-width:0; }
+.np-row-head button { display:flex; align-items:center; gap:4px; width:100%; font:inherit; color:inherit; text-transform:inherit; letter-spacing:inherit; text-align:left; padding:0; }
+.np-row-head button:hover { color:var(--np-red); }
+/* The arrow holds its slot at all times so a header does not jump sideways
+ * when the sort lands on it. */
+.np-row-head button i { font-style:normal; font-size:8px; opacity:.35; }
+.np-row-head button:hover i { opacity:.7; }
+.np-row-head .np-sorted { opacity:1; color:var(--np-red); }
+.np-row-head .np-sorted button i { opacity:1; }
+/* Signals sits right-aligned in the body, so its header must agree. */
+.np-row-head>span:last-child button { justify-content:flex-end; }
 .np-row-type { font-weight:650; font-size:10px; text-transform:uppercase; letter-spacing:.045em; }
 .np-row-title { font:bold 15px/1.25 Georgia,serif; letter-spacing:-.01em; min-width:0; margin:0; display:flex; flex-direction:column; gap:2px; }
 .np-row-title a { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -338,6 +349,8 @@
 .np-news-list .np-skeleton .np-skeleton-meta { width:70%; height:8px; margin:0; }
 .np-news-list .np-skeleton .np-skeleton-headline { gap:0; margin:0; }
 .np-news-list .np-skeleton .np-skeleton-headline i { height:12px; width:88%; }
+/* Desktop sorts from the header; this bar is the narrow-screen stand-in. */
+.np-row-sortbar { display:none; }
 .np-news-list .np-empty { margin:auto; }
 .np-row-thumb { display:block; width:100%; aspect-ratio:4/3; overflow:hidden; background:#ece8dd; }
 .np-row-thumb img,.np-row-thumb video { width:100%; height:100%; object-fit:cover; display:block; }
@@ -358,8 +371,15 @@
 @container edition (max-width:520px) {
   .np-front-controls { gap:10px; }
   .np-row { grid-template-columns:40px minmax(0,1fr) auto; gap:8px; }
-  /* Two columns left: the header's labels no longer line up with anything. */
+  /* Two columns left: the header's labels no longer line up with anything, so
+   * the sort moves into a bar of its own. */
   .np-row-head { display:none; }
+  .np-row-sortbar { display:flex; align-items:center; gap:8px; flex:0 0 auto; overflow-x:auto; scrollbar-width:none; padding-bottom:7px; border-bottom:1px solid var(--np-rule); font-size:10px; text-transform:uppercase; letter-spacing:.06em; }
+  .np-row-sortbar::-webkit-scrollbar { display:none; }
+  .np-row-sortbar>span { opacity:.55; flex:0 0 auto; }
+  .np-row-sortbar button { flex:0 0 auto; display:flex; align-items:center; gap:3px; padding:3px 7px; border:1px solid var(--np-rule); font:inherit; color:inherit; text-transform:inherit; letter-spacing:inherit; }
+  .np-row-sortbar button[aria-pressed=true] { background:var(--np-ink); color:var(--np-paper); border-color:var(--np-ink); }
+  .np-row-sortbar button i { font-style:normal; font-size:8px; }
   .np-row-type { display:none; }
   /* The title is what someone taps. Keep the headline count and views, drop the
    * two that were only useful for comparing rows side by side. */
