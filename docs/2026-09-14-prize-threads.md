@@ -163,18 +163,28 @@ nothing machine-readable at all:
 | `api.grants.gov` search2 + fetchOpportunity | **Works, no key** - `hitCount: 141`, `awardCeiling = 7800000`, `responseDate = Oct 15, 2026`. **Dropped anyway: wrong content.** See the goals check. |
 | EU SEDIA `api.tech.ec.europa.eu` | **Works, no key** - `totalResults: 18476`, carries `deadlineDate` + `budgetOverview`. Needs a multipart `query` file field; a plain query parameter returns HTTP 500. Status filter still unsolved (see below). |
 
-**The SEDIA filter is now solved** (Roy asked me to keep pushing, so this got
-fixed rather than left open). The original bug was querying two status codes at
-once; they are open and closed, not two flavours of open:
+**The SEDIA status mapping below was wrong; corrected 2026-09-14 during
+implementation.** The codes were inferred from future-deadline ratios rather than
+read from the response. `actions[].status.description` names them outright:
 
 ```
-status 31094501 -> total 6715  | future-deadline 6/8 in page   = OPEN
-status 31094502 -> total 11628 | future-deadline 0/8 in page   = CLOSED
+31094501 -> "Forthcoming"  total  6,856
+31094502 -> "Open"         total 14,242
+31094503 -> "Closed"       total 244,911
 ```
 
-Pulling 100 open calls confirms it: **98 of 100 carry a future deadline.** The
-`text=` parameter does not combine with the query filter (`text=prize` returns 0
-while `text=***` returns 6715), so filtering happens client-side.
+So `31094502` is Open, not Closed. Treating it as closed would have discarded the
+larger half of the live set. `apps/api/src/prize-sources.ts` therefore uses
+`SEDIA_LIVE_STATUSES = ['31094501', '31094502']` - forthcoming and open both
+matter, because a prize you can see coming is still worth attaching.
+
+**`text=prize` returning 0 was also wrong.** Live it returns **4,027 hits**, all
+genuine EU prizes (SOFT Innovation Prize, Horizon Prize for Social Innovation,
+Nuclear Innovation Prize) - every one of them status `31094503` (Closed). The
+adapter is correct and returns nothing today only because no EU prize is
+currently open, which is a fact about the world, not a bug. Matching still runs
+client-side on `actions[].description` (`/\bprize\b/i`, matching the real value
+`"IPr Inducement Prize"`).
 
 **But the same category error appears here too.** Of those 100 open EU calls, the
 number with "prize" in the title is **zero**. What they actually are:
@@ -262,8 +272,9 @@ Stages 1-4 are independent of which source wins, and are safe to build now:
    `problem_key` and thread text, set the six columns, skip silently on no match.
 4. `StoryTile` meta line, `ChallengePage` block and the one-line copy.
 
-5. **SEDIA adapter** with the now-working open filter (`status 31094501`) plus a
-   client-side prize match, so a CASSINI-class call is picked up the day it opens.
+5. **SEDIA adapter** filtering on forthcoming + open (`31094501`, `31094502`)
+   plus a client-side prize match, so a CASSINI-class call is picked up the day
+   it opens.
 6. Re-test the no-API prize aggregators periodically; add a government source the
    moment a machine-readable federal prize feed exists.
 
