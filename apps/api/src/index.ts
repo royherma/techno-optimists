@@ -1,4 +1,5 @@
-import { SCOUT_LIMITS } from './scout-budget'
+import { SCOUT_LIMITS, ScoutBudget } from './scout-budget'
+import { runPrizeEnrichment } from './prize-enrich'
 import { SCOUT_FEEDS, recentSourceRuns, sourceRunPage, summarizeSources } from './scout-sources'
 import { runScout, SCOUT_CRON } from './scout-cloudflare'
 import { appendScoutRows, ScoutInputError } from './scout-import'
@@ -1184,6 +1185,45 @@ app.get('/api/scout/source-runs', async (c) => {
 app.get('/api/scout/status', async (c) => {
   const last = await c.env.CACHE?.get('scout:last-run', 'json')
   return c.json({ enabled: c.env.SCOUT_ENABLED === 'true', schedule: SCOUT_CRON, timezone: 'UTC', limits: SCOUT_LIMITS, last_run: last ?? null }, 200, { 'Cache-Control': 'no-store' })
+})
+
+/**
+ * Run prize enrichment on its own, without the feed pass in front of it.
+ *
+ * POST /api/scout/run reaches enrichment only at the end of a full Scout run,
+ * behind an R2 claim keyed `scout-manual/<date>` with a single `:2` fallback
+ * (scout-cloudflare.ts:253). Two manual runs a day is the ceiling, so once
+ * they are spent the third call returns already_ran_manual_today and the
+ * prize pass is unreachable until the next cron slot - which is exactly the
+ * wrong property when the thing you are trying to verify IS the prize pass.
+ *
+ * There is no claim here on purpose, and that is safe for a different reason
+ * than it looks: enrichment writes only `WHERE prize_url IS NULL`
+ * (prize-enrich.ts:149), so a second run cannot double-attach or overwrite.
+ * Re-running is idempotent by construction, not by a counter. The model spend
+ * is still bounded per call by the same ScoutBudget the Scout uses.
+ *
+ * Awaited rather than waitUntil: enrichment is two HTTP pulls and a bounded
+ * match loop, which fits inside a request. The Scout's fire-and-forget shape
+ * is what made both stalled runs report `running` with no error - the caller
+ * polled a status the dead run never wrote. Returning the real result means a
+ * failure arrives as a failure.
+ */
+app.post('/api/prizes/enrich', async (c) => {
+  const me = await currentPerson(c)
+  if (!me) return c.json({ error: 'sign_in_required' }, 401)
+  if (!me.is_admin) return c.json({ error: 'admin_only' }, 403)
+  if (!c.env.AI) return c.json({ error: 'no_ai_binding' }, 409)
+  const budget = new ScoutBudget(SCOUT_LIMITS.manual_neurons_per_run)
+  try {
+    const result = await runPrizeEnrichment({ DB: c.env.DB, AI: c.env.AI }, { budget })
+    return c.json({ ...result, neurons_used: budget.used })
+  } catch (error) {
+    // Surfaced, not swallowed. Inside runScout a prize failure is deliberately
+    // silent so a source outage cannot fail a good feed run; here the prize
+    // pass is the whole request, so its error is the answer.
+    return c.json({ error: 'enrichment_failed', detail: error instanceof Error ? error.message : String(error) }, 500)
+  }
 })
 
 /**
