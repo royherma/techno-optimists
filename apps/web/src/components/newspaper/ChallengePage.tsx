@@ -73,6 +73,12 @@ function Briefing({ briefing, type }: { briefing: NonNullable<Challenge['briefin
   // A fix already exists on these, so "the problem" would be the wrong word for
   // something nobody is still stuck on.
   const isFix = type === 'build' || type === 'idea' || type === 'experiment'
+  // Only where a solution is genuinely still wanted. solved_elsewhere has an
+  // answer that needs carrying over, not inventing, and a null status means the
+  // source never said - asking for ideas against an unknown would be guessing
+  // in the reader's face. partially_solved keeps the invitation: something
+  // works and the rest is open, which is the most answerable kind of thread.
+  const open = !isFix && (briefing.status === 'unsolved' || briefing.status === 'partially_solved')
   if (!briefing.problem && !briefing.why_unsolved && !briefing.evidence) return null
   return <div className="np-briefing">
     {briefing.problem && <div className="np-briefing-part">
@@ -84,6 +90,9 @@ function Briefing({ briefing, type }: { briefing: NonNullable<Challenge['briefin
       <p>{briefing.why_unsolved}</p>
     </div>}
     {briefing.evidence && <blockquote className="np-briefing-evidence">{briefing.evidence}</blockquote>}
+    {open && <p className="np-briefing-cta">
+      Nobody has solved this yet. <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('compose-idea', { detail: { kind: 'idea' } }))}>Have an idea? Suggest a solution →</button>
+    </p>}
   </div>
 }
 
