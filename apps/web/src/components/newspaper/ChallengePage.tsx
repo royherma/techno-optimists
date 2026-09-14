@@ -73,12 +73,6 @@ function Briefing({ briefing, type }: { briefing: NonNullable<Challenge['briefin
   // A fix already exists on these, so "the problem" would be the wrong word for
   // something nobody is still stuck on.
   const isFix = type === 'build' || type === 'idea' || type === 'experiment'
-  // Only where a solution is genuinely still wanted. solved_elsewhere has an
-  // answer that needs carrying over, not inventing, and a null status means the
-  // source never said - asking for ideas against an unknown would be guessing
-  // in the reader's face. partially_solved keeps the invitation: something
-  // works and the rest is open, which is the most answerable kind of thread.
-  const open = !isFix && (briefing.status === 'unsolved' || briefing.status === 'partially_solved')
   if (!briefing.problem && !briefing.why_unsolved && !briefing.evidence) return null
   return <div className="np-briefing">
     {briefing.problem && <div className="np-briefing-part">
@@ -90,10 +84,28 @@ function Briefing({ briefing, type }: { briefing: NonNullable<Challenge['briefin
       <p>{briefing.why_unsolved}</p>
     </div>}
     {briefing.evidence && <blockquote className="np-briefing-evidence">{briefing.evidence}</blockquote>}
-    {open && <p className="np-briefing-cta">
-      Nobody has solved this yet. <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('compose-idea', { detail: { kind: 'idea' } }))}>Have an idea? Suggest a solution →</button>
-    </p>}
   </div>
+}
+
+/**
+ * The invitation to answer, offered on every thread. A reader who has just
+ * finished reading the problem is at the moment they are most likely to have
+ * something to say, so it sits at the end of the story column rather than only
+ * in the panel beside it.
+ *
+ * It lives outside Briefing because a thread with no briefing rows still takes
+ * contributions - gating the ask on the presence of imported problem text would
+ * silently drop it on exactly the threads a person wrote themselves.
+ *
+ * Only the lead sentence varies: "nobody has solved this" is a claim the other
+ * states cannot make.
+ */
+function BriefingCta({ briefing, type }: { briefing: Challenge['briefing']; type: Challenge['type'] }) {
+  const isFix = type === 'build' || type === 'idea' || type === 'experiment'
+  const open = !isFix && (briefing?.status === 'unsolved' || briefing?.status === 'partially_solved')
+  return <p className="np-briefing-cta">
+    {open ? 'Nobody has solved this yet.' : isFix ? 'Seen something like this?' : 'Know something about this?'} <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('compose-idea', { detail: { kind: 'idea' } }))}>Have an idea? Suggest a solution →</button>
+  </p>
 }
 
 export default function ChallengePage({ initial }: { initial?: ChallengeData }) {
@@ -162,6 +174,7 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
               }
               return <p key={i}>{p}</p>
             })}
+            <BriefingCta briefing={c.briefing} type={c.type} />
             {c.prize && <PrizeBlock prize={c.prize} />}
             {(c.source?.note || c.source?.url || c.source?.name) && (
               <div className="np-article-briefing">
