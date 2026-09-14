@@ -100,15 +100,32 @@ export const MAX_OUTPUT_TOKENS = 2000
 /** Same reason, on the input side. Characters, not tokens - cheap to enforce. */
 export const MAX_INPUT_CHARS = 24_000
 
+/**
+ * The name a donor sees on the provider's consent screen, on the key in their
+ * dashboard, and on the provider's own app rankings. One constant, because
+ * three places disagreeing is how a donor ends up unable to tell which key is
+ * ours when they go to revoke one.
+ */
+const APP_LABEL = 'TechnoOptimists.org'
+const APP_URL = 'https://technooptimists.org'
+
 const openrouter: Provider = {
   id: 'openrouter',
   name: 'OpenRouter',
   console_url: 'https://openrouter.ai/credits',
 
   // https://openrouter.ai/docs/use-cases/oauth-pkce
+  //
+  // `key_label` is what the authorize page shows as the app name and what the
+  // minted key is called in the donor's OpenRouter dashboard. Without it the
+  // page reads "An app requests access to your account", which is exactly the
+  // sentence that makes someone cancel. The docs list it under the headless
+  // variant; it is sent here alongside `callback_url` because a wrong-shaped
+  // key_label is ignored, and an unnamed consent screen is not.
   authorizeUrl: ({ callback, challenge }) =>
     `https://openrouter.ai/auth?callback_url=${encodeURIComponent(callback)}` +
-    `&code_challenge=${encodeURIComponent(challenge)}&code_challenge_method=S256`,
+    `&code_challenge=${encodeURIComponent(challenge)}&code_challenge_method=S256` +
+    `&key_label=${encodeURIComponent(APP_LABEL)}`,
 
   async exchange({ code, verifier }) {
     const res = await fetch('https://openrouter.ai/api/v1/auth/keys', {
@@ -138,8 +155,8 @@ const openrouter: Provider = {
         'content-type': 'application/json',
         // OpenRouter attributes traffic by these, which is what puts the site's
         // name in the donor's own usage log rather than an unlabelled charge.
-        'http-referer': 'https://technooptimists.org',
-        'x-title': 'Techno Optimists',
+        'http-referer': APP_URL,
+        'x-title': APP_LABEL,
       },
       body: JSON.stringify({
         model,
