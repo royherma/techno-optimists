@@ -62,6 +62,7 @@ const toComment = (row: Record<string, unknown>): ChallengeComment => ({
   author: { id: String(row.author_id), handle: String(row.author_handle),
     avatar_url: row.author_avatar == null ? null : String(row.author_avatar) },
   created_at: String(row.created_at),
+  assisted: row.assisted_model == null ? null : { model: String(row.assisted_model) },
 })
 
 community.get('/:slug/comments', async (c) => {
@@ -71,8 +72,13 @@ community.get('/:slug/comments', async (c) => {
   if (before && !/^\d+$/.test(before)) return c.json({ error: 'bad_cursor' }, 400)
   // Newest page first, displayed chronologically. Rowid makes same-second
   // ordering stable and lets older pages load without skipping replies.
-  const rows = await c.env.DB.prepare(`SELECT m.*, m.rowid cursor, p.handle author_handle, p.avatar_url author_avatar
+  // The left join is what puts the "drafted with AI" mark on a response. It
+  // stays a join rather than a column on the comment so the original model
+  // text and the published text can never drift apart.
+  const rows = await c.env.DB.prepare(`SELECT m.*, m.rowid cursor, p.handle author_handle, p.avatar_url author_avatar,
+      r.model assisted_model
     FROM challenge_comments m JOIN people p ON p.id = m.author_id
+    LEFT JOIN ai_runs r ON r.published_comment_id = m.id
     WHERE m.challenge_id = ? ${before ? 'AND m.rowid < ?' : ''}
     ORDER BY m.rowid DESC LIMIT 51`).bind(row.id, ...(before ? [Number(before)] : [])).all()
   const page = rows.results.slice(0, 50)

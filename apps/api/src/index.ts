@@ -12,7 +12,7 @@ import {
 } from './auth'
 import {
   DEFAULT_PROVIDER, ProviderError, challengeOf, disconnectAccount, isAiAction,
-  markRevoked, mintVerifier, providerOf, publicAccount, runAction, saveAccount,
+  markRevoked, mintVerifier, parseDraft, providerOf, publicAccount, runAction, saveAccount,
   usableAccount,
 } from './ai-accounts'
 import { isAdminEmail } from './admin'
@@ -1336,11 +1336,16 @@ app.post('/api/challenges/:slug/ai/:action', async (c) => {
     throw err
   }
 
+  // `draft` returns JSON: the model picks what the thread needs and writes it.
+  // A malformed reply degrades to the raw text rather than throwing away a run
+  // the donor already paid for - see parseDraft.
+  const draft = action === 'draft' ? parseDraft(result.text) : null
+
   const runId = `air_${mintToken().slice(0, 16)}`
   await c.env.DB.batch([
     c.env.DB.prepare(
-      'INSERT INTO ai_runs (id, challenge_id, person_id, action, model, provider, cost_usd, output) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    ).bind(runId, challenge.id, me.id, action, result.model, account.provider, result.cost_usd, result.text),
+      'INSERT INTO ai_runs (id, challenge_id, person_id, action, model, provider, cost_usd, output, draft_kind) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    ).bind(runId, challenge.id, me.id, action, result.model, account.provider, result.cost_usd, result.text, draft?.kind ?? null),
     c.env.DB.prepare("UPDATE ai_accounts SET last_used_at = datetime('now') WHERE person_id = ?").bind(me.id),
   ])
 
@@ -1348,9 +1353,51 @@ app.post('/api/challenges/:slug/ai/:action', async (c) => {
   return c.json({
     run: {
       id: runId, action, model: result.model, output: result.text,
+      // The donor sees what their own run cost. It is their money, and a
+      // number they cannot see is one they cannot decide about.
       cost_usd: result.cost_usd, by_handle: me.handle, by_name: me.name,
+      ...(draft ? { draft } : {}),
     },
   })
+})
+
+/**
+ * Links a run to the response it became, so a thread can say which responses
+ * were written with donated compute.
+ *
+ * Scoped to the caller's own run and their own comment: this is the only write
+ * that connects the two tables, and someone else's run is not theirs to claim.
+ */
+app.post('/api/ai/runs/:id/published', async (c) => {
+  const me = await currentPerson(c)
+  if (!me) return c.json({ error: 'signin_required' }, 401)
+
+  const body = await c.req.json().catch(() => null)
+  const commentId = typeof body?.comment_id === 'string' ? body.comment_id : null
+  if (!commentId) return c.json({ error: 'comment_id_required' }, 400)
+
+  const linked = await c.env.DB.prepare(
+    `UPDATE ai_runs SET published_comment_id = ?
+     WHERE id = ? AND person_id = ? AND published_comment_id IS NULL
+       AND EXISTS (SELECT 1 FROM challenge_comments WHERE id = ? AND author_id = ?)`,
+  ).bind(commentId, c.req.param('id'), me.id, commentId, me.id).run()
+
+  return c.json({ ok: linked.meta.changes === 1 })
+})
+
+/**
+ * The model's original draft behind a published response.
+ *
+ * Public, because the mark on the response claims the draft exists and a claim
+ * nobody can open is not attribution. Only `output` and the model go out - the
+ * run's cost is the donor's number until Roy decides otherwise.
+ */
+app.get('/api/comments/:id/original', async (c) => {
+  const run = await c.env.DB.prepare(
+    'SELECT model, output, created_at FROM ai_runs WHERE published_comment_id = ?',
+  ).bind(c.req.param('id')).first<{ model: string; output: string; created_at: string }>()
+  if (!run) return c.json({ error: 'not_found' }, 404)
+  return c.json({ original: run })
 })
 
 /** Runs donated to one thread, newest first. Public: attribution is the point. */

@@ -110,7 +110,16 @@ CREATE TABLE IF NOT EXISTS ai_runs (
   -- Reported by the provider. Nullable: a provider that does not return a cost
   -- still produced a real run, and guessing a number would be worse than none.
   cost_usd     REAL,
+  -- The model's original, untouched. A person may edit the draft into their
+  -- own words before publishing; this column is what they edited FROM, and it
+  -- is never rewritten.
   output       TEXT NOT NULL,
+  -- What the model judged the thread needed: idea, explanation, solution or
+  -- question. Null for runs from before the draft action existed.
+  draft_kind   TEXT,
+  -- Set when a draft becomes a published response, so a thread can show which
+  -- responses were written with donated compute.
+  published_comment_id TEXT,
   created_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

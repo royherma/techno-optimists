@@ -56,4 +56,24 @@ for (const [name, sqlType] of scoutColumns) {
   }
 }
 run(['--file', 'packages/db/community.sql'])
+
+// A donated run can become a published response. These two columns record that
+// without ever touching `output`, which stays the untouched original: the whole
+// promise is that the model's first draft survives whatever the person edits it
+// into. Nullable forever - a run nobody published is a normal run.
+//
+// Placed AFTER community.sql because that file is what creates ai_runs; on a
+// fresh database an ALTER above this line would target a table that does not
+// exist yet.
+const aiRunColumns = [
+  ['draft_kind', 'TEXT'],
+  ['published_comment_id', 'TEXT'],
+]
+const aiRunInfo = JSON.parse(run(['--command', 'PRAGMA table_info(ai_runs)', '--json']))
+for (const [name, sqlType] of aiRunColumns) {
+  if (!aiRunInfo[0]?.results?.some((c) => c.name === name)) {
+    run(['--command', `ALTER TABLE ai_runs ADD COLUMN ${name} ${sqlType}`])
+  }
+}
+
 console.log(`Community schema ready (${target}); existing records preserved.`)

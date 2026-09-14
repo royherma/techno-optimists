@@ -58,17 +58,27 @@ OAuth, PKCE, or API key.
 
 ## Flow
 
-1. Signed-in person opens a thread, hits an AI action (Structure this / Research
-   this / Translate). If they have no connected account, the button reads
-   **Connect an AI account to run this** and goes to `/settings#compute`.
-2. `/settings#compute` → **Connect an AI account**. We generate a `code_verifier`, store
-   it server-side keyed to their session, redirect to `openrouter.ai/auth`.
+The donated run produces a response the person publishes. It lives in the
+composer, not in a panel beside the thread: a panel that printed model output
+next to the thread gave the reader something they could not act on.
+
+1. Signed-in person opens a thread and starts a response. Above the box:
+   **Draft this with your own AI credits**. With no connected account it reads
+   **Connect an AI account** and goes to `/api/ai/connect?next=…`.
+2. Connect mints a `code_verifier` stored server-side against their session and
+   redirects to `openrouter.ai/auth` with `key_label=TechnoOptimists.org`, so
+   the consent screen names us instead of saying "An app".
 3. They authorize. OpenRouter redirects to
-   `https://technooptimists.org/api/ai/callback?code=…`.
-4. Worker exchanges the code for a key, encrypts it, stores it, redirects back
-   to wherever they were.
-5. The AI action now runs. The thread records **"Researched by @mei, on her own
-   credits."**
+   `https://technooptimists.org/api/ai/callback?code=…`; the Worker exchanges
+   the code, encrypts the key, stores it, and returns them to the thread with
+   `?connected=1` so the composer can say the account is live.
+4. **Draft** runs. The model reads the thread and decides what it needs - an
+   idea, an explanation, a solution or a question - and returns that choice
+   with a title and body through a JSON schema.
+5. The draft lands in the box. The person edits it and publishes it as theirs.
+   They see what the run cost them; nobody else does yet.
+6. The published response carries **"Drafted with <model> on the author's own
+   credits"**, which opens onto the model's untouched original.
 
 ## Auth: the email question, answered
 
@@ -176,9 +186,12 @@ CREATE TABLE IF NOT EXISTS ai_runs (
   id            TEXT PRIMARY KEY,
   challenge_id  TEXT NOT NULL REFERENCES challenges(id) ON DELETE CASCADE,
   person_id     TEXT NOT NULL REFERENCES people(id) ON DELETE CASCADE,
-  action        TEXT NOT NULL,   -- structure | research | translate
+  action        TEXT NOT NULL,   -- structure | draft
   model         TEXT NOT NULL,
-  cost_usd      REAL,            -- reported by OpenRouter, for the donor's own total
+  cost_usd      REAL,            -- the donor's own number, until Roy publishes totals
+  output        TEXT NOT NULL,   -- the model's original, never rewritten after an edit
+  draft_kind    TEXT,            -- idea | explanation | solution | question
+  published_comment_id TEXT,     -- the response this draft became, if it became one
   created_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_ai_runs_challenge ON ai_runs(challenge_id, created_at DESC);
@@ -197,6 +210,9 @@ donated across 7 threads", which is the thing that makes anyone do this twice.
 - `GET  /api/ai/callback` — exchanges code, stores key, 302 back to `next`
 - `POST /api/ai/disconnect` — requires session, deletes row, best-effort revoke
 - `POST /api/challenges/:slug/ai/:action` — runs the action on the caller's key
+- `POST /api/ai/runs/:id/published` — links a run to the response it became,
+  scoped to the caller's own run **and** own comment
+- `GET  /api/comments/:id/original` — public; the model's original behind the mark
 
 `/api/ai/*` goes in `run_worker_first` in `wrangler.jsonc` alongside `/api/*`
 — already covered by the existing `/api/*` entry, so no config change, but the
