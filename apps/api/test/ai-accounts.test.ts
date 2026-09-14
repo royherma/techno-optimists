@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   AI_ACTIONS, MAX_INPUT_CHARS, MAX_OUTPUT_TOKENS, MODEL_PREFERENCE,
   ProviderError, challengeOf, decryptKey, encryptKey, isAiAction, isProviderId,
-  mintVerifier, providerOf,
+  mintVerifier, parseDraft, providerOf,
 } from '../src/ai-accounts'
 
 const env = { AI_KEY_SECRET: 'test-secret-not-the-real-one' }
@@ -127,5 +127,41 @@ describe('actions', () => {
     for (const a of AI_ACTIONS) expect(isAiAction(a)).toBe(true)
     expect(isAiAction('drop-tables')).toBe(false)
     expect(isAiAction('')).toBe(false)
+  })
+})
+
+/**
+ * A donor has already been charged by the time this runs, so the only
+ * unacceptable outcome is throwing away the text. Every malformed shape below
+ * still has to return the words the model produced.
+ */
+describe('parseDraft', () => {
+  it('reads a bare JSON object', () => {
+    const d = parseDraft('{"kind":"solution","title":"Aerate at 4am","body":"Run the pump."}')
+    expect(d).toEqual({ kind: 'solution', title: 'Aerate at 4am', body: 'Run the pump.' })
+  })
+
+  it('reads it through a code fence', () => {
+    const d = parseDraft('```json\n{"kind":"question","title":"T","body":"B"}\n```')
+    expect(d.kind).toBe('question')
+    expect(d.body).toBe('B')
+  })
+
+  it('keeps the text when the reply is not JSON at all', () => {
+    const d = parseDraft('  The pond stratifies overnight.  ')
+    expect(d).toEqual({ kind: 'idea', title: '', body: 'The pond stratifies overnight.' })
+  })
+
+  it('keeps the text when the JSON is truncated mid-object', () => {
+    const raw = '{"kind":"idea","title":"T","body":"unterminated'
+    expect(parseDraft(raw).body).toBe(raw)
+  })
+
+  it('falls back to idea when the model invents a kind', () => {
+    expect(parseDraft('{"kind":"manifesto","body":"B"}').kind).toBe('idea')
+  })
+
+  it('does not publish an empty body as a draft', () => {
+    expect(parseDraft('{"kind":"idea","title":"T","body":"   "}').body).toContain('"body"')
   })
 })

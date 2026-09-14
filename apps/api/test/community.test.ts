@@ -12,6 +12,9 @@ const token = 'c'.repeat(64)
 beforeEach(async () => {
   sqlite = new DatabaseSync(':memory:')
   sqlite.exec(readFileSync(new URL('../../../packages/db/schema.sql', import.meta.url), 'utf8'))
+  // community.sql too: the comment list left-joins ai_runs for the
+  // "drafted with AI" mark, so a fixture without it is not the real schema.
+  sqlite.exec(readFileSync(new URL('../../../packages/db/community.sql', import.meta.url), 'utf8'))
   sqlite.exec("INSERT INTO people (id,handle,name) VALUES ('p1','reader','Reader'),('p2','owner','Owner'); INSERT INTO identities(person_id,email) VALUES ('p1','reader@example.com'); INSERT INTO challenges(id,slug,type,title,summary,author_id) VALUES ('c1','one','problem','A real challenge','Some context','p2'),('c2','two','problem','Another challenge','Other context','p2')")
   sqlite.prepare('INSERT INTO sessions(token_hash,person_id,expires_at) VALUES (?, ?, ?)').run(await hashToken(token), 'p1', '2099-01-01')
   const prepare = (sql: string) => {

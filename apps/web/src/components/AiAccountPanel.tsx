@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import '../styles/newspaper/compute.css'
 
 /**
  * Connect an AI account, so runs on a thread are paid for by the reader's own

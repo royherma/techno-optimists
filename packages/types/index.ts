@@ -293,6 +293,15 @@ export interface ChallengeComment {
   body: string
   author: Pick<PublicPerson, 'id' | 'handle' | 'avatar_url'>
   created_at: string
+  /**
+   * Set when this response started as a draft the author paid a model to
+   * write. The author still wrote what was published - this says how the first
+   * version got there, and names the model so the claim is checkable.
+   *
+   * The cost of the run is deliberately not here. That is the donor's own
+   * number until Roy decides to publish how much compute a thread consumed.
+   */
+  assisted?: { model: string } | null
 }
 
 export const EMPTY_ACTIONS: Record<ActionKind, number> = Object.fromEntries(

@@ -6,6 +6,8 @@ import ResponseContent, { isDiscussionMedia } from './ResponseContent'
 import { ago } from '../../lib/vocab'
 import PanelDialog from '../newspaper/PanelDialog'
 import { uuid } from '../../lib/uuid'
+import DraftWithCompute, { COMPOSER_KIND, type DraftRun } from './DraftWithCompute'
+import AssistedMark from './AssistedMark'
 
 const LABEL: Record<CommentKind, string> = { comment: 'Comment', idea: 'Idea', question: 'Question', evidence: 'Evidence', test_result: 'Test result' }
 type Attachment = { url: string; name: string }
@@ -32,6 +34,10 @@ export default function Discussion({ slug, me, sessionReady, paged = false, pane
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [status, setStatus] = useState('')
+  // The run whose draft is currently in the box. Kept so publishing can link
+  // the response back to the run that paid for it, and cleared the moment the
+  // draft is gone - a stale id would credit a run to text it never wrote.
+  const [draftRun, setDraftRun] = useState<DraftRun | null>(null)
   const input = useRef<HTMLTextAreaElement>(null)
   const inFlight = useRef(false)
   const key = `challenge-discussion:${slug}`
@@ -147,6 +153,21 @@ export default function Discussion({ slug, me, sessionReady, paged = false, pane
       })
       if (r.status === 401) { window.location.href = `/signin?next=${encodeURIComponent(`/c/${slug}#discussion`)}`; return }
       if (!r.ok) throw new Error(r.status === 429 ? 'A few too quickly. Wait a minute, then try again.' : 'Your response did not save. Your draft is still here; try again.')
+      // Link the response to the run that drafted it, so the thread can show
+      // which responses were written with donated compute. Best effort: the
+      // response is published either way, and failing to record the credit is
+      // not a reason to tell someone their writing did not save.
+      if (draftRun) {
+        const published = await r.json().catch(() => null)
+        const commentId = published?.comment?.id ?? published?.id
+        if (commentId) {
+          await fetch(`/api/ai/runs/${encodeURIComponent(draftRun.id)}/published`, {
+            method: 'POST', headers: { 'content-type': 'application/json' },
+            credentials: 'same-origin', body: JSON.stringify({ comment_id: commentId }),
+          }).catch(() => {})
+        }
+        setDraftRun(null)
+      }
       setDraft(emptyDraft()); setPreview(false)
       setStatus('Your response is published.')
       window.dispatchEvent(new Event('challenge-comment'))
@@ -159,6 +180,19 @@ export default function Discussion({ slug, me, sessionReady, paged = false, pane
   const composer = (<form hidden={paged && view !== 'write'} className="discussion-composer" onSubmit={submit} onDragOver={(e) => { if (e.dataTransfer.types.includes('Files')) e.preventDefault() }} onDrop={(e) => {
       if (e.dataTransfer.files.length) { e.preventDefault(); void addFiles(Array.from(e.dataTransfer.files)) }
     }}>
+      {/* Offered before the box, because it is a way to START writing. Only on
+          a top-level response: a reply is aimed at one person, and a model that
+          has not read that exchange would talk past them. */}
+      {!draft.parent_id && <DraftWithCompute
+        slug={slug}
+        hasBody={draft.body.trim().length > 0}
+        onDraft={(run) => {
+          setDraftRun(run)
+          setPreview(false)
+          change({ body: run.draft.body, kind: COMPOSER_KIND[run.draft.kind] })
+          requestAnimationFrame(() => input.current?.focus())
+        }}
+      />}
       <label htmlFor="response-body">{draft.parent_id ? `Reply${parent ? ` to @${parent.author.handle}` : ''}` : 'Your response'}</label>
       {draft.parent_id && <button className="text-control" type="button" disabled={busy} onClick={() => change({ parent_id: null })}>Cancel reply</button>}
       <div className="composer-tools" aria-label="Response tools">
@@ -222,6 +256,7 @@ export default function Discussion({ slug, me, sessionReady, paged = false, pane
           <time dateTime={dateISO(comment.created_at)} title={formatDateTime(comment.created_at)}>{ago(comment.created_at)}</time></div>
         {comment.parent_id && <p className="reply-context">Replying to {repliedTo ? <a href={`#response-${repliedTo.id}`}>@{repliedTo.author.handle}</a> : 'an earlier response'}</p>}
         <ResponseContent body={comment.body} />
+        {comment.assisted && <AssistedMark commentId={comment.id} model={comment.assisted.model} />}
         <button className="text-control" disabled={busy} onClick={() => { setView('write'); setPreview(false); change({ parent_id: comment.id }); requestAnimationFrame(() => { input.current?.focus(); if (!paged && !panel) input.current?.scrollIntoView({ block: 'center', behavior: 'instant' }) }) }}>Reply</button>
       </li>
     })}</ol>

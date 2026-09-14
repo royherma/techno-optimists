@@ -14,7 +14,6 @@ import Discussion from '../challenge/Discussion'
 import Progress from '../challenge/Progress'
 import PeopleLive from '../PeopleLive'
 import Editorial from '../challenge/Editorial'
-import ContributeCompute from '../challenge/ContributeCompute'
 import '../../styles/newspaper/challenge.css'
 
 export type ChallengeData = { challenge: Challenge; updates: Update[]; people: DetailPerson[] }
@@ -208,6 +207,5 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
       <SourcePlace challenge={c} />
     </div>
     {me?.is_admin && <PanelDialog title="Edit thread" open={editing} onClose={() => setEditing(false)}><Editorial challenge={c} refresh={refresh} /></PanelDialog>}
-    <ContributeCompute slug={c.slug} />
   </div>
 }
