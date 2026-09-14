@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Challenge } from '../../../../../packages/types'
+import { CHALLENGE_TYPES, type Challenge } from '../../../../../packages/types'
+import { STAGE_ORDER } from '../../lib/vocab'
 import { useFeed } from './useFeed'
 import StoryTile from './StoryTile'
 import StoryRow from './StoryRow'
@@ -31,6 +32,8 @@ function readView(): View {
  */
 type SortKey = 'type' | 'stage' | 'title' | 'place' | 'added' | 'prize' | 'signals'
 const SORT_FIRST: Record<SortKey, 'asc' | 'desc'> = { type: 'asc', stage: 'asc', title: 'asc', place: 'asc', added: 'desc', prize: 'desc', signals: 'desc' }
+/** Header order after the thumbnail cell, which has nothing to rank. */
+const SORT_COLUMNS: [SortKey, string][] = [['type', 'Type'], ['stage', 'Stage'], ['title', 'Thread'], ['place', 'Place'], ['added', 'Added'], ['prize', 'Prize'], ['signals', 'Signals']]
 
 /**
  * The rank of a row for one key. Strings compare with localeCompare at the call
@@ -63,6 +66,7 @@ export default function FrontPage({ initial }: { initial: Challenge[] }) {
   const [page, setPage] = useState(0)
   const [size, setSize] = useState(1)
   const [rowSize, setRowSize] = useState(8)
+  const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' } | null>(null)
   const [measured, setMeasured] = useState(false)
   const frame = useRef<HTMLDivElement>(null)
   /**
@@ -77,8 +81,12 @@ export default function FrontPage({ initial }: { initial: Challenge[] }) {
     const list = box.querySelector('.np-news-list')
     const row = box.querySelector<HTMLElement>('.np-row:not(.np-row-head)')
     const head = box.querySelector<HTMLElement>('.np-row-head')
+    // Exactly one of these is visible at a time, so both are measured and the
+    // hidden one contributes nothing.
+    const bar = box.querySelector<HTMLElement>('.np-row-sortbar')
     const rowH = row?.getBoundingClientRect().height || 55
-    const available = (list?.clientHeight || box.clientHeight) - (head?.getBoundingClientRect().height || 25)
+    const chrome = (head?.getBoundingClientRect().height || 25) + (bar?.getBoundingClientRect().height || 0)
+    const available = (list?.clientHeight || box.clientHeight) - chrome
     setRowSize(Math.max(3, Math.floor(available / rowH)))
   }
   useEffect(() => {
@@ -100,7 +108,25 @@ export default function FrontPage({ initial }: { initial: Challenge[] }) {
     if (next === 'grid') url.searchParams.delete('view'); else url.searchParams.set('view', next)
     history.replaceState(history.state, '', url)
   }
-  const filtered = challenges.filter(c => (type === 'all' || c.type === type) && `${c.title} ${c.summary} ${c.location || ''}`.toLowerCase().includes(query.toLowerCase()))
+  const matched = challenges.filter(c => (type === 'all' || c.type === type) && `${c.title} ${c.summary} ${c.location || ''}`.toLowerCase().includes(query.toLowerCase()))
+  // No sort chosen means the feed's own order, which is the editorial one.
+  /**
+   * Click cycles natural direction -> reverse -> off. The third click matters:
+   * the unsorted feed is the editorial order, and without a way back a reader
+   * who sorted once could never see it again short of a reload.
+   */
+  function toggleSort(key: SortKey) {
+    setPage(0)
+    setSort(s => s?.key !== key ? { key, dir: SORT_FIRST[key] }
+      : s.dir === SORT_FIRST[key] ? { key, dir: SORT_FIRST[key] === 'asc' ? 'desc' : 'asc' }
+      : null)
+  }
+  const filtered = sort ? [...matched].sort((a, b) => {
+    const av = sortValue(a, sort.key), bv = sortValue(b, sort.key)
+    if (av === null || bv === null) return av === bv ? 0 : av === null ? 1 : -1
+    const cmp = typeof av === 'string' ? av.localeCompare(bv as string) : av - (bv as number)
+    return sort.dir === 'asc' ? cmp : -cmp
+  }) : matched
   const perPage = view === 'list' ? rowSize : size
   const pages = Math.max(1, Math.ceil(filtered.length / perPage)), current = Math.min(page, pages - 1)
   const stories = filtered.slice(current * perPage, (current + 1) * perPage)
@@ -125,7 +151,24 @@ export default function FrontPage({ initial }: { initial: Challenge[] }) {
           {pending ? Array.from({ length: 8 }, (_, i) => <div key={i} className="np-row np-skeleton" aria-hidden="true">
             <span className="np-row-thumb np-skeleton-image" /><span className="np-skeleton-meta" /><span className="np-skeleton-meta" /><div className="np-skeleton-headline"><i /></div><span className="np-skeleton-meta" /><span className="np-skeleton-meta" /><span className="np-skeleton-meta" /><span className="np-skeleton-meta" />
           </div>) : <>
-            <header className="np-row np-row-head" aria-hidden="true"><span /><span>Type</span><span>Stage</span><span>Thread</span><span>Place</span><span>Added</span><span>Prize</span><span>Signals</span></header>
+            <header className="np-row np-row-head">
+              <span />
+              {SORT_COLUMNS.map(([key, label]) => <span key={key} className={sort?.key === key ? 'np-sorted' : ''}>
+                <button type="button" onClick={() => toggleSort(key)}
+                  aria-label={`Sort by ${label}${sort?.key === key ? `, currently ${sort.dir === 'asc' ? 'ascending' : 'descending'}` : ''}`}>
+                  {label}<i aria-hidden="true">{sort?.key === key ? (sort.dir === 'asc' ? '▲' : '▼') : '↕'}</i>
+                </button>
+              </span>)}
+            </header>
+            {/* Narrow screens hide the header, because three columns cannot carry
+              * seven labels. Sorting still has to be reachable, so it appears as
+              * its own control there instead. */}
+            <div className="np-row-sortbar">
+              <span>Sort</span>
+              {SORT_COLUMNS.map(([key, label]) => <button key={key} type="button" aria-pressed={sort?.key === key} onClick={() => toggleSort(key)}>
+                {label}{sort?.key === key && <i aria-hidden="true">{sort.dir === 'asc' ? '▲' : '▼'}</i>}
+              </button>)}
+            </div>
             {stories.map(c => <StoryRow key={c.id} challenge={c} />)}
             {!stories.length && empty}
           </>}
