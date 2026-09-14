@@ -151,6 +151,20 @@ const toChallenge = (r: Row, actionRows: Row[]): Challenge => {
           name: r.source_name == null ? null : String(r.source_name),
           note: r.source_note == null ? null : String(r.source_note),
         },
+    // Same collapse rule as `source`: all-null returns null, so a surface tests
+    // `c.briefing &&` once instead of five separate fields. A row keeps the
+    // parts it has - evidence without a stated reason is a real state, and is
+    // the common one for threads imported before these columns existed.
+    briefing: r.problem == null && r.why_unsolved == null && r.evidence == null
+      && r.solve_status == null && r.severity == null
+      ? null
+      : {
+          problem: r.problem == null ? null : String(r.problem),
+          why_unsolved: r.why_unsolved == null ? null : String(r.why_unsolved),
+          evidence: r.evidence == null ? null : String(r.evidence),
+          status: r.solve_status == null ? null : String(r.solve_status) as 'unsolved' | 'partially_solved' | 'solved_elsewhere',
+          severity: r.severity == null ? null : String(r.severity) as 'low' | 'moderate' | 'high' | 'critical',
+        },
     // Six nullable columns collapse to one nullable object, same shape rule as
     // `source` above: no prize returns null rather than an object of nulls, so
     // `c.prize &&` is the only check a surface needs. Keyed off prize_url

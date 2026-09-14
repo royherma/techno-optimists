@@ -221,6 +221,26 @@ export interface Challenge {
    */
   source: { url: string | null; name: string | null; note: string | null } | null
   /**
+   * What is wrong, why it is still open, and the line from the article that
+   * proves it. Separate fields because a reader arriving cold asks exactly
+   * these questions, in this order, and the answers used to be concatenated
+   * into `source.note` where none of them could be shown on their own.
+   *
+   * Every part is independently nullable and that is the normal case. A thread
+   * a person posted has no Scout card behind it. A build that works has no
+   * `why_unsolved`. Surfaces must render each part only when it is present -
+   * never a heading over an empty slot, and never a placeholder sentence.
+   */
+  briefing: {
+    problem: string | null
+    why_unsolved: string | null
+    evidence: string | null
+    /** As reported on the source date, never a claim about today. */
+    status: 'unsolved' | 'partially_solved' | 'solved_elsewhere' | null
+    /** How bad, independent of `impact`, which is how far it reaches. */
+    severity: 'low' | 'moderate' | 'high' | 'critical' | null
+  } | null
+  /**
    * An externally funded reward someone else is offering for this problem.
    * Null is the normal case and always will be.
    *

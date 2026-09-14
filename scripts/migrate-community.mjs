@@ -37,5 +37,23 @@ for (const [name, sqlType] of prizeColumns) {
 // Partial index, so a row with no prize costs nothing. IF NOT EXISTS makes the
 // whole block repeatable, which is what lets ship run it on every deploy.
 run(['--command', 'CREATE INDEX IF NOT EXISTS idx_challenges_prize ON challenges(prize_deadline) WHERE prize_amount IS NOT NULL'])
+// The problem statement and why it is still open. These are not new facts: the
+// Scout model already produced them as separate fields and the importer
+// concatenated all of them into one source_note blob. Splitting them out is
+// what lets the page render a Problem section and omit it when a thread is a
+// build with no problem. Nullable forever - a human-posted thread has no Scout
+// card, and pre-migration rows stay NULL until the backfill parses their blob.
+const scoutColumns = [
+  ['problem', 'TEXT'],
+  ['why_unsolved', 'TEXT'],
+  ['evidence', 'TEXT'],
+  ['solve_status', 'TEXT'],
+  ['severity', 'TEXT'],
+]
+for (const [name, sqlType] of scoutColumns) {
+  if (!tables[0].results.some((c) => c.name === name)) {
+    run(['--command', `ALTER TABLE challenges ADD COLUMN ${name} ${sqlType}`])
+  }
+}
 run(['--file', 'packages/db/community.sql'])
 console.log(`Community schema ready (${target}); existing records preserved.`)

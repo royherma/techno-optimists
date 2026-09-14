@@ -254,3 +254,39 @@ ALTER TABLE challenges ADD COLUMN prize_note     TEXT;     -- 'pool split across
 -- Partial, so the common NULL row costs nothing.
 CREATE INDEX IF NOT EXISTS idx_challenges_prize ON challenges(prize_deadline)
   WHERE prize_amount IS NOT NULL;
+
+-- ---------------------------------------------------------------------------
+-- The problem in the reader's words, and why it is still open.
+--
+-- These existed already: the Scout model produces `problem`, `why_unsolved`,
+-- `confirms`, `status` and `severity` as separate fields, and every one of them
+-- was concatenated into a single `source_note` prose blob with ' | ' between
+-- them. The structure survived the model and died at the INSERT. A reader then
+-- got one italic paragraph reading "in Kalyan, Maharashtra, this is their
+-- Vanaspati Ganesh &mdash; a tradition that has become one | partially_solved:
+-- ..." and could not answer "what is the problem" from it.
+--
+-- Storing them apart is what lets the page show a Problem section and hide it
+-- when there is no problem to show. A build is not a problem with empty fields.
+--
+-- All NULL is normal and permanent: a thread posted by a person has no Scout
+-- card behind it, and rows imported before this migration keep NULL until the
+-- backfill parses their old blob.
+--
+-- Added to existing databases by scripts/migrate-community.mjs, which ALTERs
+-- only when the columns are missing.
+-- ---------------------------------------------------------------------------
+-- One or two lines, plain words. Rendered as the first thing under the deck.
+ALTER TABLE challenges ADD COLUMN problem       TEXT;
+-- Why it is still open. NULL when the reason is not known, never a stub like
+-- "No effective solution in place" - that sentence is what the section is
+-- supposed to replace, and printing it is worse than printing nothing.
+ALTER TABLE challenges ADD COLUMN why_unsolved  TEXT;
+-- Verbatim excerpt from the article carrying the measurement. Kept whole; the
+-- old blob truncated these mid-sentence.
+ALTER TABLE challenges ADD COLUMN evidence      TEXT;
+-- 'unsolved' | 'partially_solved' | 'solved_elsewhere'
+ALTER TABLE challenges ADD COLUMN solve_status  TEXT;
+-- 'low' | 'moderate' | 'high' | 'critical'. Distinct from `impact`, which is
+-- reach. A single household can be critical severity at impact 1.
+ALTER TABLE challenges ADD COLUMN severity      TEXT;
