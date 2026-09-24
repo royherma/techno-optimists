@@ -103,6 +103,9 @@ const gscToken = import.meta.env.GSC_VERIFICATION ?? process.env.GSC_VERIFICATIO
       whichever page the reader was sent back to.
     -->
     <Snack client:load />
+    <script>
+      import '../lib/error-reporter'
+    </script>
   </body>
 </html>
 

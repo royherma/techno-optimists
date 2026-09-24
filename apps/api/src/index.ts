@@ -4,6 +4,7 @@ import { SCOUT_FEEDS, recentSourceRuns, sourceRunPage, summarizeSources } from '
 import { runScout, SCOUT_CRON } from './scout-cloudflare'
 import { appendScoutRows, ScoutInputError } from './scout-import'
 import { Hono } from 'hono'
+import { bodyLimit } from 'hono/body-limit'
 import { z } from 'zod'
 import {
   HANDLE_MAX, HANDLE_MIN, SESSION_COOKIE, clearCookie, cookie, currentPerson,
@@ -1595,6 +1596,49 @@ app.post('/api/site/view', async (c) => {
 app.get('/api/site/views', async (c) => {
   const total = await c.env.DB.prepare('SELECT COUNT(*) n FROM site_views').first<{ n: number }>()
   return c.json({ views: Number(total?.n ?? 0) })
+})
+
+/* -------------------------------------------------------------------------- */
+/* Browser error reports                                                      */
+/* -------------------------------------------------------------------------- */
+
+const clientErrorBody = z.object({
+  message: z.string().trim().min(1).max(500),
+  source: z.string().trim().max(300).optional().default(''),
+  line: z.number().int().nonnegative().optional().default(0),
+  col: z.number().int().nonnegative().optional().default(0),
+  stack: z.string().max(4000).optional().default(''),
+  path: z.string().trim().max(300).optional().default(''),
+}).strict()
+
+// Sent via sendBeacon, so no content-type to gate on - same reason /api/site/view skips it.
+app.post('/api/client-errors', bodyLimit({ maxSize: 8_000, onError: (c) => c.json({ error: 'body_too_large' }, 413) }), async (c) => {
+  const origin = c.req.header('origin')
+  if (origin && origin !== new URL(c.req.url).origin) return c.json({ error: 'bad_origin' }, 403)
+
+  const parsed = clientErrorBody.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return c.json({ error: 'bad_body' }, 400)
+  const { message, source, line, col, stack, path } = parsed.data
+
+  console.error(JSON.stringify({
+    level: 'error',
+    kind: 'client',
+    ray: c.req.header('cf-ray') ?? 'no-ray',
+    method: c.req.method,
+    path,
+    message,
+    stack,
+    source,
+    line,
+    col,
+  }))
+
+  track(c.env, 'client_error', path || new URL(c.req.url).pathname, {
+    country: c.req.header('cf-ipcountry') ?? '',
+    referrer: c.req.header('referer') ?? '',
+  })
+
+  return c.json({ ok: true })
 })
 
 /* -------------------------------------------------------------------------- */
