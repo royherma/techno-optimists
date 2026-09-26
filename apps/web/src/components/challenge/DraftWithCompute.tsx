@@ -48,7 +48,7 @@ const CHOSE: Record<DraftKind, string> = {
 }
 
 const PROBLEMS: Record<string, string> = {
-  signin_required: 'Sign in first, then this runs on your credits.',
+  sign_in_required: 'Sign in first, then this runs on your credits.',
   no_account: 'Connect an AI account to draft with your own credits.',
   no_credit: 'That account has no credit left. Top it up and try again.',
   revoked: 'That account is no longer authorized. Reconnect it and try again.',
@@ -122,7 +122,7 @@ export default function DraftWithCompute({
   }
 
   const needsAccount = problem === PROBLEMS.no_account || problem === PROBLEMS.revoked
-  const needsSignin = problem === PROBLEMS.signin_required
+  const needsSignin = problem === PROBLEMS.sign_in_required
   const here = encodeURIComponent(`/c/${slug}#discussion`)
 
   return <div className="draft-assist">

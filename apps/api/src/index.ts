@@ -1271,7 +1271,7 @@ app.get('/api/ai/account', async (c) => {
 
 app.post('/api/ai/disconnect', async (c) => {
   const me = await currentPerson(c)
-  if (!me) return c.json({ error: 'signin_required' }, 401)
+  if (!me) return c.json({ error: 'sign_in_required' }, 401)
   await disconnectAccount(c.env, me.id)
   return c.json({ ok: true })
 })
@@ -1285,7 +1285,7 @@ app.post('/api/ai/disconnect', async (c) => {
  */
 app.post('/api/challenges/:slug/ai/:action', async (c) => {
   const me = await currentPerson(c)
-  if (!me) return c.json({ error: 'signin_required' }, 401)
+  if (!me) return c.json({ error: 'sign_in_required' }, 401)
 
   const action = c.req.param('action')
   if (!isAiAction(action)) return c.json({ error: 'unknown_action' }, 400)
@@ -1371,7 +1371,7 @@ app.post('/api/challenges/:slug/ai/:action', async (c) => {
  */
 app.post('/api/ai/runs/:id/published', async (c) => {
   const me = await currentPerson(c)
-  if (!me) return c.json({ error: 'signin_required' }, 401)
+  if (!me) return c.json({ error: 'sign_in_required' }, 401)
 
   const body = await c.req.json().catch(() => null)
   const commentId = typeof body?.comment_id === 'string' ? body.comment_id : null
