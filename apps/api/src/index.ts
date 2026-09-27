@@ -24,7 +24,7 @@ import { MAX_BYTES, checkUpload, dimensionsOf, mediaKey, mediaUrl } from './medi
 import { slugify } from './slug'
 import {
   ACTION_KINDS, CHALLENGE_TYPES, EMPTY_ACTIONS, FEED_SORTS, HELP_KINDS, ROLES, STAGES,
-  prizeStatusOf,
+  prizeStatusOf, BriefingStatus, BriefingSeverity,
   type ActionKind, type Challenge, type Media, type Update,
 } from '../../../packages/types/index'
 
@@ -176,8 +176,8 @@ const toChallenge = (r: Row, actionRows: Row[]): Challenge => {
           problem: r.problem == null ? null : String(r.problem),
           why_unsolved: r.why_unsolved == null ? null : String(r.why_unsolved),
           evidence: r.evidence == null ? null : String(r.evidence),
-          status: r.solve_status == null ? null : String(r.solve_status) as 'unsolved' | 'partially_solved' | 'solved_elsewhere',
-          severity: r.severity == null ? null : String(r.severity) as 'low' | 'moderate' | 'high' | 'critical',
+          status: r.solve_status == null ? null : String(r.solve_status) as BriefingStatus,
+          severity: r.severity == null ? null : String(r.severity) as BriefingSeverity,
         },
     // Six nullable columns collapse to one nullable object, same shape rule as
     // `source` above: no prize returns null rather than an object of nulls, so

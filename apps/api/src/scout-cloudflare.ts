@@ -4,6 +4,9 @@ import { z } from 'zod'
 import { appendScoutRows, sourceIdentity, type ScoutRow } from './scout-import'
 import { feedCover, resolveScoutImage } from './scout-images'
 import { runPrizeEnrichment } from './prize-enrich'
+import {
+  CHALLENGE_TYPES, STAGES, BRIEFING_SEVERITIES, BRIEFING_STATUSES,
+} from '../../../packages/types/index'
 
 type Bindings = Pick<Cloudflare.Env, 'DB'> & Partial<Pick<Cloudflare.Env, 'AI' | 'CACHE' | 'MEDIA'>> & { SCOUT_ENABLED?: string }
 export const SCOUT_CRON = '17 */6 * * *'
@@ -46,13 +49,13 @@ export function decodeEntities(text: string | undefined): string {
 export const draftSchema = z.object({
   eligible: z.boolean(), reason: z.string().max(240),
   headline: z.string().min(8).max(140), body: z.string().min(10).max(280),
-  type: z.enum(['problem', 'idea', 'experiment', 'build']),
-  stage: z.enum(['spot', 'understand', 'ideas', 'build', 'test', 'learn', 'improve']),
+  type: z.enum(CHALLENGE_TYPES),
+  stage: z.enum(STAGES),
   place: z.string().min(2).max(80), country: z.string().min(2).max(50),
   problem_key: z.string().min(3).max(80),
   impact: z.number().int().min(1).max(5), impact_reason: z.string().min(10).max(240),
-  severity: z.enum(['low', 'moderate', 'high', 'critical']),
-  status: z.enum(['unsolved', 'partially_solved', 'solved_elsewhere']), status_note: z.string().min(10).max(240),
+  severity: z.enum(BRIEFING_SEVERITIES),
+  status: z.enum(BRIEFING_STATUSES), status_note: z.string().min(10).max(240),
   // The problem in plain words, and why it is still open. status_note was
   // carrying this job and could not do it: it produced "Ongoing investigations"
   // and "No effective solution in place", which tell a reader nothing. These two
