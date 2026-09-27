@@ -58,3 +58,4 @@ outputs/
 # untracked and a `git clean` would take it otherwise.
 wrangler.jsonc
 wrangler.build.jsonc
+.claude/artifacts/
