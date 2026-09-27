@@ -1,0 +1,376 @@
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mProcessing ../../wrangler.jsonc configuration:[0m
+
+  
+    - "env.prod" environment configuration
+      - "tail_consumers" exists at the top level, but not on "env.prod".
+        This is not what you probably want, since "tail_consumers" is not inherited by environments.
+        Please add "tail_consumers" to "env.prod".
+
+
+[
+  {
+    "results": [
+      {
+        "id": "c_8ef19e8a-c602-4e82-bc27-a65e181ccd72",
+        "slug": "scout-262d8f1df5056e5bfa524af8",
+        "type": "build",
+        "title": "This school teaches 30 children daily",
+        "summary": "Children learn about wetlands and wildlife in Pampore, Kashmir"
+      },
+      {
+        "id": "c_d23ef25d-76c7-4e43-8051-a0f3ae64612a",
+        "slug": "scout-ec64b7a809a272b118e65e47",
+        "type": "problem",
+        "title": "This flood affects 50.49 lakh people",
+        "summary": "Floodwater surrounds homes in Begusarai, making hygiene difficult"
+      },
+      {
+        "id": "c_3748ef3a-99f5-4dd5-8923-9344cf483ea6",
+        "slug": "scout-4ac0f271fce57db93c81e259",
+        "type": "build",
+        "title": "This AI assistant helps 10,000 farmers daily",
+        "summary": "Farmers use AI for crop and cattle care"
+      },
+      {
+        "id": "c_d76743ff-faf4-4925-81a4-4535491e8008",
+        "slug": "scout-3a435ace94754eff7b1ff412",
+        "type": "build",
+        "title": "This Mumbai initiative recycles 760 study tables",
+        "summary": "Broken Ganpati idols are recycled into study tables for children"
+      },
+      {
+        "id": "c_1106465e-ba9c-45da-9541-ce4363ae505f",
+        "slug": "scout-2cad74cb8814cf3de062159b",
+        "type": "problem",
+        "title": "This outbreak kills 46 hippos",
+        "summary": "Anthrax suspected in hippo deaths in Muchinga province, Zambia"
+      },
+      {
+        "id": "c_c3f22584-144c-419f-8e64-5bb5608e3d78",
+        "slug": "scout-23a6aa1eea66dbe4cd2ec578",
+        "type": "build",
+        "title": "This bacterium degrades 98.50% of Direct Blue-6 dye",
+        "summary": "IIT Guwahati researchers found a bacterium to treat toxic textile dye wastewater"
+      },
+      {
+        "id": "c_3aff70ce-d6ec-4a9e-83b7-5d24dc4670f3",
+        "slug": "scout-7ab6299eda6bac21da42101d",
+        "type": "problem",
+        "title": "This lagoon has 1,700 hectares of weeds",
+        "summary": "Weeds choke waterways, frustrating farming and fishing at Chia Lagoon"
+      },
+      {
+        "id": "c_51f0173e-8144-4feb-b11c-d1e6ff1e36a4",
+        "slug": "scout-018e251008f32e0c65443bb5",
+        "type": "build",
+        "title": "This commander leads 10 battalions",
+        "summary": "Sanjukta Parashar commands CoBRA's battalions"
+      },
+      {
+        "id": "c_b544789f-fb4c-4f05-9161-246750e6006c",
+        "slug": "scout-eb1cfc26d668892efcb22b62",
+        "type": "build",
+        "title": "This city has 6 micrograms per cubic metre of PM2.5",
+        "summary": "Lunglei and Tura have low air pollution levels."
+      },
+      {
+        "id": "c_5d43538f-5d0e-4c38-8e8e-4c3f9eb6a89c",
+        "slug": "scout-256e0b92a966eb8186a6fe36",
+        "type": "build",
+        "title": "This Love Bus serves 100 kilometers daily",
+        "summary": "Electric minibuses connect business districts and commercial centers in Metro Manila"
+      },
+      {
+        "id": "c_814f7811-f214-407c-8697-6fbf0acaa770",
+        "slug": "scout-9e0fe19964f8e2b5603941f7",
+        "type": "problem",
+        "title": "This scam traps 300,000 people",
+        "summary": "Bangladeshi migrants fall prey to job scams in Cambodia, losing thousands of dollars and facing exploitation."
+      },
+      {
+        "id": "c_175a36a4-62ff-4769-b5b4-72fd1d67a562",
+        "slug": "scout-c7dd39faec0c022449c387b7",
+        "type": "problem",
+        "title": "This reserve loses 44% of grassland",
+        "summary": "Manas National Park's grassland cover has decreased, affecting rhino habitat"
+      },
+      {
+        "id": "c_da193cb5-c2e9-4dc2-87ee-28ef39081732",
+        "slug": "scout-562718f7774adc363b8b7d03",
+        "type": "build",
+        "title": "This van brings 2.5-kg weights to apartment clubhouses",
+        "summary": "Seniors in Bengaluru apartment complexes lift weights with Unleash 45 mobile gym"
+      },
+      {
+        "id": "c_b05df680-e718-4ae7-a537-c1f9075663ed",
+        "slug": "scout-52fd54537e3bf0a552753c60",
+        "type": "build",
+        "title": "This beach collects 4,000 tonnes of waste",
+        "summary": "Mumbai beaches are polluted with plastic waste"
+      },
+      {
+        "id": "c_f3ededbc-d3c9-4140-930c-424b5aa2bb95",
+        "slug": "scout-1fd3cecf424ebd0e0bc4a533",
+        "type": "build",
+        "title": "This system stores 100 metres of excess rain underground",
+        "summary": "Bhungroo helps Gujarat farmers access irrigation during dry season"
+      },
+      {
+        "id": "c_d482b98a-e60e-418a-ac0a-b5b1e3360454",
+        "slug": "scout-e073594999b1621a3f8b5fd8",
+        "type": "build",
+        "title": "This farm generates 2 MW of solar power",
+        "summary": "Solar power helps farmers in Madhya Pradesh earn a steady income"
+      },
+      {
+        "id": "c_9e1a9786-9089-44dd-a508-2dada23ed28a",
+        "slug": "scout-acd4a323138d7f1697768d33",
+        "type": "problem",
+        "title": "This village has 400 houses underwater",
+        "summary": "Floods affect millions in Bihar despite rainfall deficit, with 15 districts and 5 million people affected."
+      },
+      {
+        "id": "c_54994b54-fafc-48ea-b39e-673eb060845d",
+        "slug": "scout-f3b771072f6c474bef00c095",
+        "type": "problem",
+        "title": "This flood submerges 2,000 homes",
+        "summary": "Flooding disrupts travel and economy in northern Vietnam"
+      },
+      {
+        "id": "c_fcb7962a-c00a-44bd-b9ea-899e35cb9699",
+        "slug": "scout-72f667951377eb4ef451336d",
+        "type": "problem",
+        "title": "This region has 12.5% of areas with high Galliformes species richness in protected areas",
+        "summary": "Galliformes species are found in high-altitude landscapes of Himachal Pradesh, but their habitats are not well-protected"
+      },
+      {
+        "id": "c_dac02ecf-0e72-479a-93ad-41e94c527f59",
+        "slug": "scout-14ca58457304dc3e961e30b9",
+        "type": "problem",
+        "title": "This data center uses 4.4 billion liters of water annually",
+        "summary": "Equinix's proposed data center in Cape Town would use large amounts of water and electricity, competing with residents"
+      },
+      {
+        "id": "c_8f8da12a-2a4e-4f88-9df1-1df5a5b4d3f8",
+        "slug": "scout-2f99eab0f8bc211fb837adc8",
+        "type": "build",
+        "title": "This park has 13 free libraries",
+        "summary": "People gather to read in Ahmedabad's public parks"
+      },
+      {
+        "id": "c_28b80c30-d7cd-4e94-9188-604228355c3f",
+        "slug": "scout-db66726e38175b43f8c88c94",
+        "type": "build",
+        "title": "This village uses 1 bamboo plant for 100 products",
+        "summary": "Bamboo is used for furniture, decorative pieces, and more in Jorhat, Assam."
+      },
+      {
+        "id": "c_15488683-94db-4b50-86af-47532df4bceb",
+        "slug": "scout-88e4aaeebddea9f981371e5f",
+        "type": "problem",
+        "title": "This railway threatens 80 kilometers of Indigenous land",
+        "summary": "A'uwẽ-Xavante people's territory is under threat from the Center-West Integration Railway"
+      },
+      {
+        "id": "c_e528368e-1ca5-4fc8-acf2-aded11a82063",
+        "slug": "scout-3e2a224ac235d760ccc12db9",
+        "type": "problem",
+        "title": "This village loses $3,421 yearly",
+        "summary": "Fishers in Vietnam lose income due to plastic waste"
+      },
+      {
+        "id": "c_3f472ecb-6961-4f77-a5c9-941496a614de",
+        "slug": "scout-bc784a2dad84c145c08e118a",
+        "type": "problem",
+        "title": "This village has 30+ child deaths",
+        "summary": "Baiga children in Balaghat's tribal villages are dying due to measles, malaria, and malnutrition."
+      },
+      {
+        "id": "c_e4dd42ae-c20a-43b0-8362-afaa6e974be9",
+        "slug": "scout-ff8a6d47be53387770ec6c93",
+        "type": "problem",
+        "title": "This festival has 7 hours of noise",
+        "summary": "Children get overstimulated at festivals with many people and noise."
+      },
+      {
+        "id": "c_45e11a5f-6414-4443-8855-edf3d7524124",
+        "slug": "scout-a91add6cbccee68458dc990a",
+        "type": "build",
+        "title": "This van carries 500 kilograms",
+        "summary": "Stellantis expands electric vehicle lineup"
+      },
+      {
+        "id": "c_c85a9cfa-ca05-46cc-8ad0-61c39cdaaf92",
+        "slug": "scout-813ad1411fa4d0bf5bff295a",
+        "type": "build",
+        "title": "This boat frees 407 animals",
+        "summary": "Industrial fishing vessels in Panama Bay accidentally catch sharks and rays, which are then freed by biologists on board."
+      },
+      {
+        "id": "c_992def7c-8307-4639-a7da-a6daaf72d6ec",
+        "slug": "scout-40e416c10eac698137579b5b",
+        "type": "build",
+        "title": "This Mumbai home collects 400 stationery kits",
+        "summary": "Mumbai couple turns Ganpati gifts into school supplies for Adivasi students"
+      },
+      {
+        "id": "c_4be78db0-3516-4d33-ad4d-d9c54a694615",
+        "slug": "scout-b774c46c681b47b4e362160e",
+        "type": "build",
+        "title": "This family grows 1 foot of wheatgrass daily",
+        "summary": "The Marathe family in Kalyan creates a living Ganesha from wheat seeds and mud."
+      },
+      {
+        "id": "c_5dbdbd5b-83f1-416f-be76-dea61975b838",
+        "slug": "scout-348e202d7717a7cb0e8a87bd",
+        "type": "build",
+        "title": "This school reaches 50 tribal children",
+        "summary": "Kombai tribal children in Tamil Nadu were not attending school due to farm labor expectations"
+      },
+      {
+        "id": "c_74e9a397-91e2-43a9-95bb-72f67ce23c62",
+        "slug": "scout-1f4395ab42ab77237e3884f3",
+        "type": "build",
+        "title": "This city removes 5 tonnes of waste",
+        "summary": "Jodhpur's ponds were polluted with waste"
+      },
+      {
+        "id": "c_dbda69ca-1400-4669-bd8b-6d148b5b4616",
+        "slug": "scout-b629711228c579015e1c9192",
+        "type": "problem",
+        "title": "This village loses 75% of its population",
+        "summary": "Cunene Province in southern Angola faces severe drought, forcing people to migrate to Namibia for water and food, leaving behind the elderly."
+      },
+      {
+        "id": "c_39af38a9-2fe0-4d41-9d79-097fe52dadda",
+        "slug": "scout-67f2f9d07b410649572447c3",
+        "type": "problem",
+        "title": "This state loses ₹1.36 trillion",
+        "summary": "Jharkhand faces revenue loss due to amendment"
+      },
+      {
+        "id": "c_58d211f0-6519-4b3b-bcda-ba0a58337abb",
+        "slug": "scout-adf5e343ba3cbeeab080bcef",
+        "type": "build",
+        "title": "This fisherwoman finds 2 spinach pipefish",
+        "summary": "In East Sepik province, near Imbando village, a fisherwoman caught two spinach pipefish while fishing for prawns."
+      },
+      {
+        "id": "c_fde6e51a-0c5a-4f95-9ba5-fe591abb3a24",
+        "slug": "scout-d98c1c765c0fb375796247d8",
+        "type": "problem",
+        "title": "This flood crippled 281 megawatts",
+        "summary": "Floods damaged power plants and transmission lines"
+      },
+      {
+        "id": "c_263b09d3-e58e-4f6d-9938-53adf0454b83",
+        "slug": "scout-69459519171341e2f15cb60c",
+        "type": "build",
+        "title": "This startup teaches 10,000 seniors",
+        "summary": "Senior citizens learn smartphones and AI tools"
+      },
+      {
+        "id": "c_611e0c32-a8fe-45bf-abce-100682562a19",
+        "slug": "scout-25b78e894be6821f6e63ee78",
+        "type": "problem",
+        "title": "This village has 12.6 micrograms of black carbon per cubic meter",
+        "summary": "Kheral village in rural Punjab experiences air pollution from crop-residue burning"
+      },
+      {
+        "id": "c_25f23ff0-6e7a-421d-8a00-db0c55916706",
+        "slug": "scout-5d015da31576a3e60e540c5e",
+        "type": "build",
+        "title": "This company raided 18 times",
+        "summary": "Taiwanese authorities investigate Chinese-linked tech companies"
+      },
+      {
+        "id": "c_380918aa-a48f-42de-bf47-d0e89aa9ce76",
+        "slug": "scout-2c9dcc108981471352e5577f",
+        "type": "problem",
+        "title": "This flood claims 1,050 lives",
+        "summary": "Unidentified bodies buried in Gokarna, Kathmandu"
+      },
+      {
+        "id": "c_4314c7fb07babab6",
+        "slug": "pond-s-oxygen-crashes-at-dawn",
+        "type": "problem",
+        "title": "My pond's oxygen crashes at dawn and I find out when the fish float",
+        "summary": "Dissolved oxygen bottoms out in the small hours. By the time anyone can see it, the loss has happened."
+      },
+      {
+        "id": "c_163c11da42067183",
+        "slug": "our-rooftop-tank-hits-scalding-by",
+        "type": "problem",
+        "title": "Our rooftop tank hits scalding by afternoon",
+        "summary": "Cold showers don't exist here from May to September. The plastic tank absorbs heat all day and stays warm overnight."
+      },
+      {
+        "id": "c_0f9a017657c94df0",
+        "slug": "tokyo-cut-its-crows-under-fifth",
+        "type": "problem",
+        "title": "Tokyo’s crow population fell below a fifth of its early-2000s peak",
+        "summary": "A 25-year campaign combined waste management and changes in everyday habits. What could other cities learn from it?"
+      },
+      {
+        "id": "c_16d0f20793a9a24e",
+        "slug": "macaques-strip-harvest-and-deterrents-cost",
+        "type": "problem",
+        "title": "Macaques strip the harvest and the deterrents cost more than the fruit",
+        "summary": "Losses run 2,300 to 14,000 LKR a month per farm, plus 1,200 to 3,000 LKR a household on firecrackers and air rifles."
+      },
+      {
+        "id": "c_3e2326d8b9736abe",
+        "slug": "metal-roofed-classrooms-hit-39-8c",
+        "type": "problem",
+        "title": "Metal-roofed classrooms hit 39.8C and children stop learning",
+        "summary": "Measured up to 5.9C hotter than outdoors, overheated for 72.5% of occupied hours. A plywood ceiling halves that."
+      },
+      {
+        "id": "c_6169073956d5f476",
+        "slug": "clinic-s-vaccine-fridge-runs-generator",
+        "type": "problem",
+        "title": "The clinic's vaccine fridge runs on a generator we can only afford a few hours a day",
+        "summary": "Mothers walk in and get sent home because the vaccines are out. Some never come back."
+      },
+      {
+        "id": "c_b70211aa4b40473b",
+        "slug": "ten-days-clear-rice-stubble-before",
+        "type": "problem",
+        "title": "Ten days to clear rice stubble before wheat sowing, and burning is free",
+        "summary": "Punjab needs 50,000 Happy Seeders to clear its fields in time. The government distributed 24,000."
+      },
+      {
+        "id": "c_cd157e75c707ce05",
+        "slug": "rainwater-tank-goes-hazy-and-smells",
+        "type": "problem",
+        "title": "The rainwater tank goes hazy and smells of sulfide by the third week",
+        "summary": "Low water plus heat and the whole tank turns. Chlorinating fixes it once; nobody wants to chlorinate rainwater forever."
+      },
+      {
+        "id": "c_7cbf666c4d014172",
+        "slug": "baboons-listen-lock-beep-and-go",
+        "type": "problem",
+        "title": "Baboons listen for the lock beep and go for the cars that didn't chirp",
+        "summary": "They already knew how to open a door. The new part is waiting to hear which ones are worth trying."
+      }
+    ],
+    "success": true,
+    "meta": {
+      "served_by": "v3-prod",
+      "served_by_region": "APAC",
+      "served_by_colo": "SIN",
+      "served_by_primary": true,
+      "timings": {
+        "sql_duration_ms": 1.6452
+      },
+      "duration": 1.6452,
+      "changes": 0,
+      "last_row_id": 0,
+      "changed_db": false,
+      "size_after": 385024,
+      "rows_read": 49,
+      "rows_written": 0,
+      "total_attempts": 1
+    }
+  }
+]
