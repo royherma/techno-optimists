@@ -9,6 +9,12 @@ export type ChallengeType = (typeof CHALLENGE_TYPES)[number]
 export const STAGES = ['spot', 'understand', 'ideas', 'build', 'test', 'learn', 'improve'] as const
 export type Stage = (typeof STAGES)[number]
 
+export const BRIEFING_SEVERITIES = ['low', 'moderate', 'high', 'critical'] as const
+export type BriefingSeverity = (typeof BRIEFING_SEVERITIES)[number]
+
+export const BRIEFING_STATUSES = ['unsolved', 'partially_solved', 'solved_elsewhere'] as const
+export type BriefingStatus = (typeof BRIEFING_STATUSES)[number]
+
 /**
  * How far the problem reaches, as a population ladder. Stored as the ring count
  * 1..5, not as one of these strings: the number sorts and filters directly
@@ -236,9 +242,9 @@ export interface Challenge {
     why_unsolved: string | null
     evidence: string | null
     /** As reported on the source date, never a claim about today. */
-    status: 'unsolved' | 'partially_solved' | 'solved_elsewhere' | null
+    status: BriefingStatus | null
     /** How bad, independent of `impact`, which is how far it reaches. */
-    severity: 'low' | 'moderate' | 'high' | 'critical' | null
+    severity: BriefingSeverity | null
   } | null
   /**
    * An externally funded reward someone else is offering for this problem.
