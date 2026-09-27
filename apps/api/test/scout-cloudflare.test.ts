@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { chooseGeocode, groundQuote, prioritizeEntries, articleDate, auditDraft, draftSchema, evidenceGate, feedLinks, fetchText, runScout, type Draft, type Source } from '../src/scout-cloudflare'
 const source: Source = { url: 'https://nepalitimes.com/news/classroom', title: 'School heat', date: '2026-09-01', text: 'In Nepalganj the classroom reached 39.8 degrees during afternoon lessons.' }
-const card: Draft = { eligible: true, reason: '', headline: 'This classroom reaches 39.8 degrees during lessons', body: 'The metal roof traps heat. The school has no electricity.', type: 'problem', stage: 'ideas', place: 'Nepalganj', country: 'Nepal', problem_key: 'classroom-heat', impact: 1, impact_reason: 'One classroom is documented.', severity: 'moderate', status: 'unsolved', status_note: 'No fix deployed at the source date.', confirms: 'the classroom reached 39.8 degrees', tags: ['heat'], image_subject: 'A classroom with a metal roof' }
+const card: Draft = { eligible: true, reason: '', headline: 'This classroom reaches 39.8 degrees during lessons', body: 'How do you cool a classroom with no power? The metal roof traps heat and the school has no electricity.', type: 'problem', stage: 'ideas', place: 'Nepalganj', country: 'Nepal', problem_key: 'classroom-heat', impact: 1, impact_reason: 'One classroom is documented.', severity: 'moderate', status: 'unsolved', status_note: 'No fix deployed at the source date.', confirms: 'the classroom reached 39.8 degrees', tags: ['heat'], image_subject: 'A classroom with a metal roof' }
 afterEach(() => vi.unstubAllGlobals())
 describe('remote Scout evidence and network boundaries', () => {
  it('accepts a grounded measurement and rejects misleading substring numbers', () => {
@@ -14,6 +14,7 @@ describe('remote Scout evidence and network boundaries', () => {
  })
  it('rejects solved claims framed as unresolved problems and missing schema fields', () => {
   expect(evidenceGate({...card,status:'solved_elsewhere'},source,Date.parse('2026-09-12'))).toContain('solved_problem_requires_restaging')
+  expect(evidenceGate({...card,body:'The metal roof traps heat. The school has no electricity.'},source,Date.parse('2026-09-12'))).toContain('body_question')
   expect(draftSchema.safeParse({...card,impact:6}).success).toBe(false)
   expect(draftSchema.safeParse({...card,severity:undefined}).success).toBe(false)
  })

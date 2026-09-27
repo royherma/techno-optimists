@@ -21,7 +21,7 @@ export type SourceRun = {
 export function sourceRun(feed: ScoutFeed, slot: number, now: number, selection: string): SourceRun {
   return { version: 2, slot, source_id: feed.id, started_at: now, duration_ms: 0, counts: emptyCounts(), reasons: {}, selection, articles: [] }
 }
-const REASONS = new Set(['not_eligible', 'missing_or_stale_source_date', 'headline_formula', 'measurement_not_quoted', 'quote_not_exact', 'local_place_not_grounded', 'solved_problem_requires_restaging', 'content_audit_failed', 'invalid_model_output', 'source_text_or_date_missing'])
+const REASONS = new Set(['not_eligible', 'missing_or_stale_source_date', 'headline_formula', 'body_question', 'measurement_not_quoted', 'quote_not_exact', 'local_place_not_grounded', 'solved_problem_requires_restaging', 'content_audit_failed', 'invalid_model_output', 'source_text_or_date_missing'])
 export function recordReasons(run: SourceRun, reasons: string[]) {
   // Free-form model explanations stay in the review record, not metric names.
   for (const reason of new Set(reasons.map(r => REASONS.has(r) ? r : 'other_evidence_failure'))) run.reasons[reason] = (run.reasons[reason] ?? 0) + 1
