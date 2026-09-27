@@ -1,4 +1,4 @@
-import { IMPACT_TIERS } from '../../../../packages/types/index'
+import { IMPACT_TIERS, STAGES } from '../../../../packages/types/index'
 import type { ActionKind, ChallengeType, Stage } from '../../../../packages/types/index'
 
 /** User-facing labels. The product's words - see CLAUDE.md vocabulary. */
@@ -11,7 +11,7 @@ export const STAGE_LABEL: Record<Stage, string> = {
   build: 'Building', test: 'Testing', learn: 'Learning', improve: 'Improving',
 }
 
-export const STAGE_ORDER: Stage[] = ['spot', 'understand', 'ideas', 'build', 'test', 'learn', 'improve']
+export const STAGE_ORDER: Stage[] = [...STAGES]
 
 /** One set of ongoing-stage labels across cards, progress and the field guide. */
 export const STAGE_STAMP = STAGE_LABEL
