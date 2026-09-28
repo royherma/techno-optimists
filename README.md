@@ -30,7 +30,7 @@ services — local work runs against a D1 database wrangler creates on demand.
 
 ```sh
 npm install
-make reset      # local D1: schema + 12 Challenges, 10 people, 10 updates
+make reset      # local D1: schema + 12 Challenges, 11 people, 10 updates
 make dev        # API on :8791, site on :4321
 ```
 
