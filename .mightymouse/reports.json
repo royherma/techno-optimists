@@ -1,0 +1,55 @@
+{
+  "cards": [
+    {
+      "id": "contributors",
+      "title": "Outside contributors",
+      "decides": "Keep building features, or stop and spend the month getting the first real people to post",
+      "run": "node .mightymouse/reports/contributors.mjs",
+      "keys": ["CLOUDFLARE_API_TOKEN"],
+      "unit": "count",
+      "better": "up",
+      "hero": true,
+      "link": "https://dash.cloudflare.com/db9eee5d30dc91c467044f8746e45206/workers/d1/databases/195e34f1-f441-49ce-9d47-21eb7ad78209"
+    },
+    {
+      "id": "visitors",
+      "title": "Visitor-days",
+      "decides": "Keep or change where threads get posted to pull people in",
+      "run": "node .mightymouse/reports/visitors.mjs",
+      "keys": ["CLOUDFLARE_API_TOKEN"],
+      "unit": "count",
+      "better": "up",
+      "link": "https://dash.cloudflare.com/db9eee5d30dc91c467044f8746e45206/workers/d1/databases/195e34f1-f441-49ce-9d47-21eb7ad78209"
+    },
+    {
+      "id": "signups",
+      "title": "Outside sign-in requests",
+      "decides": "Fix the homepage pitch (nobody asks) or the sign-in email (people ask, never click)",
+      "run": "node .mightymouse/reports/signups.mjs",
+      "keys": ["CLOUDFLARE_API_TOKEN"],
+      "unit": "count",
+      "better": "up",
+      "link": "https://dash.cloudflare.com/db9eee5d30dc91c467044f8746e45206/workers/d1/databases/195e34f1-f441-49ce-9d47-21eb7ad78209"
+    },
+    {
+      "id": "thread-opens",
+      "title": "Threads opened per visitor",
+      "decides": "Keep Scout's topic mix or change what it imports",
+      "run": "node .mightymouse/reports/thread-opens.mjs",
+      "keys": ["CLOUDFLARE_API_TOKEN"],
+      "unit": "count",
+      "better": "up",
+      "link": "https://dash.cloudflare.com/db9eee5d30dc91c467044f8746e45206/workers/d1/databases/195e34f1-f441-49ce-9d47-21eb7ad78209"
+    },
+    {
+      "id": "errors",
+      "title": "Errors (browser + 5xx)",
+      "decides": "Pause feature work this week to fix errors",
+      "run": "node .mightymouse/reports/errors.mjs",
+      "keys": ["CLOUDFLARE_API_TOKEN"],
+      "unit": "count",
+      "better": "down",
+      "link": "https://dash.cloudflare.com/db9eee5d30dc91c467044f8746e45206/workers/services/view/techno-optimists/production/observability"
+    }
+  ]
+}
