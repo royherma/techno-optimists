@@ -67,7 +67,7 @@ closed. That is correct, not a bug to fix.
 
 ## Before you open a PR
 
-- `make check` passes - `npm run typecheck` and `npm test`.
+- `make check` passes - `npm run typecheck` and `npm test`, `npm run test:scout` (run `npm --prefix scripts/scout ci` once first), `node scripts/test-edition.mjs` and `npm --workspace web run check`.
 - Read [CLAUDE.md](CLAUDE.md). It is written for the people and agents editing this
   repo and it binds contributors too. The parts that will get a PR sent back:
   - **Vocabulary.** A Challenge is a Challenge, never a "post", "project" or "issue".
