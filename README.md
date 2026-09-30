@@ -46,7 +46,7 @@ bug in this file — open an issue saying where you got stuck.
 |---|---|
 | `make dev` | 🔧 API on :8791 and the site on :4321, together |
 | `make reset` | 🌱 rebuild local D1 and load the seed fixtures |
-| `make check` | ✅ typecheck + tests — this is what CI would run |
+| `make check` | ✅ typecheck + tests + scout tests + edition routing + web check — this is what CI would run |
 | `make ship` | 🚢 typecheck, test, migrate additively, deploy prod, verify |
 | `make ship-dev` | 🧪 same for the dev worker, seeds and all |
 | `make verify` | 🔍 probe the live site end to end |

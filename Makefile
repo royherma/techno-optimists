@@ -32,8 +32,8 @@ reset: ## db + seed, from scratch
 
 # --- before you ship --------------------------------------------------------
 
-check: ## typecheck + tests
-	@npm run typecheck && npm test
+check: ## typecheck + tests + scout + edition + web check
+	@npm run typecheck && npm test && npm run test:scout && node scripts/test-edition.mjs && npm --workspace web run check
 
 # --- shipping ---------------------------------------------------------------
 #
