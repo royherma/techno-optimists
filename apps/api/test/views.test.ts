@@ -1,28 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { DatabaseSync } from 'node:sqlite'
-import { readFileSync } from 'node:fs'
 import { app } from '../src/index'
+import { sqliteD1 } from './helpers/sqlite-d1'
 
 // The real route SQL against real SQLite, including the dedupe primary key.
-let sqlite: DatabaseSync
+let sqlite: ReturnType<typeof sqliteD1>['sqlite']
 let DB: D1Database
 beforeEach(() => {
-  sqlite = new DatabaseSync(':memory:')
-  sqlite.exec(readFileSync(new URL('../../../packages/db/schema.sql', import.meta.url), 'utf8'))
-  sqlite.exec(readFileSync(new URL('../../../packages/db/community.sql', import.meta.url), 'utf8'))
+  ;({ sqlite, DB } = sqliteD1('schema.sql', 'community.sql'))
   sqlite.exec("INSERT INTO people(id,handle,name) VALUES ('one','one','One')")
   sqlite.exec("INSERT INTO challenges(id,slug,type,title,summary,author_id) VALUES ('c','pond','problem','Pond','A pond','one')")
-  const prepare = (sql: string) => {
-    let params: any[] = []
-    const statement = {
-      bind(...args: any[]) { params = args; return statement },
-      async first() { return sqlite.prepare(sql).get(...params) ?? null },
-      async all() { return { results: sqlite.prepare(sql).all(...params) } },
-      async run() { return sqlite.prepare(sql).run(...params) },
-    }
-    return statement
-  }
-  DB = { prepare } as unknown as D1Database
 })
 afterEach(() => sqlite.close())
 
