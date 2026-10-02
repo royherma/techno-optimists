@@ -20,7 +20,9 @@ export function useFeed(initial: Challenge[]) {
           const response: Response = await fetch('/api/challenges?limit=50' + (cursor ? '&cursor=' + encodeURIComponent(cursor) : ''), { signal: abort.signal })
           if (!response.ok) throw new Error('feed')
           const data: FeedResponse = await response.json()
-          all.push(...data.challenges); cursor = data.next_cursor
+          all.push(...data.challenges)
+          // A cursor that does not advance would loop until the abort and discard a good first page.
+          cursor = data.next_cursor === cursor ? null : data.next_cursor
         } while (cursor)
         if (!disposed) { setChallenges(all); setError(false); writeFeedCache(all) }
       } catch { if (!disposed) setError(true) }
