@@ -58,6 +58,16 @@ function sortValue(c: Challenge, key: SortKey): number | string | null {
   }
 }
 
+/** Two problems per idea/experiment/build, problem first; leftovers keep feed order. */
+function problemsFirst(list: Challenge[]): Challenge[] {
+  const problems = list.filter(c => c.type === 'problem'), others = list.filter(c => c.type !== 'problem')
+  const out: Challenge[] = []
+  while (problems.length || others.length) {
+    out.push(...problems.splice(0, 2), ...others.splice(0, 1))
+  }
+  return out
+}
+
 export default function FrontPage({ initial }: { initial: Challenge[] }) {
   const { challenges, error, loading } = useFeed(initial)
   const [type, setType] = useState('all')
@@ -126,7 +136,7 @@ export default function FrontPage({ initial }: { initial: Challenge[] }) {
     if (av === null || bv === null) return av === bv ? 0 : av === null ? 1 : -1
     const cmp = typeof av === 'string' ? av.localeCompare(bv as string) : av - (bv as number)
     return sort.dir === 'asc' ? cmp : -cmp
-  }) : matched
+  }) : type === 'all' ? problemsFirst(matched) : matched
   const perPage = view === 'list' ? rowSize : size
   const pages = Math.max(1, Math.ceil(filtered.length / perPage)), current = Math.min(page, pages - 1)
   const stories = filtered.slice(current * perPage, (current + 1) * perPage)
