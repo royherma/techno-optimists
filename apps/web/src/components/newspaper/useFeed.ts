@@ -17,7 +17,7 @@ export function useFeed(initial: Challenge[]) {
         let cursor: string | null = null
         const all: Challenge[] = []
         do {
-          const response: Response = await fetch('/api/challenges?limit=50' + (cursor ? '&cursor=' + encodeURIComponent(cursor) : ''), { signal: abort.signal })
+          const response: Response = await fetch('/api/challenges?limit=50' + (cursor ? '&offset=' + encodeURIComponent(cursor) : ''), { signal: abort.signal })
           if (!response.ok) throw new Error('feed')
           const data: FeedResponse = await response.json()
           all.push(...data.challenges); cursor = data.next_cursor
