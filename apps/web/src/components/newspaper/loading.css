@@ -34,3 +34,18 @@
   @keyframes np-press-sweep { to { transform: translateX(100%); } }
   @keyframes np-edition-in { from { opacity: .45; } to { opacity: 1; } }
 }
+
+/* Before measurement, the bounded real edition follows the same container
+ * breakpoints as the skeleton. Hydration then takes over pagination sizing. */
+.np-front .np-initial-grid { grid-template: 1fr / 1fr; }
+.np-front .np-initial-grid .np-story { display: none; overflow: hidden; }
+.np-front .np-initial-grid .np-story:first-child { display: flex; grid-area: auto; flex-direction: column; border-right: 0; padding-right: 0; }
+@container edition (min-width: 680px) and (min-height: 440px) {
+  .np-front .np-initial-grid { grid-template: minmax(0,1.15fr) minmax(0,1fr) / repeat(2,minmax(0,1fr)); }
+  .np-front .np-initial-grid .np-story:nth-child(-n+3) { display: flex; }
+  .np-front .np-initial-grid .np-story:first-child { grid-column: 1/-1; grid-row: 1; flex-direction: row; }
+}
+@container edition (min-width: 980px) and (min-height: 580px) {
+  .np-front .np-initial-grid { grid-template-rows: minmax(0,1.25fr) repeat(2,minmax(0,1fr)); }
+  .np-front .np-initial-grid .np-story { display: flex; }
+}
