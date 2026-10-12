@@ -4,12 +4,12 @@ import type { Challenge, FeedResponse } from '../../../../../packages/types'
 export function useFeed(initial: Challenge[]) {
   const [challenges, setChallenges] = useState(initial)
   const [error, setError] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(initial.length === 0)
   useEffect(() => {
     const abort = new AbortController()
     const cached = readFeedCache()
     if (cached) { setChallenges(cached); setLoading(false) }
-    // A failed connection must release the skeleton and expose the build snapshot.
+    // Empty feeds wait at most eight seconds; existing data stays usable throughout.
     const timeout = window.setTimeout(() => abort.abort(), 8000)
     let disposed = false
     async function refresh() {
@@ -22,7 +22,7 @@ export function useFeed(initial: Challenge[]) {
           const data: FeedResponse = await response.json()
           all.push(...data.challenges); cursor = data.next_cursor
         } while (cursor)
-        if (!disposed) { setChallenges(all); setError(false); writeFeedCache(all) }
+        if (!disposed && !abort.signal.aborted) { setChallenges(all); setError(false); writeFeedCache(all) }
       } catch { if (!disposed) setError(true) }
       finally { window.clearTimeout(timeout); if (!disposed) setLoading(false) }
     }
