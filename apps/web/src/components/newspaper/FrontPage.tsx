@@ -58,13 +58,23 @@ function sortValue(c: Challenge, key: SortKey): number | string | null {
   }
 }
 
+/** Two problems per idea/experiment/build, problem first; leftovers keep feed order. */
+function problemsFirst(list: Challenge[]): Challenge[] {
+  const problems = list.filter(c => c.type === 'problem'), others = list.filter(c => c.type !== 'problem')
+  const out: Challenge[] = []
+  while (problems.length || others.length) {
+    out.push(...problems.splice(0, 2), ...others.splice(0, 1))
+  }
+  return out
+}
+
 export default function FrontPage({ initial }: { initial: Challenge[] }) {
   const { challenges, error, loading } = useFeed(initial)
   const [type, setType] = useState('all')
   const [view, setView] = useState<View>('grid')
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(0)
-  const [size, setSize] = useState(1)
+  const [size, setSize] = useState(5)
   const [rowSize, setRowSize] = useState(8)
   const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' } | null>(null)
   const [measured, setMeasured] = useState(false)
@@ -126,11 +136,12 @@ export default function FrontPage({ initial }: { initial: Challenge[] }) {
     if (av === null || bv === null) return av === bv ? 0 : av === null ? 1 : -1
     const cmp = typeof av === 'string' ? av.localeCompare(bv as string) : av - (bv as number)
     return sort.dir === 'asc' ? cmp : -cmp
-  }) : matched
+  }) : type === 'all' ? problemsFirst(matched) : matched
   const perPage = view === 'list' ? rowSize : size
   const pages = Math.max(1, Math.ceil(filtered.length / perPage)), current = Math.min(page, pages - 1)
   const stories = filtered.slice(current * perPage, (current + 1) * perPage)
-  const pending = !measured || loading
+  // The build snapshot is already useful; only an empty feed waits for refresh.
+  const pending = loading && challenges.length === 0
   // Rows only exist after the list has painted once, so the first measurement
   // used the fallback height. Re-measure against a real row now.
   const listLive = view === 'list' && !pending
@@ -173,7 +184,7 @@ export default function FrontPage({ initial }: { initial: Challenge[] }) {
             {!stories.length && empty}
           </>}
         </div>
-      : <div className={`np-news-grid ${pending ? '' : `np-news-count-${stories.length}`} ${pending ? 'np-loading-grid' : 'np-edition-ready'}`} aria-busy={pending}>
+      : <div className={`np-news-grid ${pending ? '' : `np-news-count-${stories.length}`} ${pending ? 'np-loading-grid' : !measured ? 'np-initial-grid' : 'np-edition-ready'}`} aria-busy={pending}>
           {pending ? Array.from({ length: 5 }, (_, i) => <div key={i} className={`np-story np-skeleton ${i === 0 ? 'np-lead' : ''}`} aria-hidden="true">
             <div className="np-story-image np-skeleton-image" />
             <div className="np-story-copy"><div className="np-skeleton-meta" /><div className="np-skeleton-headline"><i /><i /><i /></div><div className="np-skeleton-lines"><i /><i /><i /></div><footer><span className="np-skeleton-meta" /></footer></div>
