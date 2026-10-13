@@ -11,12 +11,12 @@ import ReaderPage from '../components/newspaper/ReaderPage'
 import privacy from '../content/privacy.html?raw'
 import terms from '../content/terms.html?raw'
 import contribute from '../content/contribute.html?raw'
-import { getFeed, getChallenge } from '../lib/api'
+import { getFeed, getChallenge, getPublicThreads } from '../lib/api'
 import '../styles/discussion.css'
 import '../styles/account.css'
 import '../styles/activity.css'
 export async function getStaticPaths() {
-  const { challenges } = await getFeed('?limit=50')
+  const challenges = await getPublicThreads()
   return ['map','settings','signin','post','people','privacy','terms','contribute','404','c/_shell', ...challenges.map(c => 'c/' + c.slug)].map(path => ({ params: { path } }))
 }
 const path = Astro.params.path!
