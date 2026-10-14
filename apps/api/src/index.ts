@@ -226,12 +226,15 @@ const feedQuery = z.object({
   tag: z.string().max(40).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(24),
   offset: z.coerce.number().int().min(0).default(0),
+  // What a client sends back from next_cursor; without it every page is page one.
+  cursor: z.coerce.number().int().min(0).optional(),
 })
 
 app.get('/api/challenges', async (c) => {
   const parsed = feedQuery.safeParse(Object.fromEntries(new URL(c.req.url).searchParams))
   if (!parsed.success) return c.json({ error: 'bad_query', detail: parsed.error.issues }, 400)
-  const { sort, type, tag, limit, offset } = parsed.data
+  const { sort, type, tag, limit } = parsed.data
+  const offset = parsed.data.cursor ?? parsed.data.offset
 
   const where: string[] = []
   const binds: unknown[] = []
