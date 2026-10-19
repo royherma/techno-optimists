@@ -92,13 +92,31 @@ The original article contains the nest-box story. The thread URL returns HTTP
 200, but its initial HTML has a generic title and relies on client loading for
 this story; HTTP alone does not establish a working reader journey.
 
-Not run in a browser: the built-in browser returned `Browser is not available:
-iab`; browser inventory exposed only Chrome. Phone, desktop and contribution
-checks remain prerequisites for sending. No UI was changed by this experiment.
+Rechecked on 2026-10-20 using MightyMouse's built-in Browser tab
+(`browser_open`, then `browser_read`). The generic initial HTML resolves to the
+specific sparrow thread title after client loading. The browser readback shows
+the cover, story, `@atlas` attribution, original-article link, four typed action
+controls, discussion and progress sections. Clicking **Write a response** opens
+the composer with a response field, contribution labels and **Sign in to respond**.
+The composer was closed without entering or publishing content. This verifies
+loading and the composer entry point, not successful sign-in or contribution.
 
-PR #15's Feedback link is absent from the live homepage. The visitors and signups
-commands both returned `CLOUDFLARE_API_TOKEN is not set` in this run, so the
-effects of PRs #15 and #16 remain unverified. There is no measured regression to
-justify reverting either. Direct replies make this experiment independent of
-the pending Feedback deployment. No outreach, production deployment or private
-contact data is included in this change.
+The Codex `iab` entry point still returned `Browser is not available: iab`;
+MightyMouse's Browser tab is a working alternative for this check. Phone layout,
+visual layout inspection and the isolated sign-in/contribution test remain
+outstanding. No UI was changed. Opening the live thread recorded one test view
+(the public API showed zero before the browser visit, and the browser showed one
+afterward); do not count this as a recruited reader or growth.
+
+PR #15's Feedback link remains absent from the live homepage and the selected
+thread's navigation. The visitors, signups and thread-opens commands returned
+`CLOUDFLARE_API_TOKEN is not set`, so the effects of PRs #15 and #16 remain
+unverified. The local main checkout predates #16; `origin/main` contains the
+complete-UTC-day fix. Run the baseline from that revision through the authenticated
+reporting runner. There is no measured regression to justify a revert.
+
+Direct replies make this experiment independent of the pending Feedback
+deployment. Recipient/message approval and the remaining checks above still
+precede invitations. No outreach, production deployment or private contact data
+is included in this change. The supplied 42 visits and 0 sign-ups remain the
+baseline, not a verified result of this QA run.
