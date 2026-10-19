@@ -1,4 +1,4 @@
-import { d1, ae, aeAlive, emit, fillSeries, curStart, prevStart, end, DAYS } from './_cf.mjs'
+import { d1, ae, aeAlive, emit, fillSeries, curStart, prevStart, end, currentAEWindow } from './_cf.mjs'
 
 // site_views holds one row per visitor per UTC day, so a sum over days counts visitor-days.
 const SUM = 'SELECT COUNT(*) AS n FROM site_views WHERE viewed_on >= ?1 AND viewed_on < ?2'
@@ -10,7 +10,7 @@ const [[cur], [prev], daily, pages] = await Promise.all([
   d1('SELECT viewed_on AS d, COUNT(*) AS n FROM site_views WHERE viewed_on >= ?1 AND viewed_on < ?2 GROUP BY d', [curStart, end]),
   // The beacon's Referer is the page it fired from, so blob4 is the landing page, not the source site.
   ae(`SELECT blob4 AS page, count() AS n FROM to_events
-      WHERE blob2 = 'site_view' AND timestamp > NOW() - INTERVAL '${DAYS}' DAY
+      WHERE blob2 = 'site_view' AND ${currentAEWindow}
       GROUP BY page ORDER BY n DESC LIMIT 50`),
 ])
 
