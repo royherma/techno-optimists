@@ -207,3 +207,18 @@ describe('upload gate', () => {
     expect(await noMedia.json()).toEqual({ error: 'media_unavailable' })
   })
 })
+describe('feed paging', () => {
+  it('walks every thread exactly once by following next_cursor', async () => {
+    sqlite.exec("INSERT INTO challenges(id,slug,type,title,summary,author_id) VALUES ('c2','two','problem','A second challenge','Some context','p2'),('c3','three','problem','A third challenge','Some context','p2')")
+    const slugs: string[] = []
+    let cursor: string | null = null
+    for (let page = 0; page < 5; page++) {
+      const data: { challenges: { slug: string }[]; next_cursor: string | null } = await (await request(`/api/challenges?limit=2${cursor ? `&cursor=${cursor}` : ''}`)).json()
+      slugs.push(...data.challenges.map(c => c.slug))
+      cursor = data.next_cursor
+      if (!cursor) break
+    }
+    expect(cursor).toBeNull()
+    expect(slugs.sort()).toEqual(['one', 'three', 'two'])
+  })
+})
