@@ -120,3 +120,26 @@ deployment. Recipient/message approval and the remaining checks above still
 precede invitations. No outreach, production deployment or private contact data
 is included in this change. The supplied 42 visits and 0 sign-ups remain the
 baseline, not a verified result of this QA run.
+
+Follow-up on 2026-10-20: the isolated `test:community:local` check now passes
+local sign-in, import, comments, replies, duplicate retries, stage isolation,
+editorial permissions and post-build routing in both editions. Its old assertion
+expected the Classic component on the newspaper route. The corrected check
+requires each edition's own hydration component, a loadable JavaScript bundle,
+and 404s for unknown threads.
+
+Built-in browser readback then exposed a separate reader-facing failure:
+Classic `/v1/c/<slug>` requested `/api/challenges/c` and showed an error instead
+of the thread. Normalizing the edition prefix before extracting the slug fixes
+this. Two regression cases failed on the old code; all three pass with the fix.
+After rebuilding, a thread created after the build loaded its actual title,
+story, response field and contribution controls in Classic. The newspaper
+fallback also loaded in the built-in browser. These are local API and browser
+readback checks, not phone-layout approval or a browser-published contribution.
+
+This follow-up targets activation (use is still unmeasured) and the supplied
+**34 visits / 0 sign-ups** snapshot. The visitors and signups reports still
+exit with `CLOUDFLARE_API_TOKEN is not set`; the older 42-visit snapshot is not
+an attributable before/after comparison. No measured regression supports a
+revert. Phone/layout QA, browser sign-in through publishing, approved recipients,
+and production deployment remain separate gates; no invitations were sent.
