@@ -143,3 +143,42 @@ exit with `CLOUDFLARE_API_TOKEN is not set`; the older 42-visit snapshot is not
 an attributable before/after comparison. No measured regression supports a
 revert. Phone/layout QA, browser sign-in through publishing, approved recipients,
 and production deployment remain separate gates; no invitations were sent.
+
+
+Follow-up on 2026-10-21: **local browser sign-in through response publishing is
+verified** on `aa984ca` in an isolated worktree. This removes one pre-invitation
+check aimed at activation (use remains unmeasured) and the supplied **34 visits /
+0 sign-ups** funnel. It does not claim a new user or a change in conversion.
+
+Reproduce with checkout-local Wrangler configs using dummy resource IDs, local
+bindings only, `ENVIRONMENT=dev`, and the fixture admin
+`qa-admin@example.test`. Run `npm ci`, `npm run db:local`,
+`npm run db:migrate:local`, `npm run db:seed:local`, `npm run build:web`,
+`npm run dev -- --local --port 8795`, then `npm run test:community:local`.
+Seed setup is required: the first attempt without it returned `unknown_author`
+for `atlas`; after seeding, the existing API check passed. Never use this reset
+or fixture workflow on a remote database.
+
+In MightyMouse's built-in Browser tab, opened `/signin`, entered the new local
+fixture `factory-reader@example.test`, requested its link, and clicked **Local
+link - no mail key set**. The click tool reported failure during navigation,
+but the following authenticated publish and its `@factoryreader` author confirm
+the session succeeded. Opened `/c/tokyo-cut-its-crows-under-fifth`, chose **Write
+a response**, entered a local QA question about comparing covered collection
+bins, and clicked **Publish response**. The UI displayed **Your response is
+published.** Reopening the thread preserved the response under `@factoryreader`.
+An independent GET of the comments API found exactly one matching response;
+the thread remained at `learn` with zero progress updates.
+
+A native screenshot of the built-in browser confirmed the composer, input,
+label selector and publish control were visible in its desktop side panel.
+This is not phone-size or full-page visual approval. The local magic link tests
+session creation and publishing, not production email delivery. All 336 tests,
+API and web TypeScript checks, the local build and community smoke check passed.
+
+The live homepage still has no Feedback link. Both reporting commands again
+returned `CLOUDFLARE_API_TOKEN is not set`; no measured regression or attributable
+growth is established, so no revert is justified. Keep the stage **prelaunch**.
+Phone/layout QA, production deployment and verification, and approved recipients
+remain before invitations. No production data, email, invitations or deployment
+were created by this check.
