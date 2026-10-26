@@ -66,6 +66,58 @@ describe('edition routing', () => {
     const apex = await app.request('https://technooptimists.org/c/example', {}, environment(true, true))
     expect(apex.status).toBe(200)
   })
+  it('301s the www front page and deep paths to the apex, keeping path and query', async () => {
+    const front = await app.request('https://www.technooptimists.org/', {}, environment(true, true))
+    expect(front.status).toBe(301)
+    expect(front.headers.get('location')).toBe('https://technooptimists.org/')
+
+    const deep = await app.request('https://www.technooptimists.org/c/x?a=1&b=2', { method: 'HEAD' }, environment(true, true))
+    expect(deep.status).toBe(301)
+    expect(deep.headers.get('location')).toBe('https://technooptimists.org/c/x?a=1&b=2')
+
+    const sitemap = await app.request('https://www.technooptimists.org/sitemap-index.xml', {}, environment(true, true))
+    expect(sitemap.status).toBe(301)
+    expect(sitemap.headers.get('location')).toBe('https://technooptimists.org/sitemap-index.xml')
+
+    const post = await app.request('https://www.technooptimists.org/', { method: 'POST' }, environment(true, true))
+    expect(post.status).not.toBe(301)
+  })
+  it('hands apex static paths to the assets binding untouched', async () => {
+    const seen: string[] = []
+    const files: Record<string, Response> = {
+      '/': new Response('<h1>front</h1>', { headers: { 'content-type': 'text/html', 'cache-control': 'public, max-age=0, must-revalidate' } }),
+      '/sitemap-index.xml': new Response('<sitemapindex/>', { headers: { 'content-type': 'application/xml' } }),
+      '/favicon.svg': new Response('<svg/>', { headers: { 'content-type': 'image/svg+xml' } }),
+    }
+    const env = {
+      ASSETS: { fetch: async (request: Request) => {
+        const path = new URL(request.url).pathname
+        seen.push(`${request.method} ${request.url}`)
+        return files[path] ?? new Response('newspaper not found', { status: 404, headers: { 'content-type': 'text/html' } })
+      } } as unknown as Fetcher,
+    }
+
+    const front = await app.request('https://technooptimists.org/', {}, env)
+    expect(front.status).toBe(200)
+    expect(front.headers.get('content-type')).toBe('text/html')
+    expect(front.headers.get('cache-control')).toBe('public, max-age=0, must-revalidate')
+    expect(await front.text()).toBe('<h1>front</h1>')
+
+    const sitemap = await app.request('https://technooptimists.org/sitemap-index.xml', {}, env)
+    expect(sitemap.status).toBe(200); expect(sitemap.headers.get('content-type')).toBe('application/xml')
+
+    const icon = await app.request('https://technooptimists.org/favicon.svg', {}, env)
+    expect(icon.status).toBe(200); expect(icon.headers.get('content-type')).toBe('image/svg+xml')
+
+    const missing = await app.request('https://technooptimists.org/no-such-page?q=1', {}, env)
+    expect(missing.status).toBe(404); expect(await missing.text()).toBe('newspaper not found')
+
+    expect(seen).toContain('GET https://technooptimists.org/no-such-page?q=1')
+
+    const api = await app.request('https://technooptimists.org/api/nope', {}, env)
+    expect(api.status).toBe(404); expect(await api.json()).toEqual({ error: 'not_found' })
+    expect(seen.some((s) => s.includes('/api/'))).toBe(false)
+  })
   // The bug this migration fixed: / used to bounce to /v2 on every visit. The
   // old addresses stay alive, but they hand back the clean one permanently.
   it('redirects the retired /v2 addresses to the bare paths', async () => {

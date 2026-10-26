@@ -139,4 +139,6 @@ from the email local part at signup - a real name nobody chose to publish.
 
 **Both editions need Worker fallback routing.** Keep `/c/*`, `/v1/*` and `/v2/*` in `assets.run_worker_first` alongside `/api/*` and `/media/*`. The shared Challenge handler serves `/c/_shell` (or `/v1/c/_shell`) for Challenges created after a build; unknown Classic URLs serve `/v1/404` with status 404, and `/v2/*` 301s to the same path without the prefix. Without the routing entries, newly posted Challenges stop at the asset handler and the retired `/v2` links stop redirecting.
 
+**Every page path runs the Worker first.** `run_worker_first` is `["/*", "!/_astro/*"]` in every environment, so `www.` requests reach the 301-to-apex middleware; a narrower list lets the asset layer answer `www/` with a 200 and Search Console indexes both hosts. The last route in `apps/api/src/index.ts` is `app.all('*')` returning `ASSETS.fetch` - remove it and every page 404s.
+
 **The newspaper is served at `/`, never by a redirect.** Base.astro used to run a client-side `location.replace` sending every bare path to its `/v2` twin, so the address bar never kept the URL anyone typed. `scripts/test-edition.mjs` asserts no `location.replace` survives in that layout. If a design switch is ever needed again, it is a path or a server response - not a redirect after first paint.
