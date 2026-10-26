@@ -1,16 +1,8 @@
 # Security headers for everything the ASSET worker serves.
 #
-# Why this file exists at all: `run_worker_first` in wrangler.jsonc is
-# ["/api/*"], so a page request is answered by the asset worker and never
-# reaches the Worker script - which means the header middleware in
-# apps/api/src/index.ts (secured()) runs on /api/*, /media/* and /c/:slug and
-# on nothing else. The headers were live on the API and absent on every page
-# until this file was added, which verify.mjs caught.
-#
-# Setting run_worker_first: true instead would route pages through Hono, but
-# Hono has no catch-all for non-API paths - /, /map and /_astro/* would 404 -
-# and it would give up edge caching on every static file. So the asset worker
-# keeps serving assets, and states its own headers here.
+# Pages run through the Worker, whose secured() sets these same headers;
+# /_astro/* is excluded from run_worker_first and served straight from the
+# asset worker, so this file covers it. Keep both lists identical.
 #
 # Deliberately NOT restated here: script-src and style-src. Astro emits a
 # per-page <meta> CSP carrying a sha256 for every inline script and style it

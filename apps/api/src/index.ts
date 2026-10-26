@@ -83,9 +83,8 @@ const app = new Hono<{ Bindings: Env }>()
 
 /*
  * One address per page: www is a 301 to the apex (Search Console listed both).
- * Only GET/HEAD outside /api - a redirected POST would turn into a GET. The
- * assets layer answers paths outside run_worker_first itself, so this covers
- * the Worker-routed pages (/c/*, /v1, /media).
+ * Only GET/HEAD outside /api - a redirected POST would turn into a GET. Needs
+ * run_worker_first to cover every page path, or the assets layer answers www.
  */
 app.use('*', async (c, next) => {
   const url = new URL(c.req.url)
@@ -1756,6 +1755,9 @@ app.get('/v1/*', async (c) => {
 })
 
 app.all('/api/*', (c) => c.json({ error: 'not_found' }, 404))
+
+// Must stay last: run_worker_first sends every page here, and this hands it back to the assets layer untouched.
+app.all('*', (c) => (c.env.ASSETS ? c.env.ASSETS.fetch(c.req.raw) : c.notFound()))
 
 /**
  * The headers every response carries, applied in one place for the same reason
