@@ -148,7 +148,7 @@ export default function FrontPage({ initial }: { initial: Challenge[] }) {
   useEffect(() => { if (listLive) measureRows() }, [listLive])
   const empty = <div className="np-empty"><h2>{query || type !== 'all' ? 'A different angle, perhaps?' : 'What could be better?'}</h2><p>{query || type !== 'all' ? 'No threads match your search. Try another search or return to all threads.' : 'A real problem. An unfinished idea. Something worth figuring out together.'}</p><a href="/">All threads →</a><a href="/post">Share a thread →</a></div>
   return <div className="np-front" ref={frame}>
-    <div className="np-front-tools"><h1>{type === 'all' ? 'Explore threads' : type.charAt(0).toUpperCase() + type.slice(1) + 's'}</h1>
+    <div className="np-front-tools"><h1>{type === 'all' ? 'Real-world problems, solved together' : type.charAt(0).toUpperCase() + type.slice(1) + 's'}</h1>
       <div className="np-front-controls">
         <label><img src="/icons/magnifying-glass.svg" alt="" /><input type="search" placeholder="Search threads" aria-label="Search threads" value={query} onChange={e => { setQuery(e.target.value); setPage(0) }} /></label>
         <div className="np-view-toggle" role="group" aria-label="Feed layout">

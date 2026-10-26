@@ -25,6 +25,9 @@ export default defineConfig({
   // the build is deployed to dev - a sitemap describes the public site, not
   // whichever mirror happens to serve it.
   site: 'https://technooptimists.org',
+  // Pages are served at the bare path (/c/<slug>); /c/<slug>/ is a 301. Without
+  // this the sitemap listed every thread with a trailing slash.
+  trailingSlash: 'never',
   integrations: [
     react(),
     // /404 is noindex (see Base.astro), so listing it here would contradict
