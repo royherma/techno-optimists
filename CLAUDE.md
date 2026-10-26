@@ -184,3 +184,5 @@ whether you share a checkout or not.
   `git worktree remove` so the registration goes with it.
 - Commit and push before leaving a worktree. The push is the only copy that survives the
   directory.
+
+Services this project uses: see .mightymouse/stack.json

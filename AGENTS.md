@@ -5,3 +5,5 @@ canonical project rulebook for every agent, including delegated agents, and
 contains the simultaneous-work, worktree, validation, and deployment rules.
 
 Keep shared rules in `CLAUDE.md`; do not duplicate them here.
+
+Services this project uses: see .mightymouse/stack.json
