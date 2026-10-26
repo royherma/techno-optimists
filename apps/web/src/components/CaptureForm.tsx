@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ChallengeType, Media } from '../../../../packages/types/index'
+import { CHALLENGE_TYPES } from '../../../../packages/types/index'
 import { TYPE_LABEL } from '../lib/vocab'
 import { getMe, type Me } from '../lib/session'
 import { snack } from '../lib/snack'
@@ -17,7 +18,7 @@ import PlacePicker from './PlacePicker'
  * the submit at the end is only ever a small JSON POST.
  */
 
-const TYPES: ChallengeType[] = ['problem', 'idea', 'experiment', 'build']
+const TYPES: ChallengeType[] = [...CHALLENGE_TYPES]
 
 const TYPE_HINT: Record<ChallengeType, string> = {
   problem: 'Something that does not work',

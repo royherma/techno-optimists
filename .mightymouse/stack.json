@@ -1,0 +1,166 @@
+{
+  "checkedAt": "2026-10-12T09:34:58.335Z",
+  "appKinds": [
+    "web",
+    "worker"
+  ],
+  "business": [
+    "saas"
+  ],
+  "environments": [
+    {
+      "name": "prod",
+      "foundIn": [
+        "package.json:25",
+        "package.json:26",
+        "package.json:32"
+      ],
+      "urls": [],
+      "accounts": []
+    },
+    {
+      "name": "dev",
+      "foundIn": [
+        "package.json:24",
+        "package.json:27",
+        "package.json:30",
+        "package.json:34",
+        "package.json:36"
+      ],
+      "urls": [],
+      "accounts": []
+    }
+  ],
+  "surfaces": [
+    {
+      "name": "Backend",
+      "paths": [
+        "apps/api/"
+      ],
+      "kind": "worker"
+    },
+    {
+      "name": "Web",
+      "paths": [
+        "apps/web/"
+      ],
+      "kind": "web"
+    }
+  ],
+  "names": [
+    "techno-optimists"
+  ],
+  "services": {
+    "product_analytics": [],
+    "web_analytics": [
+      {
+        "provider": "cf_web_analytics",
+        "foundIn": "https://technooptimists.org/"
+      }
+    ],
+    "errors": [],
+    "logging": [
+      {
+        "provider": "cf_observability",
+        "foundIn": "wrangler.jsonc:10",
+        "key": "CLOUDFLARE_ACCOUNT_ID"
+      },
+      {
+        "provider": "cf_analytics_engine",
+        "foundIn": "apps/api/src/analytics.ts:34",
+        "key": "CLOUDFLARE_ACCOUNT_ID"
+      }
+    ],
+    "health": [
+      {
+        "provider": "health_route",
+        "foundIn": "apps/api/src/index.ts:1532"
+      }
+    ],
+    "auth": [
+      {
+        "provider": "custom_session",
+        "foundIn": "apps/api/src/index.ts:972"
+      }
+    ],
+    "payments": [],
+    "revenue": [],
+    "email": [
+      {
+        "provider": "resend",
+        "foundIn": "apps/api/src/index.ts:886",
+        "key": "RESEND_API_KEY"
+      }
+    ],
+    "push": [],
+    "database": [
+      {
+        "provider": "d1",
+        "foundIn": "apps/api/src/ai-accounts.ts:291",
+        "key": "CLOUDFLARE_ACCOUNT_ID"
+      },
+      {
+        "provider": "cf_kv",
+        "foundIn": "apps/api/src/cloudflare-env.d.ts:4",
+        "key": "CLOUDFLARE_ACCOUNT_ID"
+      },
+      {
+        "provider": "r2",
+        "foundIn": "apps/api/src/cloudflare-env.d.ts:5",
+        "key": "CLOUDFLARE_ACCOUNT_ID"
+      }
+    ],
+    "backups": [
+      {
+        "provider": "d1_time_travel",
+        "foundIn": "apps/api/src/ai-accounts.ts:291"
+      }
+    ],
+    "hosting": [
+      {
+        "provider": "cloudflare",
+        "foundIn": "wrangler.jsonc",
+        "key": "CLOUDFLARE_ACCOUNT_ID"
+      }
+    ],
+    "updates": [],
+    "ci": [
+      {
+        "provider": "github_actions",
+        "foundIn": ".github/workflows/ci.yml"
+      }
+    ],
+    "tests": [
+      {
+        "provider": "vitest",
+        "foundIn": "apps/api/package.json"
+      }
+    ],
+    "abuse": [],
+    "seo": [
+      {
+        "provider": "sitemap",
+        "foundIn": "apps/web/astro.config.mjs:35"
+      },
+      {
+        "provider": "robots",
+        "foundIn": "apps/web/public/robots.txt"
+      },
+      {
+        "provider": "og_image",
+        "foundIn": "apps/api/src/scout-cloudflare.ts:185"
+      }
+    ],
+    "legal": [
+      {
+        "provider": "privacy_page",
+        "foundIn": "apps/web/src/components/SiteFooter.astro:47"
+      },
+      {
+        "provider": "terms_page",
+        "foundIn": "apps/web/src/components/SiteFooter.astro:46"
+      }
+    ]
+  },
+  "skip": []
+}
