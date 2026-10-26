@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { chooseGeocode, groundQuote, prioritizeEntries, articleDate, auditDraft, draftSchema, evidenceGate, feedLinks, fetchText, runScout, type Draft, type Source } from '../src/scout-cloudflare'
 const source: Source = { url: 'https://nepalitimes.com/news/classroom', title: 'School heat', date: '2026-09-01', text: 'In Nepalganj the classroom reached 39.8 degrees during afternoon lessons.' }
-const card: Draft = { eligible: true, reason: '', headline: 'This classroom reaches 39.8 degrees during lessons', body: 'The metal roof traps heat. The school has no electricity.', type: 'problem', stage: 'ideas', place: 'Nepalganj', country: 'Nepal', problem_key: 'classroom-heat', impact: 1, impact_reason: 'One classroom is documented.', severity: 'moderate', status: 'unsolved', status_note: 'No fix deployed at the source date.', confirms: 'the classroom reached 39.8 degrees', tags: ['heat'], image_subject: 'A classroom with a metal roof' }
+const card: Draft = { eligible: true, reason: '', headline: 'Nepalganj pupils sit through 39.8 degrees under a metal roof', body: 'The metal roof traps heat and the school has no electricity.', type: 'problem', stage: 'ideas', place: 'Nepalganj', country: 'Nepal', problem_key: 'classroom-heat', impact: 1, impact_reason: 'One classroom is documented.', severity: 'moderate', status: 'unsolved', status_note: 'No fix deployed at the source date.', confirms: 'the classroom reached 39.8 degrees', tags: ['heat'], image_subject: 'A classroom with a metal roof' }
 afterEach(() => vi.unstubAllGlobals())
 describe('remote Scout evidence and network boundaries', () => {
  it('accepts a grounded measurement and rejects misleading substring numbers', () => {
   expect(evidenceGate(card, source, Date.parse('2026-09-12'))).toEqual([])
-  expect(evidenceGate({...card,headline:'This classroom reaches 9.8 degrees'}, source, Date.parse('2026-09-12'))).toContain('measurement_not_quoted')
+  expect(evidenceGate({...card,headline:'Nepalganj pupils sit through 9.8 degrees'}, source, Date.parse('2026-09-12'))).toContain('measurement_not_quoted')
  })
  it('rejects stale, future, impossible dates, invented places and unquoted evidence', () => {
   for (const date of ['2025-01-01','2027-01-01','2026-02-30','bad']) expect(evidenceGate(card,{...source,date},Date.parse('2026-09-12'))).toContain('missing_or_stale_source_date')
@@ -14,6 +14,8 @@ describe('remote Scout evidence and network boundaries', () => {
  })
  it('rejects solved claims framed as unresolved problems and missing schema fields', () => {
   expect(evidenceGate({...card,status:'solved_elsewhere'},source,Date.parse('2026-09-12'))).toContain('solved_problem_requires_restaging')
+  expect(evidenceGate({...card,body:'How do you cool a classroom? The metal roof traps heat.'},source,Date.parse('2026-09-12'))).toContain('body_question')
+  expect(evidenceGate({...card,headline:'This classroom reaches 39.8 degrees'},source,Date.parse('2026-09-12'))).toContain('headline_formula')
   expect(draftSchema.safeParse({...card,impact:6}).success).toBe(false)
   expect(draftSchema.safeParse({...card,severity:undefined}).success).toBe(false)
  })
@@ -23,7 +25,7 @@ describe('remote Scout evidence and network boundaries', () => {
   expect(source.text).toContain(grounded.confirms)
   expect(grounded.confirms.split(/\s+/).length).toBeLessThanOrEqual(15)
   expect(evidenceGate(grounded,source,Date.parse('2026-09-12'))).toEqual([])
-  expect(groundQuote({...paraphrased,headline:'This classroom reaches 99 degrees'},source).confirms).toBe(paraphrased.confirms)
+  expect(groundQuote({...paraphrased,headline:'Nepalganj pupils sit through 99 degrees'},source).confirms).toBe(paraphrased.confirms)
   const ai = {run:vi.fn().mockResolvedValue({response: JSON.stringify({approved:false,reasons:['wrong physical subject'],headline_supported:false,body_supported:true,location_supported:true,impact_supported:true,status_supported:true,stage_supported:true})})} as unknown as Ai
   expect(await auditDraft(ai,source,grounded)).toContain('content_audit_failed')
  })
@@ -74,8 +76,8 @@ describe('remote Scout evidence and network boundaries', () => {
  })
  it('supports several headline measurements when the short quote backs one and the source backs all', () => {
   const s={...source,text:source.text+' The school has 25 pupils.'}
-  expect(evidenceGate({...card,headline:'This classroom reaches 39.8 degrees for 25 pupils'},s,Date.parse('2026-09-12'))).toEqual([])
-  expect(evidenceGate({...card,headline:'This classroom reaches 39.8 degrees for 99 pupils'},s,Date.parse('2026-09-12'))).toContain('measurement_not_quoted')
+  expect(evidenceGate({...card,headline:'Nepalganj classroom reaches 39.8 degrees for 25 pupils'},s,Date.parse('2026-09-12'))).toEqual([])
+  expect(evidenceGate({...card,headline:'Nepalganj classroom reaches 39.8 degrees for 99 pupils'},s,Date.parse('2026-09-12'))).toContain('measurement_not_quoted')
  })
  it('makes no network or AI calls when disabled or when the slot is already claimed', async () => {
   const ai = {run:vi.fn()}, fetcher = vi.fn()

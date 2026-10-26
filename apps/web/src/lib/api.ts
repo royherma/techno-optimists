@@ -3,7 +3,7 @@ import type { ActionKind, Challenge, Update } from '../../../../packages/types/i
 // At build time Astro talks to the local wrangler dev API; in the browser the
 // Worker serves both the assets and /api/* from one origin, so a relative path
 // is correct there.
-const BASE = import.meta.env.PUBLIC_API_BASE ?? 'http://127.0.0.1:8791'
+const BASE = import.meta.env?.PUBLIC_API_BASE ?? 'http://127.0.0.1:8791'
 
 export type DetailPerson = {
   id: string; handle: string; name: string; avatar_url: string | null
@@ -16,6 +16,26 @@ export async function getFeed(params = ''): Promise<{ challenges: Challenge[]; n
   const r = await fetch(`${BASE}/api/challenges${params}`)
   if (!r.ok) throw new Error(`feed ${r.status}`)
   return r.json()
+}
+
+/** Enumerate only the anonymous public feed for static thread routes. */
+export async function getPublicThreads(): Promise<Challenge[]> {
+  const threads = new Map<string, Challenge>()
+  let offset = 0
+  while (true) {
+    const { challenges, next_cursor } = await getFeed(`?limit=50&offset=${offset}`)
+    const previousSize = threads.size
+    for (const challenge of challenges) threads.set(challenge.slug, challenge)
+    if (next_cursor === null) return [...threads.values()]
+    // next_cursor is the public API's next offset, not a cursor query parameter.
+    // Fail closed on a broken contract instead of publishing a partial sitemap
+    // or hanging a build when the endpoint ignores pagination.
+    const next = Number(next_cursor)
+    if (!/^\d+$/.test(next_cursor) || !Number.isSafeInteger(next) || next <= offset || threads.size === previousSize) {
+      throw new Error('public thread pagination did not advance')
+    }
+    offset = next
+  }
 }
 
 /**
