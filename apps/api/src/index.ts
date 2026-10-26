@@ -81,6 +81,10 @@ type Env = {
 
 const app = new Hono<{ Bindings: Env }>()
 
+// One line, one JSON object: Workers Logs and the tail consumer index the fields, so filter on source/path/ray.
+export const logError = (source: 'server' | 'browser', fields: Record<string, unknown>) =>
+  console.error(JSON.stringify({ level: 'error', source, ...fields }))
+
 /**
  * The only place an unhandled throw becomes a response.
  *
@@ -99,16 +103,13 @@ const app = new Hono<{ Bindings: Env }>()
  */
 app.onError((err, c) => {
   const ray = c.req.header('cf-ray') ?? 'no-ray'
-  // One line, one JSON object: Workers Logs indexes the fields, so this is
-  // filterable by path or ray in the dashboard rather than grep-only.
-  console.error(JSON.stringify({
-    level: 'error',
+  logError('server', {
     ray,
     method: c.req.method,
     path: new URL(c.req.url).pathname,
     message: err instanceof Error ? err.message : String(err),
     stack: err instanceof Error ? err.stack : undefined,
-  }))
+  })
   return c.json({ error: 'server_error', ray }, 500)
 })
 
@@ -225,12 +226,15 @@ const feedQuery = z.object({
   tag: z.string().max(40).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(24),
   offset: z.coerce.number().int().min(0).default(0),
+  // What a client sends back from next_cursor; without it every page is page one.
+  cursor: z.coerce.number().int().min(0).optional(),
 })
 
 app.get('/api/challenges', async (c) => {
   const parsed = feedQuery.safeParse(Object.fromEntries(new URL(c.req.url).searchParams))
   if (!parsed.success) return c.json({ error: 'bad_query', detail: parsed.error.issues }, 400)
-  const { sort, type, tag, limit, offset } = parsed.data
+  const { sort, type, tag, limit } = parsed.data
+  const offset = parsed.data.cursor ?? parsed.data.offset
 
   const where: string[] = []
   const binds: unknown[] = []
@@ -1604,11 +1608,9 @@ app.get('/api/site/views', async (c) => {
 
 const clientErrorBody = z.object({
   message: z.string().trim().min(1).max(500),
-  source: z.string().trim().max(300).optional().default(''),
-  line: z.number().int().nonnegative().optional().default(0),
-  col: z.number().int().nonnegative().optional().default(0),
   stack: z.string().max(4000).optional().default(''),
-  path: z.string().trim().max(300).optional().default(''),
+  url: z.string().trim().url().max(1000),
+  ua: z.string().trim().max(400).optional().default(''),
 }).strict()
 
 // Sent via sendBeacon, so no content-type to gate on - same reason /api/site/view skips it.
@@ -1618,22 +1620,20 @@ app.post('/api/client-errors', bodyLimit({ maxSize: 8_000, onError: (c) => c.jso
 
   const parsed = clientErrorBody.safeParse(await c.req.json().catch(() => null))
   if (!parsed.success) return c.json({ error: 'bad_body' }, 400)
-  const { message, source, line, col, stack, path } = parsed.data
+  const { message, stack, url, ua } = parsed.data
+  const path = new URL(url).pathname
 
-  console.error(JSON.stringify({
-    level: 'error',
-    kind: 'client',
+  logError('browser', {
     ray: c.req.header('cf-ray') ?? 'no-ray',
     method: c.req.method,
     path,
+    url,
+    ua: ua || c.req.header('user-agent') || '',
     message,
     stack,
-    source,
-    line,
-    col,
-  }))
+  })
 
-  track(c.env, 'client_error', path || new URL(c.req.url).pathname, {
+  track(c.env, 'client_error', path, {
     country: c.req.header('cf-ipcountry') ?? '',
     referrer: c.req.header('referer') ?? '',
   })

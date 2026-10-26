@@ -1,43 +1,36 @@
 const ENDPOINT = '/api/client-errors'
 const MAX_REPORTS = 5
+const MESSAGE_MAX = 500
 const STACK_MAX = 2000
+const UA_MAX = 400
 
 let sent = 0
 
-type ClientErrorReport = { message: string; source: string; line: number; col: number; stack: string; path: string }
+type BrowserErrorReport = { message: string; stack: string; url: string; ua: string }
 
-function send(report: ClientErrorReport) {
+function send(message: string, stack: string) {
   if (sent >= MAX_REPORTS) return
   sent++
-  const body = JSON.stringify(report)
-  if (typeof navigator.sendBeacon === 'function') {
-    navigator.sendBeacon(ENDPOINT, new Blob([body], { type: 'application/json' }))
-  } else {
-    void fetch(ENDPOINT, { method: 'POST', headers: { 'content-type': 'application/json' }, body, keepalive: true })
+  const report: BrowserErrorReport = {
+    message: (message.trim() || 'Unknown error').slice(0, MESSAGE_MAX),
+    stack: stack.slice(0, STACK_MAX),
+    url: `${location.origin}${location.pathname}${location.search}`,
+    ua: navigator.userAgent.slice(0, UA_MAX),
   }
+  const body = JSON.stringify(report)
+  try {
+    if (typeof navigator.sendBeacon === 'function' && navigator.sendBeacon(ENDPOINT, new Blob([body], { type: 'application/json' }))) return
+    void fetch(ENDPOINT, { method: 'POST', headers: { 'content-type': 'application/json' }, body, keepalive: true }).catch(() => {})
+  } catch {}
 }
 
 window.addEventListener('error', (event) => {
-  send({
-    message: String(event.message ?? '').slice(0, 500),
-    source: event.filename ?? '',
-    line: event.lineno ?? 0,
-    col: event.colno ?? 0,
-    stack: event.error?.stack ? String(event.error.stack).slice(0, STACK_MAX) : '',
-    path: location.pathname,
-  })
+  const err = event.error
+  const where = event.filename ? `at ${event.filename}:${event.lineno ?? 0}:${event.colno ?? 0}` : ''
+  send(String(event.message ?? ''), err instanceof Error && err.stack ? err.stack : where)
 })
 
 window.addEventListener('unhandledrejection', (event) => {
   const reason = event.reason
-  const message = reason instanceof Error ? reason.message : String(reason)
-  const stack = reason instanceof Error && reason.stack ? reason.stack : ''
-  send({
-    message: message.slice(0, 500),
-    source: '',
-    line: 0,
-    col: 0,
-    stack: stack.slice(0, STACK_MAX),
-    path: location.pathname,
-  })
+  send(reason instanceof Error ? reason.message : String(reason), reason instanceof Error && reason.stack ? reason.stack : '')
 })

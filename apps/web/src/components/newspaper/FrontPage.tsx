@@ -74,7 +74,7 @@ export default function FrontPage({ initial }: { initial: Challenge[] }) {
   const [view, setView] = useState<View>('grid')
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(0)
-  const [size, setSize] = useState(1)
+  const [size, setSize] = useState(5)
   const [rowSize, setRowSize] = useState(8)
   const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' } | null>(null)
   const [measured, setMeasured] = useState(false)
@@ -140,7 +140,8 @@ export default function FrontPage({ initial }: { initial: Challenge[] }) {
   const perPage = view === 'list' ? rowSize : size
   const pages = Math.max(1, Math.ceil(filtered.length / perPage)), current = Math.min(page, pages - 1)
   const stories = filtered.slice(current * perPage, (current + 1) * perPage)
-  const pending = !measured || loading
+  // The build snapshot is already useful; only an empty feed waits for refresh.
+  const pending = loading && challenges.length === 0
   // Rows only exist after the list has painted once, so the first measurement
   // used the fallback height. Re-measure against a real row now.
   const listLive = view === 'list' && !pending
@@ -183,7 +184,7 @@ export default function FrontPage({ initial }: { initial: Challenge[] }) {
             {!stories.length && empty}
           </>}
         </div>
-      : <div className={`np-news-grid ${pending ? '' : `np-news-count-${stories.length}`} ${pending ? 'np-loading-grid' : 'np-edition-ready'}`} aria-busy={pending}>
+      : <div className={`np-news-grid ${pending ? '' : `np-news-count-${stories.length}`} ${pending ? 'np-loading-grid' : !measured ? 'np-initial-grid' : 'np-edition-ready'}`} aria-busy={pending}>
           {pending ? Array.from({ length: 5 }, (_, i) => <div key={i} className={`np-story np-skeleton ${i === 0 ? 'np-lead' : ''}`} aria-hidden="true">
             <div className="np-story-image np-skeleton-image" />
             <div className="np-story-copy"><div className="np-skeleton-meta" /><div className="np-skeleton-headline"><i /><i /><i /></div><div className="np-skeleton-lines"><i /><i /><i /></div><footer><span className="np-skeleton-meta" /></footer></div>

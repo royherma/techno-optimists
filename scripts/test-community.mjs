@@ -37,8 +37,25 @@ assert.equal((await fetch(`${base}/api/challenges/${slug}/editorial`, { method: 
 const fresh = await api('/api/challenges', 'POST', { type: 'problem', title: `Local discussion routing check ${Date.now()}`, summary: 'A local-only fixture for checking a Challenge created after the build.' })
 assert.equal(fresh.status, 201)
 const { challenge } = await fresh.json()
-const page = await fetch(`${base}/c/${challenge.slug}`)
-assert.equal(page.status, 200, 'New Challenge must have a working page before rebuilding')
-assert((await page.text()).includes('ChallengeDetail'))
-console.log(`New-page browser check: ${base}/c/${challenge.slug}`)
-console.log('Local API passed: import, comments, replies, retry, stage isolation, admin emoji, anonymous denial, and new-page routing.')
+// The newspaper and Classic hydrate different components. A 200 alone could
+// hide the wrong shell (or a generic fallback), so verify each edition's island
+// and its loadable bundle without depending on the build's asset hash.
+for (const [prefix, component] of [['', 'ChallengePage'], ['/v1', 'ChallengeDetail']]) {
+  const url = `${base}${prefix}/c/${challenge.slug}`
+  const page = await fetch(url)
+  assert.equal(page.status, 200, `New thread must load before rebuilding: ${url}`)
+  const html = await page.text()
+  const island = [...html.matchAll(/<astro-island\b[^>]*>/g)]
+    .map(([tag]) => tag)
+    .find((tag) => tag.includes(`component-url="/_astro/${component}.`))
+  assert(island, `${url} must hydrate ${component}`)
+  assert.match(island, /\bclient="load"/, 'Thread must load without interaction')
+  const bundlePath = island.match(/\bcomponent-url="([^"]+)"/)[1]
+  const bundle = await fetch(new URL(bundlePath, base))
+  assert.equal(bundle.status, 200, `Thread bundle must load: ${bundlePath}`)
+  assert.match(bundle.headers.get('content-type') ?? '', /javascript/)
+  const missing = await fetch(`${base}${prefix}/c/missing-${crypto.randomUUID()}`)
+  assert.equal(missing.status, 404, 'Unknown threads must not return a successful shell')
+  console.log(`New-page browser check: ${url}`)
+}
+console.log('Local API passed: import, comments, replies, retry, stage isolation, admin emoji, anonymous denial, and newspaper/Classic new-page routing and bundles.')

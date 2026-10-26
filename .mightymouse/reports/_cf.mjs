@@ -16,11 +16,17 @@ const isoDay = (d) => d.toISOString().slice(0, 10)
 const today = new Date()
 export const dayOffset = (n) => isoDay(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - n)))
 
-// Current window is [curStart, end), previous is [prevStart, curStart). All UTC dates.
-export const end = dayOffset(-1)
-export const curStart = dayOffset(DAYS - 1)
-export const prevStart = dayOffset(2 * DAYS - 1)
-export const windowDays = Array.from({ length: DAYS }, (_, i) => dayOffset(DAYS - 1 - i))
+// Compare full UTC days: exclude today so a partial day cannot look like a drop.
+// Current window is [curStart, end), previous is [prevStart, curStart).
+export const end = dayOffset(0)
+export const curStart = dayOffset(DAYS)
+export const prevStart = dayOffset(2 * DAYS)
+export const windowDays = Array.from({ length: DAYS }, (_, i) => dayOffset(DAYS - i))
+
+// Analytics Engine and D1 must use the same frozen bounds, including at midnight.
+const aeWindow = (start, stop) => `timestamp >= toDateTime('${start} 00:00:00', 'UTC') AND timestamp < toDateTime('${stop} 00:00:00', 'UTC')`
+export const currentAEWindow = aeWindow(curStart, end)
+export const previousAEWindow = aeWindow(prevStart, curStart)
 
 export async function d1(sql, params = []) {
   const res = await fetch(`${API}/d1/database/${PROD_DB}/query`, {

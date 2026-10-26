@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from 're
 import type { Challenge, Update, Stage } from '../../../../../packages/types/index'
 import type { DetailPerson } from '../../lib/api'
 import { getMe, type Me } from '../../lib/session'
+import { editionPath } from '../../lib/edition'
 import { TYPE_LABEL, STAGE_ORDER, STAGE_STAMP, STAGE_MEANING, ago, count, gridRef, impactLabel } from '../../lib/vocab'
 import { Rings } from '../newspaper/Legend'
 import ActionBar from '../ActionBar'
@@ -33,7 +34,7 @@ export default function ChallengeDetail({ initial }: { initial?: Detail }) {
   const [error, setError] = useState('')
   const [actual, setActual] = useState(initial?.challenge.slug ?? '')
   const refresh = useCallback(async () => {
-    const slug = window.location.pathname.split('/').filter(Boolean)[1] ?? initial?.challenge.slug ?? ''
+    const slug = editionPath(window.location.pathname).split('/').filter(Boolean)[1] ?? initial?.challenge.slug ?? ''
     setActual(slug)
     const r = await fetch(`/api/challenges/${encodeURIComponent(slug)}`, { cache: 'no-store' })
     if (!r.ok) throw new Error('The latest thread could not load.')
