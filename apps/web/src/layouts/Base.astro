@@ -13,7 +13,8 @@ const { title, description = 'Find interesting real-world problems and help solv
 // Classic is a second rendering of the same Challenges, not a second set of
 // addresses, so every /v1 screen points at its newspaper twin instead of
 // competing with it for the same content in an index.
-const canonicalPath = Astro.url.pathname.replace(/^\/v1(?=\/|$)/, '') || '/'
+// No trailing slash: /c/<slug> is the address, /c/<slug>/ only redirects to it.
+const canonicalPath = Astro.url.pathname.replace(/^\/v1(?=\/|$)/, '').replace(/\/+$/, '') || '/'
 const canonical = new URL(canonicalPath, ORIGIN).href
 const ogImage = new URL(image, ORIGIN).href
 

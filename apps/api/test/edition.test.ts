@@ -51,6 +51,21 @@ describe('edition routing', () => {
   it('does not expose the internal shell route', async () => {
     expect((await app.request('/c/_shell', {}, environment(true, true))).status).toBe(404)
   })
+  it('301s a trailing-slash thread URL to the bare path, keeping the query', async () => {
+    const r = await app.request('/c/example/?from=gsc', {}, environment(true, true))
+    expect(r.status).toBe(301)
+    const target = new URL(r.headers.get('location')!)
+    expect(target.pathname).toBe('/c/example'); expect(target.search).toBe('?from=gsc')
+  })
+  it('301s www to the apex for pages but not for API calls', async () => {
+    const page = await app.request('https://www.technooptimists.org/c/example?x=1', {}, environment(true, true))
+    expect(page.status).toBe(301)
+    expect(page.headers.get('location')).toBe('https://technooptimists.org/c/example?x=1')
+    const api = await app.request('https://www.technooptimists.org/api/nope', { method: 'POST' }, environment(true, true))
+    expect(api.status).not.toBe(301)
+    const apex = await app.request('https://technooptimists.org/c/example', {}, environment(true, true))
+    expect(apex.status).toBe(200)
+  })
   // The bug this migration fixed: / used to bounce to /v2 on every visit. The
   // old addresses stay alive, but they hand back the clean one permanently.
   it('redirects the retired /v2 addresses to the bare paths', async () => {

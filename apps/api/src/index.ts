@@ -81,6 +81,28 @@ type Env = {
 
 const app = new Hono<{ Bindings: Env }>()
 
+/*
+ * One address per page: www is a 301 to the apex (Search Console listed both).
+ * Only GET/HEAD outside /api - a redirected POST would turn into a GET. The
+ * assets layer answers paths outside run_worker_first itself, so this covers
+ * the Worker-routed pages (/c/*, /v1, /media).
+ */
+app.use('*', async (c, next) => {
+  const url = new URL(c.req.url)
+  if (url.hostname.startsWith('www.') && (c.req.method === 'GET' || c.req.method === 'HEAD') && !url.pathname.startsWith('/api/')) {
+    url.hostname = url.hostname.slice(4)
+    return c.redirect(url.toString(), 301)
+  }
+  await next()
+})
+
+// /c/<slug>/ used to be in the sitemap and canonicals; hand back the bare path.
+app.get('/c/:slug/', (c) => {
+  const url = new URL(c.req.url)
+  url.pathname = `/c/${c.req.param('slug')}`
+  return c.redirect(url.toString(), 301)
+})
+
 // One line, one JSON object: Workers Logs and the tail consumer index the fields, so filter on source/path/ray.
 export const logError = (source: 'server' | 'browser', fields: Record<string, unknown>) =>
   console.error(JSON.stringify({ level: 'error', source, ...fields }))
