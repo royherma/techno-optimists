@@ -5,4 +5,4 @@ import FrontPage from '../components/newspaper/FrontPage'
 import { getFeed } from '../lib/api'
 const { challenges } = await getFeed('?limit=50')
 ---
-<Base title="Techno Optimists: Real-World Problems to Solve Together" description="Browse open threads on real-world problems and help solve them with the Techno Optimists community."><NewspaperShell challenges={challenges}><FrontPage initial={challenges} client:load /></NewspaperShell></Base>
+<Base title="Techno Optimists: Real-World Problems to Solve Together" description="Techno Optimists is a global community using technology to understand real-world problems, try ideas and build better solutions together."><NewspaperShell challenges={challenges}><FrontPage initial={challenges} client:load /></NewspaperShell></Base>
