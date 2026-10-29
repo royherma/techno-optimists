@@ -2,8 +2,8 @@
 import '../styles/global.css'
 import Snack from '../components/Snack.tsx'
 import { ORIGIN, SCHEMA_JSON } from '../lib/schema.mjs'
-interface Props { title: string; description?: string; image?: string; noindex?: boolean }
-const { title, description = 'Find interesting real-world problems and help solve them.', image = '/og.png', noindex = false } = Astro.props
+interface Props { title: string; description?: string; image?: string; imageAlt?: string; noindex?: boolean }
+const { title, description = 'Find interesting real-world problems and help solve them.', image = '/og.png', imageAlt, noindex = false } = Astro.props
 
 // The canonical origin. Astro.site is unset (static output, two deploy targets),
 // so the prod domain is named here - a relative og:image is ignored by every
@@ -55,10 +55,12 @@ const gscToken = import.meta.env.GSC_VERIFICATION ?? process.env.GSC_VERIFICATIO
     <meta property="og:image" content={ogImage} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    {imageAlt && <meta property="og:image:alt" content={imageAlt} />}
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
+    {imageAlt && <meta name="twitter:image:alt" content={imageAlt} />}
 
     <!--
       Google Search Console ownership. The token is a build-time env var, not a
