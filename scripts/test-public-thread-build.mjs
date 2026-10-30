@@ -12,11 +12,11 @@ for (const slug of routes) {
   for (const prefix of ['', 'v1/']) {
     const html = await read(`${prefix}c/${slug}/index.html`)
     assert.ok(!html.includes('name="robots" content="noindex"'), `${prefix}${slug} indexable`)
-    assert.ok(html.includes(`rel="canonical" href="https://technooptimists.org/c/${slug}/"`), `${prefix}${slug} canonical`)
+    assert.ok(html.includes(`rel="canonical" href="https://technooptimists.org/c/${slug}"`), `${prefix}${slug} canonical`)
     assert.ok(!html.includes('<title>Thread - Techno Optimists</title>'), `${prefix}${slug} has title`)
     assert.match(html, /<h1[ >]/, `${prefix}${slug} rendered heading`)
   }
-  assert.ok(locations.includes(`https://technooptimists.org/c/${slug}/`), `${slug} in sitemap`)
+  assert.ok(locations.includes(`https://technooptimists.org/c/${slug}`), `${slug} in sitemap`)
 }
 for (const route of ['settings', 'signin', 'people', '404', 'c/_shell', 'v1/c/_shell']) {
   const html = await read(route === '404' ? '404.html' : `${route}/index.html`)
@@ -24,4 +24,5 @@ for (const route of ['settings', 'signin', 'people', '404', 'c/_shell', 'v1/c/_s
   assert.ok(!html.includes('rel="canonical"'), `${route} has no canonical`)
 }
 assert.ok(locations.every(url => !url.includes('/c/_shell') && !url.includes('/people') && !url.includes('/v1/')), 'shell, people and duplicate edition excluded')
+assert.ok(locations.every(url => !/^\/(settings|signin)\/?$/.test(new URL(url).pathname)), 'noindex settings and signin excluded')
 console.log(`${routes.length} public routes in both editions; unique sitemap; private/noindex surfaces preserved`)
