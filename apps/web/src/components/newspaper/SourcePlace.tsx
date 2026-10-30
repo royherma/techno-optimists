@@ -20,7 +20,7 @@ export default function SourcePlace({ challenge: c }: { challenge: Challenge }) 
       </div><div className="np-source-content"><h3>Source</h3><PagedContent compact label="Source">
         <p>{source ? <a href={source.href} target="_blank" rel="noopener noreferrer">{c.source?.name || source.hostname} ↗</a> : c.source?.name || c.source?.url || 'Shared directly here.'}</p>
         {c.source?.note && <p>{c.source.note}</p>}
-        <p>Added {formatDate(c.imported_at || c.created_at)}. Latest activity {formatDate(c.last_activity_at)}.</p>
+        <p>Added {formatDate(c.imported_at || c.created_at)}. {c.imported_at ? `Source published ${formatDate(c.created_at)}` : `Latest activity ${formatDate(c.last_activity_at)}`}.</p>
     </PagedContent></div></div>
   </section>
 }
