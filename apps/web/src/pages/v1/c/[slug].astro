@@ -4,6 +4,7 @@ import Sheet from '../../../components/Sheet.astro'
 import PageToolbar from '../../../components/PageToolbar.astro'
 import ChallengeDetail from '../../../components/challenge/ChallengeDetail'
 import { getChallenge, getPublicThreads } from '../../../lib/api'
+import { threadPageTitle } from '../../../lib/thread-title.mjs'
 import '../../../styles/detail.css'
 import '../../../styles/discussion.css'
 export async function getStaticPaths() {
@@ -14,7 +15,7 @@ const { slug } = Astro.params
 const initial = slug === '_shell' ? undefined : await getChallenge(slug!)
 const c = initial?.challenge
 ---
-<Base title={c ? `${c.title} - Techno Optimists` : 'Thread - Techno Optimists'} description={c?.summary} noindex={!c}>
+<Base title={c ? threadPageTitle(c.title) : 'Thread - Techno Optimists'} description={c?.summary} noindex={!c}>
   <Sheet>
     <PageToolbar label="Thread" />
     <main class="challenge-detail"><ChallengeDetail client:load initial={initial} /></main>
