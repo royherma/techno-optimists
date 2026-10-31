@@ -4,6 +4,7 @@ import type { Challenge, Update, Stage } from '../../../../../packages/types/ind
 import type { DetailPerson } from '../../lib/api'
 import { getMe, type Me } from '../../lib/session'
 import { editionPath } from '../../lib/edition'
+import { threadPageTitle } from '../../lib/thread-title.mjs'
 import { TYPE_LABEL, STAGE_ORDER, STAGE_STAMP, STAGE_MEANING, ago, count, gridRef, impactLabel } from '../../lib/vocab'
 import { Rings } from '../newspaper/Legend'
 import ActionBar from '../ActionBar'
@@ -40,7 +41,7 @@ export default function ChallengeDetail({ initial }: { initial?: Detail }) {
     if (!r.ok) throw new Error('The latest thread could not load.')
     const next = await r.json() as Detail
     setData(next); setError('')
-    document.title = `${next.challenge.title} - Techno Optimists`
+    document.title = threadPageTitle(next.challenge.title)
   }, [initial?.challenge.slug])
   useEffect(() => {
     void refresh().catch(() => setError('The latest thread could not load. Please retry.'))

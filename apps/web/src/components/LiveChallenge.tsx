@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { threadPageTitle } from '../lib/thread-title.mjs'
 
 /**
  * Redraws this page for a Challenge posted since the last build.
@@ -20,7 +21,7 @@ export default function LiveChallenge() {
       if (!r.ok || cancelled) return
       const { challenge } = await r.json()
 
-      document.title = `${challenge.title} - Techno Optimists`
+      document.title = threadPageTitle(challenge.title)
 
       const setText = (sel: string, value: string) => {
         const el = document.querySelector(sel)

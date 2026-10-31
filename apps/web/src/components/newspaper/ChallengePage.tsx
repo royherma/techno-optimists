@@ -4,6 +4,7 @@ import type { DetailPerson } from '../../lib/api'
 import { getMe, type Me } from '../../lib/session'
 import { STAGE_MEANING, STAGE_STAMP, impactLabel } from '../../lib/vocab'
 import { formatDate, relativeDate } from '../../lib/dates'
+import { threadPageTitle } from '../../lib/thread-title.mjs'
 import PagedContent from './PagedContent'
 import StageBadge from './StageBadge'
 import SourcePlace from './SourcePlace'
@@ -119,7 +120,7 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
     const next: ChallengeData = await response.json()
     setData(previous => previous?.challenge.slug === next.challenge.slug
       ? { ...next, challenge: { ...next.challenge, views_count: Math.max(previous.challenge.views_count, next.challenge.views_count) } }
-      : next); setError(''); document.title = next.challenge.title + ' - Techno Optimists'
+      : next); setError(''); document.title = threadPageTitle(next.challenge.title)
   }
   useEffect(() => {
     void refresh().catch(e => setError(e.message))

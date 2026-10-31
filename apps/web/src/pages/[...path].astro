@@ -12,6 +12,7 @@ import privacy from '../content/privacy.html?raw'
 import terms from '../content/terms.html?raw'
 import contribute from '../content/contribute.html?raw'
 import { getFeed, getChallenge, getPublicThreads } from '../lib/api'
+import { threadPageTitle } from '../lib/thread-title.mjs'
 import '../styles/discussion.css'
 import '../styles/account.css'
 import '../styles/activity.css'
@@ -26,7 +27,7 @@ const titles: Record<string, string> = { map:'World map', settings:'Your account
 const title = detail?.challenge.title || titles[path] || 'Thread'
 const articles: Record<string,string> = { privacy, terms, contribute }
 ---
-<Base title={`${title} - Techno Optimists`} description={detail?.challenge.summary} noindex={['settings','signin','people','404','c/_shell'].includes(path)}>
+<Base title={detail ? threadPageTitle(detail.challenge.title) : `${title} - Techno Optimists`} description={detail?.challenge.summary} noindex={['settings','signin','people','404','c/_shell'].includes(path)}>
   <NewspaperShell section={titles[path] || 'Thread'} challenges={challenges} impact={detail?.challenge.impact ?? null}>
     {path.startsWith('c/') && <ChallengePage client:load initial={detail} />}
     {path === 'map' && <MapPage client:load initial={challenges} />}
