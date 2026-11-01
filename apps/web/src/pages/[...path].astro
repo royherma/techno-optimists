@@ -27,7 +27,7 @@ const titles: Record<string, string> = { map:'World map', settings:'Your account
 const title = detail?.challenge.title || titles[path] || 'Thread'
 const articles: Record<string,string> = { privacy, terms, contribute }
 ---
-<Base title={detail ? threadPageTitle(detail.challenge.title) : `${title} - Techno Optimists`} description={detail?.challenge.summary} noindex={['settings','signin','people','404','c/_shell'].includes(path)}>
+<Base title={path === 'contribute' ? 'Contribute to Techno Optimists: Share a Problem or Help Solve One' : detail ? threadPageTitle(detail.challenge.title) : `${title} - Techno Optimists`} description={path === 'contribute' ? 'Share a real-world problem, idea or experiment, join a thread with research or testing, or help improve the open-source site. No expertise needed.' : detail?.challenge.summary} noindex={['settings','signin','people','404','c/_shell'].includes(path)}>
   <NewspaperShell section={titles[path] || 'Thread'} challenges={challenges} impact={detail?.challenge.impact ?? null}>
     {path.startsWith('c/') && <ChallengePage client:load initial={detail} />}
     {path === 'map' && <MapPage client:load initial={challenges} />}
