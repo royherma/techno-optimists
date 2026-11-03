@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'astro/config'
 import react from '@astrojs/react'
 import sitemap from '@astrojs/sitemap'
@@ -15,7 +16,13 @@ import { SCHEMA_JSON } from './src/lib/schema.mjs'
 // Hashing the same exported string the layout renders is what keeps the two in
 // step - edit the schema and this follows on the next build. A pasted literal
 // would go stale silently.
-const SCHEMA_HASH = `sha256-${createHash('sha256').update(SCHEMA_JSON, 'utf8').digest('base64')}`
+const sha256 = (text) => `sha256-${createHash('sha256').update(text, 'utf8').digest('base64')}`
+const SCHEMA_HASH = sha256(SCHEMA_JSON)
+// Same refusal applies to JSON-LD inside the checked-in article HTML; hash each tag's exact body.
+const ARTICLE_SCHEMA_HASHES = ['contribute', 'privacy', 'terms'].flatMap((name) =>
+  [...readFileSync(new URL(`./src/content/${name}.html`, import.meta.url), 'utf8')
+    .matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) => sha256(m[1])),
+)
 
 // Tailwind v4 goes through the Vite plugin, NOT @astrojs/tailwind - that
 // integration has a peer-dep conflict on Astro 7 (creators-of-today GOTCHAS #5).
@@ -67,7 +74,7 @@ export default defineConfig({
         "object-src 'none'",
       ],
       scriptDirective: {
-        hashes: [SCHEMA_HASH],
+        hashes: [SCHEMA_HASH, ...ARTICLE_SCHEMA_HASHES],
       },
       styleDirective: {
         // Tailwind is a real stylesheet ('self'); this adds the font CSS origin
