@@ -16,6 +16,7 @@
     "build:web": "python3 scripts/coordinate.py run build:web 'node scripts/build-web.mjs'",
     "typecheck": "npm --workspace api run typecheck",
     "test": "npm --workspace api run test",
+    "test:browser-errors:build": "node scripts/test-browser-error-build.mjs",
     "db:local": "python3 scripts/coordinate.py run db:local 'wrangler d1 execute techno-optimists --local --file packages/db/schema.sql'",
     "seed:gen": "python3 scripts/coordinate.py run seed:gen 'node scripts/gen-seed.mjs'",
     "db:seed:local": "python3 scripts/coordinate.py run db:seed:local 'npm run seed:gen && wrangler d1 execute techno-optimists --local --file packages/db/seed.sql'",
