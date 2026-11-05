@@ -20,9 +20,10 @@ import { isAdminEmail } from './admin'
 import { track } from './analytics'
 import { community } from './community'
 import { notify } from './slack'
-import { MAX_BYTES, checkUpload, dimensionsOf, mediaKey, mediaUrl } from './media'
+import { MAX_BYTES, checkUpload, mediaKey, mediaUrl, storeUpload } from './media'
 import { slugify } from './slug'
 import { takeQuota } from './rate-limit'
+import { BodyTooLarge, limitRequestBody } from './request-body'
 import {
   ACTION_KINDS, CHALLENGE_TYPES, EMPTY_ACTIONS, FEED_SORTS, HELP_KINDS, ROLES, STAGES,
   prizeStatusOf,
@@ -81,6 +82,7 @@ type Env = {
 }
 
 const app = new Hono<{ Bindings: Env }>()
+app.use('/api/*', limitRequestBody)
 
 /*
  * One address per page: www is a 301 to the apex (Search Console listed both).
@@ -733,34 +735,21 @@ app.put('/api/uploads', async (c) => {
 
   const key = mediaKey(me.id, check.ext, mintToken().slice(0, 12))
 
-  /*
-   * Buffer once, then store and measure from the same bytes. Streaming the body
-   * straight through is cheaper, but the stream is consumed by the put and the
-   * dimensions are only readable from the header - and a second read of an R2
-   * object to recover them costs more than holding a file we already cap at
-   * 100MB.
-   */
-  const bytes = new Uint8Array(await c.req.raw.arrayBuffer())
-  if (bytes.byteLength === 0) return c.json({ error: 'empty_body' }, 400)
-
-  // A client can lie in content-length, so the cap is enforced on what actually
-  // arrived, before anything is written.
-  if (bytes.byteLength > MAX_BYTES) return c.json({ error: 'too_large', max_bytes: MAX_BYTES }, 413)
-
-  const stored = await c.env.MEDIA.put(key, bytes, {
-    httpMetadata: { contentType: c.req.header('content-type')!.split(';')[0].trim() },
-    customMetadata: { person_id: me.id },
-  })
-
-  // A format this cannot parse (video, HEIC) returns null and the surfaces fall
-  // back to their own shape, which is why w/h are optional on Media.
-  const size = dimensionsOf(bytes)
-
-  return c.json({
-    ok: true,
-    media: { kind: check.kind, url: mediaUrl(key), key, ...(size ?? {}) },
-    bytes: stored?.size ?? bytes.byteLength,
-  })
+  try {
+    const stored = await storeUpload(c.env.MEDIA, key, c.req.raw.body, {
+      httpMetadata: { contentType: c.req.header('content-type')!.split(';')[0].trim().toLowerCase() },
+      customMetadata: { person_id: me.id },
+    })
+    if (!stored.bytes) return c.json({ error: 'empty_body' }, 400)
+    return c.json({
+      ok: true,
+      media: { kind: check.kind, url: mediaUrl(key), key, ...(stored.size ?? {}) },
+      bytes: stored.bytes,
+    })
+  } catch (error) {
+    if (error instanceof BodyTooLarge) return c.json({ error: 'too_large', max_bytes: MAX_BYTES }, 413)
+    throw error
+  }
 })
 
 /**
