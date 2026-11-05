@@ -104,9 +104,8 @@ hydration - in the one case that looks most like hardening. The header carries w
 `<meta>` CSP cannot: `frame-ancestors` is ignored inside `<meta>`, so clickjacking
 protection lives only in the header.
 
-**`dev_link` is returned only when `ENVIRONMENT !== 'prod'`.** The magic link is a bearer
-token; returned unconditionally, POSTing a stranger's address hands over their account. A
-missing mail key in prod must break sign-in loudly, never open a door.
+**`dev_link` is restricted to explicit dev mode on loopback hosts.** Public hosts fail
+with 503 when mail is unconfigured or fails. Bearer links are never logged.
 
 **Admins come from the `ADMIN_EMAILS` secret. Unset demotes everyone, silently.**
 `apps/api/src/admin.ts` reads a comma-separated secret; `identities.is_admin` only

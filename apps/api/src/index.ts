@@ -844,6 +844,9 @@ app.post('/api/auth/request', async (c) => {
   if (!parsed.success) return c.json({ error: 'bad_email' }, 400)
   const email = normalizeEmail(parsed.data.email)
   const ip = c.req.header('cf-connecting-ip') ?? null
+  const url = new URL(c.req.url)
+  const localLink = c.env.ENVIRONMENT === 'dev' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)
+  if (!c.env.RESEND_API_KEY && !localLink) return c.json({ error: 'mail_unavailable' }, 503)
 
   const over = await overRateLimit(c.env.DB, email, ip)
   if (over) {
@@ -866,16 +869,8 @@ app.post('/api/auth/request', async (c) => {
   const link = `${new URL(c.req.url).origin}/api/auth/callback?token=${token}${next ? `&next=${encodeURIComponent(next)}` : ''}`
   const sent = await sendMagicLink(c.env, email, link)
 
-  // In dev there is no mail key, so the link goes to the Worker log. Never in prod.
-  if (!sent) console.log(`[auth] magic link for ${email}: ${link}`)
-
-  // The link is a bearer token for the account. Returning it in the response
-  // body is a convenience for local dev ONLY - anywhere it is reachable by a
-  // stranger, POSTing someone else's address would hand over their login. Prod
-  // fails closed: if the mail key is missing there, sign-in breaks loudly
-  // rather than quietly becoming an open door.
-  const showLink = !sent && c.env.ENVIRONMENT !== 'prod'
-  return c.json({ ok: true, sent, ...(showLink ? { dev_link: link } : {}) })
+  if (!sent && !localLink) return c.json({ error: 'mail_unavailable' }, 503)
+  return c.json({ ok: true, sent, ...(!sent && localLink ? { dev_link: link } : {}) })
 })
 
 /**
@@ -925,7 +920,7 @@ const sendMagicLink = async (env: Env, email: string, link: string): Promise<boo
     }),
   })
   if (!res.ok) {
-    console.log(`[auth] resend failed ${res.status}: ${await res.text()}`)
+    console.log(`[auth] resend failed ${res.status}`)
     return false
   }
   return true
