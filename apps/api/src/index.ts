@@ -1430,7 +1430,7 @@ app.get('/api/challenges/:slug/ai/runs', async (c) => {
   if (!challenge) return c.json({ error: 'not_found' }, 404)
 
   const rows = await c.env.DB.prepare(
-    `SELECT r.id, r.action, r.model, r.output, r.created_at, p.handle, p.name, p.avatar_url
+    `SELECT r.id, r.action, r.model, r.output, r.created_at, p.handle, p.avatar_url
      FROM ai_runs r JOIN people p ON p.id = r.person_id
      WHERE r.challenge_id = ? ORDER BY r.created_at DESC LIMIT 20`,
   ).bind(challenge.id).all()
@@ -1441,7 +1441,7 @@ app.get('/api/challenges/:slug/ai/runs', async (c) => {
     runs: (rows.results ?? []).map((r: Row) => ({
       id: String(r.id), action: String(r.action), model: String(r.model),
       output: String(r.output), created_at: String(r.created_at),
-      by: { handle: String(r.handle), name: String(r.name), avatar_url: r.avatar_url == null ? null : String(r.avatar_url) },
+      by: { handle: String(r.handle), avatar_url: r.avatar_url == null ? null : String(r.avatar_url) },
     })),
   })
 })
