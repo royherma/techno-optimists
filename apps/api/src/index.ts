@@ -865,6 +865,11 @@ app.post('/api/auth/request', async (c) => {
     return c.json({ error: 'too_many_requests' }, 429)
   }
 
+  if (!await takeQuota(c.env.DB, 'login-email', email, LINKS_PER_EMAIL_HOUR, 3600)
+    || !await takeQuota(c.env.DB, 'login-ip', ip ?? 'unknown', LINKS_PER_IP_HOUR, 3600)) {
+    return c.json({ error: 'too_many_requests' }, 429)
+  }
+
   // One live link per address at a time: requesting a second invalidates the
   // first, so a forwarded old email cannot be used to take the account.
   const token = mintToken()
