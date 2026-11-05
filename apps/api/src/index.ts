@@ -9,7 +9,7 @@ import { z } from 'zod'
 import {
   HANDLE_MAX, HANDLE_MIN, SESSION_COOKIE, clearCookie, cookie, currentPerson,
   handleFromEmail, handleProblem, hashToken, iso, linkExpiry, mintToken, nameFromEmail,
-  normalizeEmail, normalizeHandle, readCookie, sessionExpiry, signalCookie,
+  normalizeEmail, normalizeHandle, readCookie, sessionExpiry, signalCookie, loginCookie, loginCookieName,
 } from './auth'
 import {
   DEFAULT_PROVIDER, ProviderError, challengeOf, disconnectAccount, isAiAction,
@@ -82,6 +82,15 @@ type Env = {
 }
 
 const app = new Hono<{ Bindings: Env }>()
+app.use('/api/*', async (c, next) => {
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(c.req.method)) {
+    const origin = c.req.header('origin')
+    if ((origin && origin !== new URL(c.req.url).origin) || c.req.header('sec-fetch-site') === 'cross-site') {
+      return c.json({ error: 'bad_origin' }, 403)
+    }
+  }
+  await next()
+})
 app.use('/api/*', limitRequestBody)
 
 /*
@@ -873,6 +882,7 @@ app.post('/api/auth/request', async (c) => {
   const sent = await sendMagicLink(c.env, email, link)
 
   if (!sent && !localLink) return c.json({ error: 'mail_unavailable' }, 503)
+  c.header('set-cookie', loginCookie(await hashToken(token), url.protocol === 'https:'))
   return c.json({ ok: true, sent, ...(!sent && localLink ? { dev_link: link } : {}) })
 })
 
@@ -953,6 +963,10 @@ app.get('/api/auth/callback', async (c) => {
     "SELECT 1 ok FROM magic_links WHERE token_hash = ? AND expires_at > datetime('now')",
   ).bind(hash).first()
   if (!stillValid) return c.redirect('/signin?error=expired', 302)
+  const secure = new URL(c.req.url).protocol === 'https:'
+  if (readCookie(c.req.header('cookie'), loginCookieName(secure)) !== hash) {
+    return c.redirect('/signin?error=browser', 302)
+  }
 
   // Claim the link here, not in the batch at the end of the handler. The reads
   // above are diagnostic - they exist to tell the reader which of the three
@@ -962,7 +976,7 @@ app.get('/api/auth/callback', async (c) => {
   // claim the same statement as the test: exactly one caller sees changes = 1,
   // and the loser is told the link is used rather than handed a second session.
   const claim = await c.env.DB.prepare(
-    "UPDATE magic_links SET used_at = datetime('now') WHERE token_hash = ? AND used_at IS NULL",
+    "UPDATE magic_links SET used_at = datetime('now') WHERE token_hash = ? AND used_at IS NULL AND expires_at > datetime('now')",
   ).bind(hash).run()
   if (claim.meta.changes !== 1) return c.redirect('/signin?error=used', 302)
 
@@ -991,8 +1005,8 @@ app.get('/api/auth/callback', async (c) => {
     c.env.DB.prepare("UPDATE identities SET last_login_at = datetime('now') WHERE email = ?").bind(email),
   ])
 
-  const secure = new URL(c.req.url).protocol === 'https:'
   c.header('set-cookie', cookie(session, secure))
+  c.header('set-cookie', loginCookie('', secure), { append: true })
   // Two cookies, so `append` - c.header() replaces by default, and without it
   // the session cookie set on the line above would be dropped and sign-in
   // would silently do nothing.
