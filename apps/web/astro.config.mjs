@@ -74,6 +74,11 @@ export default defineConfig({
         "object-src 'none'",
       ],
       scriptDirective: {
+        // Cloudflare injects its existing Web Analytics beacon at the edge,
+        // including a version suffix after beacon.min.js. Keep Astro's hashes
+        // and self-hosted islands; permit only this additional script host.
+        // Proxied collection uses same-origin /cdn-cgi/rum (connect-src 'self').
+        resources: ["'self'", 'https://static.cloudflareinsights.com'],
         hashes: [SCHEMA_HASH, ...ARTICLE_SCHEMA_HASHES],
       },
       styleDirective: {
