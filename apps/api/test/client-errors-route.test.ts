@@ -53,6 +53,33 @@ describe('browser report route boundaries', () => {
     expect(log).not.toHaveBeenCalled()
   })
 
+  it('counts UTF-8 bytes rather than characters when bounding reports', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const body = { ...report, stack: '漢'.repeat(3000) }
+    expect(JSON.stringify(body).length).toBeLessThan(8000)
+    expect((await request(body)).status).toBe(413)
+    expect(log).not.toHaveBeenCalled()
+  })
+
+  it('accepts exactly 8000 bytes and refuses the next byte', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const json = JSON.stringify(report)
+    const body = json + ' '.repeat(8000 - new TextEncoder().encode(json).byteLength)
+    const send = (body: string) => app.request('/api/client-errors', { method: 'POST', body }, { DB: {} as D1Database })
+    expect((await send(body)).status).toBe(200)
+    expect((await send(body + ' ')).status).toBe(413)
+    expect(log).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps embedded newlines and fake log markers inside one browser log entry', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const body = { ...report, message: 'boom\n{"source":"server"}', stack: 'Error: boom\n  at example.js:1' }
+    expect((await request(body)).status).toBe(200)
+    expect(log).toHaveBeenCalledTimes(1)
+    expect(log.mock.calls[0][0]).not.toContain('\n')
+    expect(JSON.parse(log.mock.calls[0][0])).toMatchObject({ ...body, source: 'browser' })
+  })
+
   it('bounds streamed bodies even without a content-length header', async () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => {})
     const body = new ReadableStream({
