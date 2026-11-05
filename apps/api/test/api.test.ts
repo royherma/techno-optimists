@@ -399,6 +399,7 @@ describe('only the author moves a Challenge to a new stage', () => {
   const db = (authorId: string) => stubSeq(
     { id: 'p_me', handle: 'me', name: 'Me', avatar_url: null, location: null, roles: '[]', email: 'me@b.com', is_admin: 0 },
     { id: 'c_1', author_id: authorId },
+    { allowed: 1 },
   ) as unknown as D1Database
 
   const post = (authorId: string, body: unknown) =>

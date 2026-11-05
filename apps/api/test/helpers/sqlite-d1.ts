@@ -22,11 +22,11 @@ export const sqliteD1 = (...schemaFiles: string[]) => {
   }
   const DB = {
     prepare,
-    batch: async (statements: { run: () => Promise<unknown> }[]) => {
+    batch: async (statements: { execute: () => unknown }[]) => {
       sqlite.exec('BEGIN')
       try {
         const out = []
-        for (const s of statements) out.push(await s.run())
+        for (const s of statements) out.push(s.execute())
         sqlite.exec('COMMIT')
         return out
       } catch (e) { sqlite.exec('ROLLBACK'); throw e }

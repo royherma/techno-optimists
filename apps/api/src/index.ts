@@ -22,6 +22,7 @@ import { community } from './community'
 import { notify } from './slack'
 import { MAX_BYTES, checkUpload, dimensionsOf, mediaKey, mediaUrl } from './media'
 import { slugify } from './slug'
+import { takeQuota } from './rate-limit'
 import {
   ACTION_KINDS, CHALLENGE_TYPES, EMPTY_ACTIONS, FEED_SORTS, HELP_KINDS, ROLES, STAGES,
   prizeStatusOf,
@@ -340,6 +341,8 @@ app.post('/api/challenges', async (c) => {
   if (!parsed.success) return c.json({ error: 'bad_body', detail: parsed.error.issues }, 400)
   const { type, title, summary, body, media, location, lat, lng, tags, impact } = parsed.data
 
+  if (!await takeQuota(c.env.DB, 'threads', me.id, 5, 3600)) return c.json({ error: 'slow_down' }, 429)
+
   const id = `c_${mintToken().slice(0, 16)}`
   const slug = await uniqueSlug(c.env.DB, slugify(title))
 
@@ -569,6 +572,8 @@ app.post('/api/challenges/:slug/updates', async (c) => {
     return c.json({ error: 'not_yours' }, 403)
   }
 
+  if (!await takeQuota(c.env.DB, 'updates', me.id, 20, 3600)) return c.json({ error: 'slow_down' }, 429)
+
   const id = `u_${mintToken().slice(0, 16)}`
   const writes = [
     c.env.DB.prepare(
@@ -681,6 +686,8 @@ app.post('/api/challenges/:slug/action', async (c) => {
   const challenge = await c.env.DB.prepare('SELECT id FROM challenges WHERE slug = ?').bind(c.req.param('slug')).first()
   if (!challenge) return c.json({ error: 'not_found' }, 404)
 
+  if (!await takeQuota(c.env.DB, 'actions', me.id, 60, 60)) return c.json({ error: 'slow_down' }, 429)
+
   await c.env.DB.batch([
     active ? c.env.DB.prepare(
       `INSERT INTO challenge_actions (challenge_id, person_id, kind, help_kind, note)
@@ -721,6 +728,8 @@ app.put('/api/uploads', async (c) => {
   const check = checkUpload(c.req.header('content-type'), declared ? Number(declared) : null)
   if (!check.ok) return c.json({ error: check.error, max_bytes: MAX_BYTES }, check.status)
   if (!c.req.raw.body) return c.json({ error: 'empty_body' }, 400)
+
+  if (!await takeQuota(c.env.DB, 'uploads', me.id, 10, 3600)) return c.json({ error: 'slow_down' }, 429)
 
   const key = mediaKey(me.id, check.ext, mintToken().slice(0, 12))
 
@@ -1803,6 +1812,7 @@ const secured = (res: Response, req: Request): Response => {
 export { app, secured }
 export default {
   async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(env.DB.prepare('DELETE FROM request_limits WHERE expires_at <= unixepoch()').run())
     ctx.waitUntil(runScout(env, controller.scheduledTime))
   },
   /**
