@@ -219,3 +219,30 @@ No deployment, invitation, account creation or production contribution was made.
 On the documentation branch based on `cf33289`, `make check` passed all 340 tests
 and the API typecheck. The web TypeScript check passed after `astro sync`
 generated its checkout-local types; `git diff --check` also passed.
+
+
+Follow-up on 2026-11-06: **thread date hydration mismatch fixed locally**.
+This addresses the console-error triage above and targets **Opens a thread ->
+Contributes**, both unmeasured in the current seven-full-day funnel (visits are
+also unmeasured). All three existing reports returned
+`CLOUDFLARE_API_TOKEN is not set`; no attributable improvement or regression can
+be established and no measured regression supports reverting the earlier PRs.
+
+The exact live invitation thread reproduced React error #418 in the built-in
+browser console. Its static HTML said `19 days ago`, while the hydrated page
+said `22 days ago`. The newspaper thread now uses the existing UTC calendar-date
+formatter in both the kicker and byline, so build age cannot change that text.
+A regression test renders the same thread at build time and three days later;
+it failed before the fix and passes afterward.
+
+Built the branch with `PUBLIC_API_BASE=https://technooptimists.org npm run
+build:web:only` and opened the exact thread through the existing read-only
+`node scripts/preview-editorial.mjs 4338` preview in the built-in browser.
+Visual inspection confirmed `Posted 14 Oct 2026`; **Write a response** still
+opened the composer. The local console had no React #418, only the expected
+405s for site/thread view writes refused by the read-only preview. This is not
+production deployment or a claim that the live CSP beacon error is resolved.
+`make check` passed 341 tests and the API typecheck; the web TypeScript check and
+`git diff --check` passed. Keep **prelaunch**: production verification, physical
+phone coverage, email delivery, authenticated reporting and approved invitations
+remain. No email, invitation or production contribution was sent.
