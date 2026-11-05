@@ -9,7 +9,7 @@ import { z } from 'zod'
 import {
   HANDLE_MAX, HANDLE_MIN, SESSION_COOKIE, clearCookie, cookie, currentPerson,
   handleFromEmail, handleProblem, hashToken, iso, linkExpiry, mintToken, nameFromEmail,
-  normalizeEmail, normalizeHandle, readCookie, sessionExpiry, signalCookie,
+  normalizeEmail, normalizeHandle, readCookie, sessionExpiry, signalCookie, loginCookie, loginCookieName,
 } from './auth'
 import {
   DEFAULT_PROVIDER, ProviderError, challengeOf, disconnectAccount, isAiAction,
@@ -20,8 +20,10 @@ import { isAdminEmail } from './admin'
 import { track } from './analytics'
 import { community } from './community'
 import { notify } from './slack'
-import { MAX_BYTES, checkUpload, dimensionsOf, mediaKey, mediaUrl } from './media'
+import { MAX_BYTES, checkUpload, mediaKey, mediaUrl, storeUpload } from './media'
 import { slugify } from './slug'
+import { takeQuota } from './rate-limit'
+import { BodyTooLarge, limitRequestBody } from './request-body'
 import {
   ACTION_KINDS, CHALLENGE_TYPES, EMPTY_ACTIONS, FEED_SORTS, HELP_KINDS, ROLES, STAGES,
   prizeStatusOf,
@@ -80,6 +82,16 @@ type Env = {
 }
 
 const app = new Hono<{ Bindings: Env }>()
+app.use('/api/*', async (c, next) => {
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(c.req.method)) {
+    const origin = c.req.header('origin')
+    if ((origin && origin !== new URL(c.req.url).origin) || c.req.header('sec-fetch-site') === 'cross-site') {
+      return c.json({ error: 'bad_origin' }, 403)
+    }
+  }
+  await next()
+})
+app.use('/api/*', limitRequestBody)
 
 /*
  * One address per page: www is a 301 to the apex (Search Console listed both).
@@ -340,6 +352,8 @@ app.post('/api/challenges', async (c) => {
   if (!parsed.success) return c.json({ error: 'bad_body', detail: parsed.error.issues }, 400)
   const { type, title, summary, body, media, location, lat, lng, tags, impact } = parsed.data
 
+  if (!await takeQuota(c.env.DB, 'threads', me.id, 5, 3600)) return c.json({ error: 'slow_down' }, 429)
+
   const id = `c_${mintToken().slice(0, 16)}`
   const slug = await uniqueSlug(c.env.DB, slugify(title))
 
@@ -569,6 +583,8 @@ app.post('/api/challenges/:slug/updates', async (c) => {
     return c.json({ error: 'not_yours' }, 403)
   }
 
+  if (!await takeQuota(c.env.DB, 'updates', me.id, 20, 3600)) return c.json({ error: 'slow_down' }, 429)
+
   const id = `u_${mintToken().slice(0, 16)}`
   const writes = [
     c.env.DB.prepare(
@@ -681,6 +697,8 @@ app.post('/api/challenges/:slug/action', async (c) => {
   const challenge = await c.env.DB.prepare('SELECT id FROM challenges WHERE slug = ?').bind(c.req.param('slug')).first()
   if (!challenge) return c.json({ error: 'not_found' }, 404)
 
+  if (!await takeQuota(c.env.DB, 'actions', me.id, 60, 60)) return c.json({ error: 'slow_down' }, 429)
+
   await c.env.DB.batch([
     active ? c.env.DB.prepare(
       `INSERT INTO challenge_actions (challenge_id, person_id, kind, help_kind, note)
@@ -722,36 +740,25 @@ app.put('/api/uploads', async (c) => {
   if (!check.ok) return c.json({ error: check.error, max_bytes: MAX_BYTES }, check.status)
   if (!c.req.raw.body) return c.json({ error: 'empty_body' }, 400)
 
+  if (!await takeQuota(c.env.DB, 'uploads', me.id, 10, 3600)) return c.json({ error: 'slow_down' }, 429)
+
   const key = mediaKey(me.id, check.ext, mintToken().slice(0, 12))
 
-  /*
-   * Buffer once, then store and measure from the same bytes. Streaming the body
-   * straight through is cheaper, but the stream is consumed by the put and the
-   * dimensions are only readable from the header - and a second read of an R2
-   * object to recover them costs more than holding a file we already cap at
-   * 100MB.
-   */
-  const bytes = new Uint8Array(await c.req.raw.arrayBuffer())
-  if (bytes.byteLength === 0) return c.json({ error: 'empty_body' }, 400)
-
-  // A client can lie in content-length, so the cap is enforced on what actually
-  // arrived, before anything is written.
-  if (bytes.byteLength > MAX_BYTES) return c.json({ error: 'too_large', max_bytes: MAX_BYTES }, 413)
-
-  const stored = await c.env.MEDIA.put(key, bytes, {
-    httpMetadata: { contentType: c.req.header('content-type')!.split(';')[0].trim() },
-    customMetadata: { person_id: me.id },
-  })
-
-  // A format this cannot parse (video, HEIC) returns null and the surfaces fall
-  // back to their own shape, which is why w/h are optional on Media.
-  const size = dimensionsOf(bytes)
-
-  return c.json({
-    ok: true,
-    media: { kind: check.kind, url: mediaUrl(key), key, ...(size ?? {}) },
-    bytes: stored?.size ?? bytes.byteLength,
-  })
+  try {
+    const stored = await storeUpload(c.env.MEDIA, key, c.req.raw.body, {
+      httpMetadata: { contentType: c.req.header('content-type')!.split(';')[0].trim().toLowerCase() },
+      customMetadata: { person_id: me.id },
+    })
+    if (!stored.bytes) return c.json({ error: 'empty_body' }, 400)
+    return c.json({
+      ok: true,
+      media: { kind: check.kind, url: mediaUrl(key), key, ...(stored.size ?? {}) },
+      bytes: stored.bytes,
+    })
+  } catch (error) {
+    if (error instanceof BodyTooLarge) return c.json({ error: 'too_large', max_bytes: MAX_BYTES }, 413)
+    throw error
+  }
 })
 
 /**
@@ -789,7 +796,7 @@ const emailBody = z.object({
  * destination is not.
  */
 const safeNext = (raw: string | undefined) =>
-  raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : null
+  raw && raw.startsWith('/') && !raw.startsWith('//') && !/[\\\x00-\x20\x7f]/.test(raw) ? raw : null
 
 /**
  * How many sign-in links one address, and one IP, may ask for per hour.
@@ -844,12 +851,20 @@ app.post('/api/auth/request', async (c) => {
   if (!parsed.success) return c.json({ error: 'bad_email' }, 400)
   const email = normalizeEmail(parsed.data.email)
   const ip = c.req.header('cf-connecting-ip') ?? null
+  const url = new URL(c.req.url)
+  const localLink = c.env.ENVIRONMENT === 'dev' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)
+  if (!c.env.RESEND_API_KEY && !localLink) return c.json({ error: 'mail_unavailable' }, 503)
 
   const over = await overRateLimit(c.env.DB, email, ip)
   if (over) {
     // 429 with no detail about which limit tripped. Saying "too many for this
     // address" confirms the address was tried, which is the same disclosure the
     // uniform success response at the bottom of this handler exists to prevent.
+    return c.json({ error: 'too_many_requests' }, 429)
+  }
+
+  if (!await takeQuota(c.env.DB, 'login-email', email, LINKS_PER_EMAIL_HOUR, 3600)
+    || !await takeQuota(c.env.DB, 'login-ip', ip ?? 'unknown', LINKS_PER_IP_HOUR, 3600)) {
     return c.json({ error: 'too_many_requests' }, 429)
   }
 
@@ -866,16 +881,9 @@ app.post('/api/auth/request', async (c) => {
   const link = `${new URL(c.req.url).origin}/api/auth/callback?token=${token}${next ? `&next=${encodeURIComponent(next)}` : ''}`
   const sent = await sendMagicLink(c.env, email, link)
 
-  // In dev there is no mail key, so the link goes to the Worker log. Never in prod.
-  if (!sent) console.log(`[auth] magic link for ${email}: ${link}`)
-
-  // The link is a bearer token for the account. Returning it in the response
-  // body is a convenience for local dev ONLY - anywhere it is reachable by a
-  // stranger, POSTing someone else's address would hand over their login. Prod
-  // fails closed: if the mail key is missing there, sign-in breaks loudly
-  // rather than quietly becoming an open door.
-  const showLink = !sent && c.env.ENVIRONMENT !== 'prod'
-  return c.json({ ok: true, sent, ...(showLink ? { dev_link: link } : {}) })
+  if (!sent && !localLink) return c.json({ error: 'mail_unavailable' }, 503)
+  c.header('set-cookie', loginCookie(await hashToken(token), url.protocol === 'https:'))
+  return c.json({ ok: true, sent, ...(!sent && localLink ? { dev_link: link } : {}) })
 })
 
 /**
@@ -925,7 +933,7 @@ const sendMagicLink = async (env: Env, email: string, link: string): Promise<boo
     }),
   })
   if (!res.ok) {
-    console.log(`[auth] resend failed ${res.status}: ${await res.text()}`)
+    console.log(`[auth] resend failed ${res.status}`)
     return false
   }
   return true
@@ -955,6 +963,10 @@ app.get('/api/auth/callback', async (c) => {
     "SELECT 1 ok FROM magic_links WHERE token_hash = ? AND expires_at > datetime('now')",
   ).bind(hash).first()
   if (!stillValid) return c.redirect('/signin?error=expired', 302)
+  const secure = new URL(c.req.url).protocol === 'https:'
+  if (readCookie(c.req.header('cookie'), loginCookieName(secure)) !== hash) {
+    return c.redirect('/signin?error=browser', 302)
+  }
 
   // Claim the link here, not in the batch at the end of the handler. The reads
   // above are diagnostic - they exist to tell the reader which of the three
@@ -964,7 +976,7 @@ app.get('/api/auth/callback', async (c) => {
   // claim the same statement as the test: exactly one caller sees changes = 1,
   // and the loser is told the link is used rather than handed a second session.
   const claim = await c.env.DB.prepare(
-    "UPDATE magic_links SET used_at = datetime('now') WHERE token_hash = ? AND used_at IS NULL",
+    "UPDATE magic_links SET used_at = datetime('now') WHERE token_hash = ? AND used_at IS NULL AND expires_at > datetime('now')",
   ).bind(hash).run()
   if (claim.meta.changes !== 1) return c.redirect('/signin?error=used', 302)
 
@@ -993,8 +1005,8 @@ app.get('/api/auth/callback', async (c) => {
     c.env.DB.prepare("UPDATE identities SET last_login_at = datetime('now') WHERE email = ?").bind(email),
   ])
 
-  const secure = new URL(c.req.url).protocol === 'https:'
   c.header('set-cookie', cookie(session, secure))
+  c.header('set-cookie', loginCookie('', secure), { append: true })
   // Two cookies, so `append` - c.header() replaces by default, and without it
   // the session cookie set on the line above would be dropped and sign-in
   // would silently do nothing.
@@ -1260,6 +1272,8 @@ app.get('/api/ai/callback', async (c) => {
   // without a verifier it cannot succeed, and burning the code makes the
   // retry fail too.
   if (!attempt) return fail('unknown')
+  const me = await currentPerson(c)
+  if (!me || me.id !== attempt.person_id) return fail('session')
   // Back button after a successful connect re-sends a spent code. That is not
   // an error to show anyone - they are connected.
   if (attempt.used_at) return c.redirect(withParam(safeNext(attempt.next ?? undefined) ?? '/settings#compute', 'connected', '1'), 302)
@@ -1336,6 +1350,8 @@ app.post('/api/challenges/:slug/ai/:action', async (c) => {
   ])
   if ((perPerson?.n ?? 0) >= AI_RUNS_PER_PERSON_HOUR) return c.json({ error: 'rate_limited_person' }, 429)
   if ((perChallenge?.n ?? 0) >= AI_RUNS_PER_CHALLENGE_DAY) return c.json({ error: 'rate_limited_challenge' }, 429)
+  if (!await takeQuota(c.env.DB, 'ai-person', me.id, AI_RUNS_PER_PERSON_HOUR, 3600)) return c.json({ error: 'rate_limited_person' }, 429)
+  if (!await takeQuota(c.env.DB, 'ai-thread', challenge.id, AI_RUNS_PER_CHALLENGE_DAY, 86400)) return c.json({ error: 'rate_limited_challenge' }, 429)
 
   // Thread fields are concatenated as plain data. The system prompt in
   // ai-accounts.ts is fixed and says so; nothing here interpolates thread text
@@ -1433,7 +1449,7 @@ app.get('/api/challenges/:slug/ai/runs', async (c) => {
   if (!challenge) return c.json({ error: 'not_found' }, 404)
 
   const rows = await c.env.DB.prepare(
-    `SELECT r.id, r.action, r.model, r.output, r.created_at, p.handle, p.name, p.avatar_url
+    `SELECT r.id, r.action, r.model, r.output, r.created_at, p.handle, p.avatar_url
      FROM ai_runs r JOIN people p ON p.id = r.person_id
      WHERE r.challenge_id = ? ORDER BY r.created_at DESC LIMIT 20`,
   ).bind(challenge.id).all()
@@ -1444,7 +1460,7 @@ app.get('/api/challenges/:slug/ai/runs', async (c) => {
     runs: (rows.results ?? []).map((r: Row) => ({
       id: String(r.id), action: String(r.action), model: String(r.model),
       output: String(r.output), created_at: String(r.created_at),
-      by: { handle: String(r.handle), name: String(r.name), avatar_url: r.avatar_url == null ? null : String(r.avatar_url) },
+      by: { handle: String(r.handle), avatar_url: r.avatar_url == null ? null : String(r.avatar_url) },
     })),
   })
 })
@@ -1599,6 +1615,8 @@ app.post('/api/site/view', async (c) => {
   const origin = c.req.header('origin')
   if (origin && origin !== new URL(c.req.url).origin) return c.json({ error: 'bad_origin' }, 403)
 
+  if (!await takeQuota(c.env.DB, 'site-views', c.req.header('cf-connecting-ip') ?? 'unknown', 60, 60)) return c.json({ error: 'slow_down' }, 429)
+
   const viewedOn = new Date().toISOString().slice(0, 10)
   await c.env.DB.prepare(
     'INSERT OR IGNORE INTO site_views (viewer_key, viewed_on) VALUES (?, ?)',
@@ -1643,6 +1661,8 @@ app.post('/api/client-errors', bodyLimit({ maxSize: 8_000, onError: (c) => c.jso
   if (!parsed.success) return c.json({ error: 'bad_body' }, 400)
   const { message, stack, url, ua } = parsed.data
   const path = new URL(url).pathname
+
+  if (!await takeQuota(c.env.DB, 'client-errors', c.req.header('cf-connecting-ip') ?? 'unknown', 10, 60)) return c.json({ error: 'slow_down' }, 429)
 
   logError('browser', {
     ray: c.req.header('cf-ray') ?? 'no-ray',
@@ -1806,6 +1826,7 @@ const secured = (res: Response, req: Request): Response => {
 export { app, secured }
 export default {
   async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(env.DB.prepare('DELETE FROM request_limits WHERE expires_at <= unixepoch()').run())
     ctx.waitUntil(runScout(env, controller.scheduledTime))
   },
   /**

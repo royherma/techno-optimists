@@ -1,3 +1,5 @@
+import { BodyTooLarge } from './request-body'
+
 /**
  * Media upload to R2.
  *
@@ -118,3 +120,51 @@ const webpSize = (b: Uint8Array) => {
 }
 
 const u16le14 = (b: Uint8Array, o: number) => (b[o] | (b[o + 1] << 8)) & 0x3fff
+
+export const storeUpload = async (bucket: R2Bucket, key: string, body: ReadableStream<Uint8Array>, options: R2PutOptions) => {
+  const reader = body.getReader()
+  const buffer = new Uint8Array(5 * 1024 * 1024)
+  const parts: R2UploadedPart[] = []
+  let multipart: R2MultipartUpload | undefined
+  let used = 0
+  let total = 0
+  let size: { w: number; h: number } | null = null
+  try {
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      total += value.byteLength
+      if (total > MAX_BYTES) throw new BodyTooLarge()
+      let offset = 0
+      while (offset < value.length) {
+        const count = Math.min(buffer.length - used, value.length - offset)
+        buffer.set(value.subarray(offset, offset + count), used)
+        used += count
+        offset += count
+        if (used === buffer.length) {
+          if (!multipart) {
+            size = dimensionsOf(buffer)
+            multipart = await bucket.createMultipartUpload(key, options)
+          }
+          parts.push(await multipart.uploadPart(parts.length + 1, buffer))
+          used = 0
+        }
+      }
+    }
+    if (multipart) {
+      if (used) parts.push(await multipart.uploadPart(parts.length + 1, buffer.subarray(0, used)))
+      await multipart.complete(parts)
+    } else if (total) {
+      const bytes = buffer.subarray(0, used)
+      size = dimensionsOf(bytes)
+      await bucket.put(key, bytes, options)
+    }
+    return { bytes: total, size }
+  } catch (error) {
+    await reader.cancel().catch(() => {})
+    if (multipart) await multipart.abort().catch(() => {})
+    throw error
+  } finally {
+    reader.releaseLock()
+  }
+}

@@ -20,6 +20,7 @@ const REASON: Record<string, string> = {
   used: 'That link has already been used. Ask for a new one.',
   unknown: 'That link is no longer valid. Ask for a new one.',
   missing: 'That link was incomplete. Ask for a new one.',
+  browser: 'Open the link in the browser where you requested it, or request a new link here.',
 }
 
 /** The copy for ?error=, or null when the reader arrived here on their own. */
