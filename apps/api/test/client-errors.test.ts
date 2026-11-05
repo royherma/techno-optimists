@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { app } from '../src/index'
 
 const stubDb = () => ({
-  prepare: () => ({ bind: function () { return this }, all: async () => ({ results: [] }), first: async () => null }),
+  prepare: (sql: string) => ({ bind: function () { return this }, all: async () => ({ results: [] }), first: async () => sql.includes('INSERT INTO request_limits') ? { allowed: 1 } : null }),
   batch: async () => [],
 }) as unknown as D1Database
 

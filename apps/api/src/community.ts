@@ -104,6 +104,8 @@ community.post('/:slug/view', async (c) => {
   const row = await c.env.DB.prepare('SELECT id FROM challenges WHERE slug = ?').bind(c.req.param('slug')).first()
   if (!row) return c.json({ error: 'not_found' }, 404)
 
+  if (!await takeQuota(c.env.DB, 'thread-views', c.req.header('cf-connecting-ip') ?? 'unknown', 60, 60)) return c.json({ error: 'slow_down' }, 429)
+
   // IP and User-Agent identify a reload; the Challenge id salts them so the
   // same reader hashes differently on every Challenge. SHA-256 of that, stored
   // truncated - enough to collide rarely, not enough to reverse to an address.
