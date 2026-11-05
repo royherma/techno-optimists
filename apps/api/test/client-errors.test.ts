@@ -190,3 +190,101 @@ describe('browser error reporter', () => {
     expect((await post(beacons[0].body)).status).toBe(200)
   })
 })
+
+
+describe('browser error transport failures', () => {
+  type Listener = (event: unknown) => void
+
+  const loadReporter = async (sendBeacon?: ReturnType<typeof vi.fn>) => {
+    vi.resetModules()
+    const listeners: Record<string, Listener> = {}
+    const fetch = vi.fn().mockResolvedValue(new Response('{}'))
+    vi.stubGlobal('window', { addEventListener: (type: string, fn: Listener) => { listeners[type] = fn } })
+    vi.stubGlobal('location', { origin: 'https://technooptimists.org', pathname: '/c/pond', search: '' })
+    vi.stubGlobal('navigator', { userAgent: 'TestUA', sendBeacon })
+    vi.stubGlobal('fetch', fetch)
+    await import('../../web/src/lib/error-reporter')
+    return { listeners, fetch }
+  }
+
+  afterEach(() => vi.unstubAllGlobals())
+
+  it.each(['missing', 'full', 'throwing'])('uses a JSON POST when beacon is %s', async (mode) => {
+    const beacon = mode === 'missing' ? undefined : vi.fn(() => {
+      if (mode === 'throwing') throw new Error('beacon unavailable')
+      return false
+    })
+    const { listeners, fetch } = await loadReporter(beacon)
+    listeners.error({ message: 'boom', error: new Error('boom') })
+    expect(fetch).toHaveBeenCalledTimes(1)
+    const [endpoint, request] = fetch.mock.calls[0]
+    expect(endpoint).toBe('/api/client-errors')
+    expect(request).toMatchObject({ method: 'POST', headers: { 'content-type': 'application/json' }, keepalive: true })
+    expect(JSON.parse(request.body)).toMatchObject({ message: 'boom', url: 'https://technooptimists.org/c/pond', ua: 'TestUA' })
+  })
+
+  it('does not send twice when the beacon accepts a report', async () => {
+    const beacon = vi.fn(() => true)
+    const { listeners, fetch } = await loadReporter(beacon)
+    listeners.error({ message: 'boom' })
+    expect(beacon).toHaveBeenCalledTimes(1)
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it.each(['reject', 'throw'])('contains fetch failures (%s) and still caps attempts at five', async (mode) => {
+    const { listeners, fetch } = await loadReporter()
+    if (mode === 'reject') fetch.mockRejectedValue(new Error('offline'))
+    else fetch.mockImplementation(() => { throw new Error('offline') })
+    for (let i = 0; i < 12; i++) {
+      expect(() => listeners.unhandledrejection({ reason: new Error('boom') })).not.toThrow()
+    }
+    await Promise.resolve()
+    expect(fetch).toHaveBeenCalledTimes(5)
+  })
+
+  it('handles rejection values that cannot be converted to strings', async () => {
+    const { listeners, fetch } = await loadReporter()
+    expect(() => listeners.unhandledrejection({ reason: Object.create(null) })).not.toThrow()
+    expect(JSON.parse(fetch.mock.calls[0][1].body)).toMatchObject({ message: 'Unknown rejection', stack: '' })
+  })
+
+  it('delivers both event types through fetch to the Worker with one shared five-report budget', async () => {
+    const { listeners, fetch } = await loadReporter()
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const requests: Promise<Response>[] = []
+    fetch.mockImplementation((url: string, init: RequestInit) => {
+      const { keepalive, ...incoming } = init
+      expect(keepalive).toBe(true)
+      // keepalive controls the browser connection; it is not transmitted to the Worker.
+      const response = app.request(url, incoming, { DB: stubDb() })
+      const pending = Promise.resolve(response)
+      requests.push(pending)
+      return pending
+    })
+    for (let i = 0; i < 8; i++) {
+      if (i % 2) listeners.error({ message: `error ${i}`, error: new Error(`error ${i}`) })
+      else listeners.unhandledrejection({ reason: new Error(`rejection ${i}`) })
+    }
+    const responses = await Promise.all(requests)
+    expect(responses.map((response) => response.status), JSON.stringify(loggedLines(log))).toEqual([200, 200, 200, 200, 200])
+    expect(loggedLines(log).map((line) => line.message)).toEqual(['rejection 0', 'error 1', 'rejection 2', 'error 3', 'rejection 4'])
+    for (const line of loggedLines(log)) {
+      expect(line).toMatchObject({ level: 'error', source: 'browser', path: '/c/pond', ua: 'TestUA' })
+      expect(line.stack).toContain('Error:')
+    }
+  })
+
+  it('keeps long URLs and escaped Unicode reports within the route limits', async () => {
+    const { listeners, fetch } = await loadReporter()
+    vi.stubGlobal('location', { origin: 'https://technooptimists.org', pathname: '/c/pond', search: '?q=' + 'x'.repeat(5000) })
+    vi.stubGlobal('navigator', { userAgent: '\u0001'.repeat(400) })
+    listeners.error({ message: '\u0001'.repeat(500), error: Object.assign(new Error('boom'), { stack: '漢\u0001'.repeat(1000) }) })
+    const body = fetch.mock.calls[0][1].body
+    expect(new TextEncoder().encode(body).byteLength).toBeLessThanOrEqual(8000)
+    expect(JSON.parse(body).url).toHaveLength(1000)
+    vi.unstubAllGlobals()
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect((await post(JSON.parse(body))).status).toBe(200)
+    expect(loggedLines(spy)[0].source).toBe('browser')
+  })
+})
