@@ -182,3 +182,40 @@ growth is established, so no revert is justified. Keep the stage **prelaunch**.
 Phone/layout QA, production deployment and verification, and approved recipients
 remain before invitations. No production data, email, invitations or deployment
 were created by this check.
+
+Follow-up on 2026-11-05: **live narrow-screen and desktop visual checks are
+verified** for the exact sparrow thread above. This advances the layout portion
+of before-sending step 2, targeting **29 visits -> thread opens unmeasured ->
+0 contributors** over the supplied seven full days. It does not claim growth.
+
+Used MightyMouse Staging's built-in Browser and native screenshots. The narrow
+viewport measured `339 x 815` CSS pixels with `devicePixelRatio: 2` in the page's
+DevTools console (`JSON.stringify({width:innerWidth,height:innerHeight,dpr:devicePixelRatio})`).
+The cover, heading, discussion entry, typed-action controls and source-domain
+link were visible. Story pagination advanced from 1/7 to 2/7. **Write a response**
+opened the composer: the response field was visible on page 1/2; **Next** exposed
+the label selector, **Sign in to respond** and draft-retention explanation on
+page 2/2. No response was entered or submitted. Enlarging the built-in browser
+showed the desktop layout, including the full heading, cover, all four typed
+actions, discussion and original-article link. The panel was restored afterward.
+This is phone-width Chromium coverage, not physical-phone, touch-keyboard or
+Safari testing; the literal phone-device check remains open.
+
+The live thread's **Feedback** link now includes this exact thread URL and the
+missing/broken/wanted prompts, superseding the October observations that it was
+absent. No email was sent. The visitors, thread-opens and contributors commands
+each returned `CLOUDFLARE_API_TOKEN is not set`. The supplied snapshot therefore
+remains the baseline; prior fixes have no attributable before/after result and
+there is no measured regression justifying a revert. This QA visit is test
+traffic, not a recruited reader.
+
+The live console also reported a blocked Cloudflare Insights beacon under CSP
+and React error #418. Neither prevented the reading or composer checks above;
+their cause and wider impact were not established. Do not call this a clean
+console or full production-journey approval. Keep **prelaunch**: physical-phone
+coverage, production email delivery, console-error triage, authenticated baseline
+reports and recipient/message approval remain separate from this visual evidence.
+No deployment, invitation, account creation or production contribution was made.
+On the documentation branch based on `cf33289`, `make check` passed all 340 tests
+and the API typecheck. The web TypeScript check passed after `astro sync`
+generated its checkout-local types; `git diff --check` also passed.
