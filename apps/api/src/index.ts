@@ -1612,6 +1612,8 @@ app.post('/api/site/view', async (c) => {
   const origin = c.req.header('origin')
   if (origin && origin !== new URL(c.req.url).origin) return c.json({ error: 'bad_origin' }, 403)
 
+  if (!await takeQuota(c.env.DB, 'site-views', c.req.header('cf-connecting-ip') ?? 'unknown', 60, 60)) return c.json({ error: 'slow_down' }, 429)
+
   const viewedOn = new Date().toISOString().slice(0, 10)
   await c.env.DB.prepare(
     'INSERT OR IGNORE INTO site_views (viewer_key, viewed_on) VALUES (?, ?)',
@@ -1656,6 +1658,8 @@ app.post('/api/client-errors', bodyLimit({ maxSize: 8_000, onError: (c) => c.jso
   if (!parsed.success) return c.json({ error: 'bad_body' }, 400)
   const { message, stack, url, ua } = parsed.data
   const path = new URL(url).pathname
+
+  if (!await takeQuota(c.env.DB, 'client-errors', c.req.header('cf-connecting-ip') ?? 'unknown', 10, 60)) return c.json({ error: 'slow_down' }, 429)
 
   logError('browser', {
     ray: c.req.header('cf-ray') ?? 'no-ray',
