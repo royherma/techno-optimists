@@ -3,7 +3,7 @@ import { prizeAmountLabel, type Challenge, type Update } from '../../../../../pa
 import type { DetailPerson } from '../../lib/api'
 import { getMe, type Me } from '../../lib/session'
 import { STAGE_MEANING, STAGE_STAMP, impactLabel } from '../../lib/vocab'
-import { formatDate, relativeDate } from '../../lib/dates'
+import { formatDate } from '../../lib/dates'
 import { threadPageTitle } from '../../lib/thread-title.mjs'
 import PagedContent from './PagedContent'
 import StageBadge from './StageBadge'
@@ -146,9 +146,10 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
   }, [data?.challenge.slug])
   if (!data) return <div className="np-empty"><h1>{error || 'Opening the thread…'}</h1>{error && <button onClick={() => void refresh().catch(e => setError(e.message))}>Try again</button>}</div>
   const c = data.challenge, image = c.media[Math.min(media, c.media.length - 1)]
+  // Static HTML may be days old when hydrated. Keep the initial date independent of the reader clock.
   const dateStr = c.imported_at || c.created_at
   return <div className="np-challenge np-challenge-sheet" data-stage={c.stage}>
-    <div className="np-challenge-kicker"><a href="/">← All threads</a><span className={`type-${c.type}`}>{c.type} <span> / {c.location || 'Around the world'}</span></span><StageBadge stage={c.stage} /><span className="np-relative">{impactLabel(c.impact) ? `Impact: ${impactLabel(c.impact)}` : 'Impact not specified'}</span>{dateStr && <span className="np-kicker-date" title={formatDate(dateStr)}>Posted {relativeDate(dateStr)}</span>}{me?.is_admin && <button onClick={() => setEditing(true)}>Edit thread</button>}</div>
+    <div className="np-challenge-kicker"><a href="/">← All threads</a><span className={`type-${c.type}`}>{c.type} <span> / {c.location || 'Around the world'}</span></span><StageBadge stage={c.stage} /><span className="np-relative">{impactLabel(c.impact) ? `Impact: ${impactLabel(c.impact)}` : 'Impact not specified'}</span>{dateStr && <span className="np-kicker-date" title={formatDate(dateStr)}>Posted {formatDate(dateStr)}</span>}{me?.is_admin && <button onClick={() => setEditing(true)}>Edit thread</button>}</div>
     {error && <p className="np-error" role="alert">{error} <button onClick={() => void refresh().catch(e => setError(e.message))}>Retry</button></p>}
     <div className="np-panel-grid">
       <section className="np-panel np-panel-story" aria-label="thread story">
@@ -164,7 +165,7 @@ export default function ChallengePage({ initial }: { initial?: ChallengeData }) 
               * only place guaranteed to be on page one whatever the column
               * height. Floated, so it must come first in source order. */}
             <BriefingCta type={c.type} />
-            <p className="np-story-author">Shared by <a href={'/people?handle=' + encodeURIComponent(c.author.handle)}>@{c.author.handle}</a> · Posted {relativeDate(dateStr)} ({formatDate(dateStr)}) <ViewsCount count={c.views_count ?? 0} title={c.title} /></p>
+            <p className="np-story-author">Shared by <a href={'/people?handle=' + encodeURIComponent(c.author.handle)}>@{c.author.handle}</a> · Posted {formatDate(dateStr)} <ViewsCount count={c.views_count ?? 0} title={c.title} /></p>
             {c.briefing && <Briefing briefing={c.briefing} type={c.type} />}
             {c.body && c.body.split(/\n\s*\n/).map((p, i) => {
               if (p.includes('\n- ')) {
