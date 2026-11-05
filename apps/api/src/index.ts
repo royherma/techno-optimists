@@ -1347,6 +1347,8 @@ app.post('/api/challenges/:slug/ai/:action', async (c) => {
   ])
   if ((perPerson?.n ?? 0) >= AI_RUNS_PER_PERSON_HOUR) return c.json({ error: 'rate_limited_person' }, 429)
   if ((perChallenge?.n ?? 0) >= AI_RUNS_PER_CHALLENGE_DAY) return c.json({ error: 'rate_limited_challenge' }, 429)
+  if (!await takeQuota(c.env.DB, 'ai-person', me.id, AI_RUNS_PER_PERSON_HOUR, 3600)) return c.json({ error: 'rate_limited_person' }, 429)
+  if (!await takeQuota(c.env.DB, 'ai-thread', challenge.id, AI_RUNS_PER_CHALLENGE_DAY, 86400)) return c.json({ error: 'rate_limited_challenge' }, 429)
 
   // Thread fields are concatenated as plain data. The system prompt in
   // ai-accounts.ts is fixed and says so; nothing here interpolates thread text
