@@ -1260,6 +1260,8 @@ app.get('/api/ai/callback', async (c) => {
   // without a verifier it cannot succeed, and burning the code makes the
   // retry fail too.
   if (!attempt) return fail('unknown')
+  const me = await currentPerson(c)
+  if (!me || me.id !== attempt.person_id) return fail('session')
   // Back button after a successful connect re-sends a spent code. That is not
   // an error to show anyone - they are connected.
   if (attempt.used_at) return c.redirect(withParam(safeNext(attempt.next ?? undefined) ?? '/settings#compute', 'connected', '1'), 302)
