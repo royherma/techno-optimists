@@ -245,8 +245,8 @@ describe('magic link is never returned to the caller in prod', () => {
   it('withholds the link in prod, with no mail key configured', async () => {
     const r = await requestLink('prod')
     const body = await r.json() as { ok: boolean; sent: boolean; dev_link?: string }
-    expect(r.status).toBe(200)
-    expect(body.sent).toBe(false)
+    expect(r.status).toBe(503)
+    expect(body).toEqual({ error: 'mail_unavailable' })
     expect(body.dev_link).toBeUndefined()
   })
 
