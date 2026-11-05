@@ -11,7 +11,7 @@ it.each(['/\\evil.example/phish', '/\t/evil.example', '/\n/evil.example', '//evi
   const token = 'c'.repeat(64)
   f.sqlite.prepare('INSERT INTO magic_links(token_hash,email,expires_at) VALUES (?,?,?)')
     .run(await hashToken(token), 'reader@example.test', '2099-01-01')
-  const r = await app.request(`https://site.test/api/auth/callback?token=${token}&next=${encodeURIComponent(next)}`, {}, { DB: f.DB })
+  const r = await app.request(`https://site.test/api/auth/callback?token=${token}&next=${encodeURIComponent(next)}`, { headers: { cookie: `__Host-to_login=${await hashToken(token)}` } }, { DB: f.DB })
   expect(r.headers.get('location')).toBe('/')
 })
 
