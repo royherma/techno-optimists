@@ -88,13 +88,11 @@ The static asset handler otherwise returns a 404 for uploaded R2 files even
 though the upload succeeded. Check a real uploaded image in a browser after
 changing this routing, including opening it in a new tab.
 
-**Sign-in rate limiting counts rows in `magic_links`. Not the Workers binding, not KV.**
-5/hour per address, 20/hour per IP. The native binding cannot express an hour: `period`
-is an enum of exactly `[10, 60]` seconds (`node_modules/wrangler/config-schema.json`), so
-an attacker paces around it at one request every 61 seconds. KV caps at one write per
-second per key, and a counter is one key, so the limiter becomes the bottleneck under
-exactly the load it exists for. `magic_links` already stores `email`, `ip` and
-`created_at`, so the count is two indexed `COUNT(*)`s over a table we write anyway.
+**Sign-in quotas are reserved atomically in `request_limits` before sending mail.**
+The existing `magic_links` count also protects the rollout's prior hour. Limits remain
+5/hour per address and 20/hour per IP. The same additive table bounds posting and
+uploads; apply `community.sql` through the migration workflow before deploying.
+Scheduled execution prunes expired counters.
 
 **The Worker's CSP header must NOT restate `script-src`.** Astro's `security.csp`
 generates the page CSP with per-build script hashes; island hydration ships three inline

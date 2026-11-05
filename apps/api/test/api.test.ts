@@ -47,10 +47,10 @@ describe('mergeActions', () => {
  * validation, status codes and shaping are what get exercised.
  */
 const stubDb = (rows: Record<string, unknown>[] = [], first: unknown = null) => ({
-  prepare: () => ({
+  prepare: (sql: string) => ({
     bind: function () { return this },
     all: async () => ({ results: rows }),
-    first: async () => first,
+    first: async () => sql.includes('INSERT INTO request_limits') ? { allowed: 1 } : first,
   }),
   batch: async () => [],
 })
