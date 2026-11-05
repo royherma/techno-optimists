@@ -246,3 +246,32 @@ production deployment or a claim that the live CSP beacon error is resolved.
 `git diff --check` passed. Keep **prelaunch**: production verification, physical
 phone coverage, email delivery, authenticated reporting and approved invitations
 remain. No email, invitation or production contribution was sent.
+
+Follow-up on 2026-11-06, second run: **blocked Web Analytics beacon fixed locally**.
+This closes the remaining CSP cause in the console-error triage above. The target
+is reliable measurement around **29 visits -> thread opens unmeasured -> 0
+contributors**, not a claim that allowing a beacon creates readers. The existing
+D1 funnel reports are separate: all three still return `CLOUDFLARE_API_TOKEN is
+not set`, so no attributable improvement or regression supports a revert.
+
+The live invitation thread's built-in browser console refused Cloudflare's
+versioned `https://static.cloudflareinsights.com/beacon.min.js/...` script.
+Astro's script resources now allow that HTTPS host alongside `'self'` and the
+generated hashes. No wildcard, inline-script exception or additional collector
+is added. [Cloudflare's CSP guidance](https://developers.cloudflare.com/web-analytics/faq/#what-do-i-need-to-add-to-my-content-security-policy-csp)
+confirms automatic injection collects at same-origin `/cdn-cgi/rum`, already
+covered by `connect-src 'self'`. No second beacon is embedded in the site.
+
+Validation: `make check` passed 341 tests and the API typecheck; the web
+`tsc --noEmit` check passed. The production-API build produced 267 HTML pages;
+all retain script hashes, self-hosted scripts and same-origin-only connections,
+with the beacon host permitted and no wildcard or unsafe script exception.
+Using `node scripts/preview-editorial.mjs 4339`, the exact invitation thread
+rendered in the built-in browser and **Write a response** opened its composer.
+In that local page's DevTools, loading the exact versioned beacon URL with no
+site token returned `loaded: true` and an empty `securitypolicyviolation` list.
+The only initial console errors were the preview's expected 405 view-write
+refusals. This verifies script loading, not analytics ingestion or production
+delivery. The live thread still reproduces React #418, confirming the earlier
+hydration fix awaits deployment. Keep **prelaunch**; deployment and live readback,
+phone/email checks, authenticated reports and approved invitations remain.
