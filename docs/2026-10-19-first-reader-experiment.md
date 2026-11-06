@@ -275,3 +275,22 @@ refusals. This verifies script loading, not analytics ingestion or production
 delivery. The live thread still reproduces React #418, confirming the earlier
 hydration fix awaits deployment. Keep **prelaunch**; deployment and live readback,
 phone/email checks, authenticated reports and approved invitations remain.
+
+Follow-up on 2026-11-07: **authenticated baseline recorded; homepage hydration
+mismatch fixed locally**. With the stored Cloudflare token, the existing reports
+ran for 2026-10-31 through 2026-11-06 (seven full UTC days, read-only):
+visitors **29** (previous 96), thread opens per visitor **3.38** (previous 0.49),
+sign-in requests **0**, contributors **0**, browser errors **12** (previous 38):
+9 on `/` and 3 on the sparrow thread. Visitor counts include team traffic. This
+is the baseline for the invitation batch; no invitation has been sent.
+
+The live homepage HTML still says `2 days ago` and `yesterday` from its build
+date, and the live thread still says `19 days ago`, so #25 and #26 are not yet
+deployed. The homepage feed (`FrontPage`, hydrated) rendered `relativeDate` in
+`StoryTile` and `StoryRow`, the same React #418 cause #25 removed from the thread
+page. Both now show the UTC calendar date. A regression test renders each at
+build time and three weeks later: it failed before the fix (`yesterday` vs
+`22 days ago`) and passes afterward. `make check` passed 343 tests and the API
+typecheck; the web `tsc --noEmit` and `git diff --check` passed. Keep
+**prelaunch**: production deployment and live readback, physical-phone and email
+checks, and approved invitations remain.
