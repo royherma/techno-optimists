@@ -2,7 +2,7 @@ import { prizeAmountLabel, type Challenge } from '../../../../../packages/types'
 import StageBadge from './StageBadge'
 import { editionPath } from '../../lib/edition'
 import ViewsCount from './ViewsCount'
-import { formatDate, relativeDate } from '../../lib/dates'
+import { formatDate } from '../../lib/dates'
 
 /**
  * The tile's whole prize treatment: one short string, or null.
@@ -35,7 +35,7 @@ export default function StoryTile({ challenge: c, lead = false, brief = false }:
     {c.media[0] && <a className="np-story-image" href={href} aria-label={`Read: ${c.title}`}>
       {c.media[0].kind === 'image' ? <img src={c.media[0].url} alt={c.media[0].alt || ''} /> : <video src={c.media[0].url} muted playsInline preload="metadata" />}{lead && <span className="np-featured">Featured</span>}
     </a>}
-    <div className="np-story-copy"><p className="np-story-meta"><strong className={`type-${c.type}`}>{c.type}</strong><StageBadge stage={c.stage} /><span>{c.location || 'A shared thread'}</span>{dateStr && <span className="np-story-date" title={formatDate(dateStr)}>· {relativeDate(dateStr)}</span>}{prizeLine && <span className="np-story-prize">· {prizeLine}</span>}</p>
+    <div className="np-story-copy"><p className="np-story-meta"><strong className={`type-${c.type}`}>{c.type}</strong><StageBadge stage={c.stage} /><span>{c.location || 'A shared thread'}</span>{dateStr && <span className="np-story-date">· {formatDate(dateStr)}</span>}{prizeLine && <span className="np-story-prize">· {prizeLine}</span>}</p>
       <h2><a href={href}>{c.title}</a></h2><p className="np-story-summary">{c.summary}</p>
       <footer><div className="np-signals"><span title={c.type === 'problem' ? 'I have this problem' : 'I want this'}><img src="/icons/plus.svg" alt="" />{c.type === 'problem' ? c.actions.have_problem : c.actions.want_this}</span><span title="I have an idea"><img src="/icons/lightbulb.svg" alt="" />{c.actions.have_idea}</span><span title="People offering help"><img src="/icons/users.svg" alt="" />{c.actions.can_help}</span><ViewsCount count={c.views_count ?? 0} title={c.title} /></div><a className="np-read" href={href}>Open thread <span>→</span></a></footer>
     </div>
