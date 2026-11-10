@@ -23,7 +23,7 @@
     "build:web:only": "python3 scripts/coordinate.py run build:web:only 'npm --workspace web run build'",
     "deploy:dev": "python3 scripts/coordinate.py run deploy:dev 'npm run build:web && wrangler deploy --env dev'",
     "deploy:prod": "python3 scripts/coordinate.py run deploy:prod 'PUBLIC_API_BASE=https://technooptimists.org npm run build:web:only && wrangler deploy --env prod'",
-    "db:prod": "python3 scripts/coordinate.py run db:prod 'wrangler d1 execute techno-optimists --remote --file packages/db/schema.sql'",
+    "db:prod": "echo 'db:prod is disabled: packages/db/schema.sql starts with DROP TABLE and would erase production. Use npm run db:migrate:prod (additive).' >&2 && exit 1",
     "db:dev": "python3 scripts/coordinate.py run db:dev 'wrangler d1 execute techno-optimists-dev --remote --file packages/db/schema.sql'",
     "db:seed:dev": "python3 scripts/coordinate.py run db:seed:dev 'npm run seed:gen && wrangler d1 execute techno-optimists-dev --remote --file packages/db/seed.sql'",
     "db:reset:dev": "python3 scripts/coordinate.py run db:reset:dev 'npm run db:dev && npm run db:seed:dev'",
