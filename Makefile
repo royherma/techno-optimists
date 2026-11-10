@@ -37,11 +37,10 @@ check: ## typecheck + tests
 
 # --- shipping ---------------------------------------------------------------
 #
-# The build prerenders from LOCAL d1, so whatever is in it lands on the site.
-# `ship` empties local d1 first: prod shows real Challenges or none, never the
-# dev fixtures. Use `ship-dev` for the throwaway environment where seeds belong.
+# Prod builds read the production API, so local seed rows never land on the domain.
+# Use `ship-dev` for the throwaway environment where seeds belong.
 
-ship: ## check, empty local d1, deploy PROD, verify
+ship: ## check, migrate prod additively, deploy PROD, verify
 	@npm run ship
 
 ship-dev: ## check, deploy dev, verify dev
