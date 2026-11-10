@@ -45,7 +45,7 @@ bug in this file — open an issue saying where you got stuck.
 | Command | What it does |
 |---|---|
 | `make dev` | 🔧 API on :8791 and the site on :4321, together |
-| `make reset` | 🌱 rebuild local D1 and load the seed fixtures |
+| `make reset` | 🌱 rebuild local D1, load the seed fixtures, apply the additive migration |
 | `make check` | ✅ typecheck + tests — this is what CI would run |
 | `make ship` | 🚢 typecheck, test, migrate additively, deploy prod, verify |
 | `make ship-dev` | 🧪 same for the dev worker, seeds and all |
