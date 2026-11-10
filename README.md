@@ -115,7 +115,7 @@ dated so staleness shows.
 | | dev | prod |
 |---|---|---|
 | Address | `techno-optimists-dev.<your-subdomain>.workers.dev` | your domain |
-| Data | throwaway, seeded | real, starts empty |
+| Data | throwaway, seeded | real: no seed rows, the scout adds threads |
 | Sign-in | returns `dev_link` in the response | mails the link, fails closed |
 
 Binding **names** are identical in both, so no code branches on environment —
