@@ -19,7 +19,7 @@
     "db:local": "python3 scripts/coordinate.py run db:local 'wrangler d1 execute techno-optimists --local --file packages/db/schema.sql'",
     "seed:gen": "python3 scripts/coordinate.py run seed:gen 'node scripts/gen-seed.mjs'",
     "db:seed:local": "python3 scripts/coordinate.py run db:seed:local 'npm run seed:gen && wrangler d1 execute techno-optimists --local --file packages/db/seed.sql'",
-    "db:reset:local": "python3 scripts/coordinate.py run db:reset:local 'npm run db:local && npm run db:seed:local'",
+    "db:reset:local": "python3 scripts/coordinate.py run db:reset:local 'npm run db:local && npm run db:seed:local && npm run db:migrate:local'",
     "build:web:only": "python3 scripts/coordinate.py run build:web:only 'npm --workspace web run build'",
     "deploy:dev": "python3 scripts/coordinate.py run deploy:dev 'npm run build:web && wrangler deploy --env dev'",
     "deploy:prod": "python3 scripts/coordinate.py run deploy:prod 'PUBLIC_API_BASE=https://technooptimists.org npm run build:web:only && wrangler deploy --env prod'",
