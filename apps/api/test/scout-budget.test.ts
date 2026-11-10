@@ -17,6 +17,14 @@ describe('Scout inference allowance', () => {
     expect(budget.used).toBeCloseTo(10*0.026668+5*0.204805)
     expect(()=>budget.reserve(1000)).toThrow('scout_budget_exhausted')
   })
+  it('treats an eligible=false answer as a rejection, not invalid model output', async () => {
+    const ai = {run:vi.fn().mockResolvedValue({response:JSON.stringify({eligible:false,reason:'An obituary',headline:''})})} as unknown as Ai
+    expect(await draftSource(ai,{text:'x'} as Source)).toBeNull()
+  })
+  it('still rejects an eligible answer with missing fields', async () => {
+    const ai = {run:vi.fn().mockResolvedValue({response:JSON.stringify({eligible:true,reason:'',headline:''})})} as unknown as Ai
+    await expect(draftSource(ai,{text:'x'} as Source)).rejects.toThrow()
+  })
   it('does not refund failed calls or malformed usage', () => {
     const budget = new ScoutBudget(1000)
     const settle = budget.text([{role:'user',content:'test'}],100)
