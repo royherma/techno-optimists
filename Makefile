@@ -21,7 +21,7 @@ web: ## astro alone on :4321 (proxies /api to :8791)
 
 # --- data -------------------------------------------------------------------
 
-db: ## rebuild LOCAL d1 - schema only, no rows
+db: ## drop and rebuild LOCAL d1 - schema only, no rows
 	@npm run db:local
 
 seed: ## regenerate seed.sql and load it into local d1
