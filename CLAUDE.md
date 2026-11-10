@@ -81,8 +81,7 @@ unknown one, and "it built" is not verification.
   `PUBLIC_API_BASE=https://technooptimists.org` and uses the locked `build:web:only`
   entry point. Development builds still use local D1. Never replace this with
   `build:web` in the production pipeline: that would publish local seed rows.
-- Prod D1 starts empty on purpose: 7 tables, zero rows. Seeds are a dev fixture and
-  never belong on the domain.
+- Prod D1 holds only real data: scout-imported threads, never seed rows. Seeds are a dev fixture and never belong on the domain.
 
 ## Code is truth
 
