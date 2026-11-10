@@ -65,7 +65,7 @@ built the worktree. On 2026-09-11 this uploaded zero assets and briefly served
 deploying a worktree, provide its own config with the intended bindings and verify
 the asset directory printed by Wrangler matches the build output.
 
-**Prod ships empty - schema only, no seed.** The 12 seed Challenges
+**Prod never gets seed rows - only scout-imported threads.** The 12 seed Challenges
 ("well-pump-runs-dry", "milk-cooling-loss") are a dev fixture. They were in prod D1 once
 already, from the aborted un-park.
 
