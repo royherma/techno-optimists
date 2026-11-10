@@ -218,8 +218,10 @@ export async function auditDraft(ai: Ai, source: Source, card: Draft, budget?: S
   return !audit.approved || audit.reasons.length || auditFields.some(k => audit[k] !== true)
     ? ['content_audit_failed', ...audit.reasons] : []
 }
-export async function draftSource(ai: Ai, source: Source, budget?: ScoutBudget): Promise<Draft> {
-  return draftSchema.parse(await ask(ai, WRITER, source, 800, z.toJSONSchema(draftSchema), budget))
+export async function draftSource(ai: Ai, source: Source, budget?: ScoutBudget): Promise<Draft | null> {
+  const raw = await ask(ai, WRITER, source, 800, z.toJSONSchema(draftSchema), budget)
+  if (raw && typeof raw === 'object' && (raw as { eligible?: unknown }).eligible === false) return null
+  return draftSchema.parse(raw)
 }
 async function hash(s: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))
@@ -304,7 +306,17 @@ export async function runScout(env: Bindings, scheduledTime: number, mode: 'sche
           continue
         }
         stats.counts.readable++; phase = 'model'; stats.counts.model_calls++
-        const card = groundQuote(await draftSource(ai, source, budget), source)
+        const drafted = await draftSource(ai, source, budget)
+        if (!drafted) {
+          phase = 'storage'
+          report.rejected++; stats.counts.rejected++
+          const reasons = ['not_eligible']; recordReasons(stats, reasons)
+          stats.articles.push({ url, outcome: 'rejected', reasons })
+          await cache.put(`scout:review:${key}`, JSON.stringify({ source_id: feed.id, source: { ...source, text: undefined }, reasons }), { expirationTtl: 90 * 86400 })
+          await cache.put(`scout:seen:${key}`, 'rejected', { expirationTtl: 30 * 86400 })
+          continue
+        }
+        const card = groundQuote(drafted, source)
         const reasons = evidenceGate(card, source, now)
         if (!reasons.length) {
           stats.counts.model_calls++

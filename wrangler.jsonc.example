@@ -60,7 +60,7 @@
   // no --env is intentionally not a script, so prod is never the accident.
   //
   //   dev   techno-optimists-dev.<subdomain>.workers.dev   throwaway data
-  //   prod  techno-optimists.<subdomain>.workers.dev       real data
+  //   prod  your custom domain (workers_dev is off)        real data
   "env": {
     "dev": {
       "name": "techno-optimists-dev",

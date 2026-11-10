@@ -1177,12 +1177,6 @@ app.get('/api/people/:handle', async (c) => {
   })
 })
 
-/**
- * Signs out. `{"everywhere":true}` revokes every session for the account, not
- * just this browser - the only move available to someone who thinks a device
- * was taken, and there is no other way to reach a 60-day cookie sitting on a
- * phone they no longer hold.
- */
 // ---------------------------------------------------------------------------
 // Donated inference. A reader connects their own AI account and spends their
 // own credits on a thread. See apps/api/src/ai-accounts.ts for the provider
@@ -1449,6 +1443,12 @@ app.get('/api/challenges/:slug/ai/runs', async (c) => {
   })
 })
 
+/**
+ * Signs out. `{"everywhere":true}` revokes every session for the account, not
+ * just this browser - the only move available to someone who thinks a device
+ * was taken, and there is no other way to reach a 60-day cookie sitting on a
+ * phone they no longer hold.
+ */
 app.post('/api/auth/signout', async (c) => {
   const token = readCookie(c.req.header('cookie'), SESSION_COOKIE)
   const everywhere = (await c.req.json().catch(() => null))?.everywhere === true

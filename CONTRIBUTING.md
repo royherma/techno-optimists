@@ -38,7 +38,7 @@ npm install
 cp wrangler.jsonc.example wrangler.jsonc
 cp wrangler.build.jsonc.example wrangler.build.jsonc
 
-npm run db:reset:local     # local D1: schema + seed Challenges
+npm run db:reset:local     # local D1: schema + seed Challenges + additive migration
 npm run build:web          # starts its own API on 8792, builds, stops it
 npm run dev                # http://127.0.0.1:8791
 ```

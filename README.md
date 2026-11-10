@@ -45,7 +45,7 @@ bug in this file — open an issue saying where you got stuck.
 | Command | What it does |
 |---|---|
 | `make dev` | 🔧 API on :8791 and the site on :4321, together |
-| `make reset` | 🌱 rebuild local D1 and load the seed fixtures |
+| `make reset` | 🌱 rebuild local D1, load the seed fixtures, apply the additive migration |
 | `make check` | ✅ typecheck + tests — this is what CI would run |
 | `make ship` | 🚢 typecheck, test, migrate additively, deploy prod, verify |
 | `make ship-dev` | 🧪 same for the dev worker, seeds and all |
@@ -115,7 +115,7 @@ dated so staleness shows.
 | | dev | prod |
 |---|---|---|
 | Address | `techno-optimists-dev.<your-subdomain>.workers.dev` | your domain |
-| Data | throwaway, seeded | real, starts empty |
+| Data | throwaway, seeded | real: no seed rows, the scout adds threads |
 | Sign-in | returns `dev_link` in the response | mails the link, fails closed |
 
 Binding **names** are identical in both, so no code branches on environment —
@@ -207,8 +207,10 @@ pipeline with real production bindings through an authenticated Wrangler session
 a localhost-only harness and the repository operation lock. It can publish data.
 A separate permanent R2 claim allows **two manual runs per UTC day**, each with a
 1,000-neuron allowance, without consuming the next scheduled slot. Set `SCOUT_SOURCE=better-india` to probe a particular enabled feed. Its JSON report
-is saved under ignored `outputs/scout-manual/`. No manual-trigger route is exposed
-on the deployed website. Scheduled and manual history keys cannot overwrite each other.
+is saved under ignored `outputs/scout-manual/`. A signed-in admin can also start a run
+with `POST /api/scout/run` (optional `?source=<id>`, same two-a-day limit; poll
+`/api/scout/status`) and run prize enrichment alone with `POST /api/prizes/enrich`.
+Scheduled and manual history keys cannot overwrite each other.
 
 The scheduled allowance totals 8,000 neurons/day; including both optional manual runs
 makes 10,000. This is a per-job accounting guard at current rates, not a guaranteed
