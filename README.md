@@ -207,8 +207,10 @@ pipeline with real production bindings through an authenticated Wrangler session
 a localhost-only harness and the repository operation lock. It can publish data.
 A separate permanent R2 claim allows **two manual runs per UTC day**, each with a
 1,000-neuron allowance, without consuming the next scheduled slot. Set `SCOUT_SOURCE=better-india` to probe a particular enabled feed. Its JSON report
-is saved under ignored `outputs/scout-manual/`. No manual-trigger route is exposed
-on the deployed website. Scheduled and manual history keys cannot overwrite each other.
+is saved under ignored `outputs/scout-manual/`. A signed-in admin can also start a run
+with `POST /api/scout/run` (optional `?source=<id>`, same two-a-day limit; poll
+`/api/scout/status`) and run prize enrichment alone with `POST /api/prizes/enrich`.
+Scheduled and manual history keys cannot overwrite each other.
 
 The scheduled allowance totals 8,000 neurons/day; including both optional manual runs
 makes 10,000. This is a per-job accounting guard at current rates, not a guaranteed
