@@ -6,7 +6,7 @@ import { mkdir, readFile } from 'node:fs/promises'
 const { chromium } = await import(process.env.PLAYWRIGHT_PATH ?? 'playwright')
 const base = process.env.TO_BASE ?? 'http://localhost:8797'
 assert(['localhost', '127.0.0.1'].includes(new URL(base).hostname), 'Local hosts only')
-const browser = await chromium.launch({ headless: true, ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}) })
+const browser = await chromium.launch({ chromiumSandbox: true, headless: true, ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}) })
 try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } })
   const page = await context.newPage()
