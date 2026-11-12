@@ -1,0 +1,9 @@
+{
+  "mode": "public-first",
+  "public": "royherma/techno-optimists",
+  "private_paths": [
+    "(^|/)\\.dev\\.vars(?!\\.example)",
+    "(^|/)\\.env(?!\\.example)",
+    "^\\.claude/"
+  ]
+}
