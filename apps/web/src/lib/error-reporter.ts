@@ -3,6 +3,7 @@ const MAX_REPORTS = 5
 const MESSAGE_MAX = 500
 const STACK_MAX = 2000
 const UA_MAX = 400
+const URL_MAX = 1000
 
 let sent = 0
 
@@ -14,12 +15,14 @@ function send(message: string, stack: string) {
   const report: BrowserErrorReport = {
     message: (message.trim() || 'Unknown error').slice(0, MESSAGE_MAX),
     stack: stack.slice(0, STACK_MAX),
-    url: `${location.origin}${location.pathname}${location.search}`,
+    url: `${location.origin}${location.pathname}${location.search}`.slice(0, URL_MAX),
     ua: navigator.userAgent.slice(0, UA_MAX),
   }
   const body = JSON.stringify(report)
   try {
     if (typeof navigator.sendBeacon === 'function' && navigator.sendBeacon(ENDPOINT, new Blob([body], { type: 'application/json' }))) return
+  } catch {}
+  try {
     void fetch(ENDPOINT, { method: 'POST', headers: { 'content-type': 'application/json' }, body, keepalive: true }).catch(() => {})
   } catch {}
 }
