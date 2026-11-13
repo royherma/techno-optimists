@@ -189,4 +189,34 @@ describe('browser error reporter', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
     expect((await post(beacons[0].body)).status).toBe(200)
   })
+
+  it('keeps reports from long page URLs within route validation limits', async () => {
+    const { listeners, beacons } = await loadReporter()
+    vi.stubGlobal('location', { origin: 'https://technooptimists.org', pathname: '/search', search: `?q=${'x'.repeat(2000)}` })
+    listeners.error({ message: 'long URL' })
+    await vi.waitFor(() => expect(beacons).toHaveLength(1))
+    expect(String(beacons[0].body.url)).toHaveLength(1000)
+    vi.unstubAllGlobals()
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect((await post(beacons[0].body)).status).toBe(200)
+  })
+
+  it.each(['missing', 'refused', 'throws'])('falls back to fetch when sendBeacon is %s', async (mode) => {
+    const { listeners } = await loadReporter()
+    vi.stubGlobal('navigator', {
+      userAgent: 'TestUA/1.0',
+      sendBeacon: mode === 'missing' ? undefined : () => {
+        if (mode === 'throws') throw new Error('beacon unavailable')
+        return false
+      },
+    })
+    const fetcher = vi.fn().mockResolvedValue(new Response(null, { status: 200 }))
+    vi.stubGlobal('fetch', fetcher)
+    listeners.error({ message: 'fallback error' })
+    expect(fetcher).toHaveBeenCalledTimes(1)
+    const [url, init] = fetcher.mock.calls[0]
+    expect(url).toBe('/api/client-errors')
+    expect(init).toMatchObject({ method: 'POST', keepalive: true, headers: { 'content-type': 'application/json' } })
+    expect(JSON.parse(init.body)).toMatchObject({ message: 'fallback error', ua: 'TestUA/1.0' })
+  })
 })
