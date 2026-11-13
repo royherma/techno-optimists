@@ -1,0 +1,105 @@
+/*
+ * Quiet footer note. The newspaper colophon is 9px and uppercase-tracked;
+ * this block resets that so the sentences stay readable. Tokens follow
+ * whichever edition the footer sits in.
+ */
+.sister-tool {
+  margin: 0;
+  padding: 0;
+  color: var(--color-ink-soft);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: normal;
+  line-height: 1.45;
+  text-align: center;
+  text-transform: none;
+}
+.sister-tool p {
+  margin: 0;
+}
+.sister-tool p + p {
+  margin-top: 4px;
+}
+.sister-tool .eyebrow {
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: var(--color-ink-faint, var(--color-ink-soft));
+}
+.sister-tool strong {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: normal;
+  line-height: 1.35;
+  color: var(--color-ink);
+}
+.sister-tool a,
+.newspaper .sister-tool a {
+  color: var(--color-ink);
+  font-weight: 650;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.sister-tool a:hover,
+.newspaper .sister-tool a:hover {
+  color: var(--np-red, var(--color-accent));
+}
+
+.site-footer .sister-tool {
+  margin-top: 18px;
+}
+
+/*
+ * The edition footer is on screen at every size, inside a 100svh column.
+ * Wide: one line under the eyebrow. Narrow: the four sentences stack.
+ */
+.newspaper .sister-tool {
+  flex: 1 0 100%;
+  min-width: 0;
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.7fr) auto;
+  grid-template-areas:
+    "eyebrow eyebrow eyebrow"
+    "lead body link";
+  column-gap: 22px;
+  row-gap: 2px;
+  align-items: baseline;
+  padding: 2px 0 8px;
+  border-bottom: 1px solid var(--np-rule);
+  text-align: left;
+  font-size: 12px;
+}
+.newspaper .sister-tool .eyebrow {
+  grid-area: eyebrow;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--np-muted);
+}
+.newspaper .sister-tool p:nth-child(2) { grid-area: lead; }
+.newspaper .sister-tool p:nth-child(3) { grid-area: body; }
+.newspaper .sister-tool p:nth-child(4) { grid-area: link; }
+.newspaper .sister-tool p + p { margin-top: 0; }
+.newspaper .sister-tool strong {
+  font-size: 14px;
+}
+.newspaper .sister-tool a {
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .newspaper .sister-tool {
+    display: block;
+    padding-bottom: 8px;
+  }
+  .newspaper .sister-tool p + p { margin-top: 3px; }
+  .newspaper .sister-tool a { white-space: normal; }
+  .newspaper .sister-tool strong { font-size: 15px; }
+}
