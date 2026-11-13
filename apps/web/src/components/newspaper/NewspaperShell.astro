@@ -1,5 +1,6 @@
 ---
 import Legend from './Legend'
+import SisterTool from '../SisterTool.astro'
 import type { Challenge } from '../../../../../packages/types'
 import '../../styles/newspaper/shell.css'
 import '../../styles/newspaper/content.css'
@@ -35,7 +36,7 @@ const manifesto = ['Explore.', 'Solve.', 'Build together.']
     <div class="np-nav-end"><a href={feedbackHref(Astro.url.pathname)} data-feedback-link>Feedback</a><a href="/settings">Account</a><a class="np-submit" href="/post">＋ Share</a><button type="button" class="np-legend-toggle" data-legend-toggle aria-expanded="false">Legend</button></div>
   </nav>
   <div class="np-workspace"><main id="newspaper-main" class="np-main"><slot /></main><aside class="np-sidebar" aria-label="Field guide and legend"><Legend client:load challenges={challenges} impact={impact} /></aside></div>
-  <footer class="np-colophon"><span>Real problems. Real ideas. A brighter tomorrow.</span><span class="np-colophon-counter">Visits <HitCounter client:load initial={initialViews} /></span><nav aria-label="About this site"><a href="/contribute">Contribute</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></footer>
+  <footer class="np-colophon"><SisterTool /><span>Real problems. Real ideas. A brighter tomorrow.</span><span class="np-colophon-counter">Visits <HitCounter client:load initial={initialViews} /></span><nav aria-label="About this site"><a href="/contribute">Contribute</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav></footer>
 </div>
 <script>
   import { editionPath } from '../../lib/edition'

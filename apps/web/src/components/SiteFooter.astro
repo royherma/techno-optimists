@@ -1,6 +1,7 @@
 ---
 import '../styles/footer.css'
 import HitCounter from './HitCounter'
+import SisterTool from './SisterTool.astro'
 import { getSiteViews } from '../lib/api'
 
 /*
@@ -35,6 +36,8 @@ const initialViews = await getSiteViews()
       problems, try ideas and build better solutions together. Open source and open to
       your help: share a thread, bring your experience, or improve the site.
     </p>
+
+    <SisterTool />
 
     <nav class="footer-nav" aria-label="Site">
       <a href="/">Index</a>

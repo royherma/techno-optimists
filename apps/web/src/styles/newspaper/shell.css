@@ -58,7 +58,7 @@ body:has(.newspaper) { background: #f7f4eb; }
 .np-main { min-height: 0; min-width: 0; display: flex; flex-direction: column; }
 .np-main>astro-island { display: contents; }
 .np-sidebar { min-height: 0; border-left: 1px solid var(--np-rule); padding-left: 23px; }
-.np-colophon { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid; padding-top: 6px; font-size: 9px; letter-spacing: .02em; flex-shrink: 0; }
+.np-colophon { display: flex; flex-wrap: wrap; row-gap: 8px; justify-content: space-between; align-items: center; border-top: 1px solid; padding-top: 6px; font-size: 9px; letter-spacing: .02em; flex-shrink: 0; }
 .np-colophon nav { display: flex; gap: 18px; }
 /* Between the strapline and the links, in the same 9px colophon type. */
 /* Same 9px ink as the strapline it sits beside - not a heading of its own. */
