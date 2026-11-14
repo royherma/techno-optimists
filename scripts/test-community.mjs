@@ -12,7 +12,8 @@ const auth = await api('/api/auth/request', 'POST', { email: 'qa-admin@example.t
 assert.equal(auth.status, 200)
 const { dev_link } = await auth.json()
 assert(dev_link, 'A local-only magic link is required')
-const login = await fetch(dev_link, { redirect: 'manual' })
+const loginCookie = auth.headers.getSetCookie().map((value) => value.split(';')[0]).join('; ')
+const login = await fetch(dev_link, { redirect: 'manual', headers: { cookie: loginCookie } })
 cookie = login.headers.getSetCookie().find((v) => v.startsWith('to_session=')).split(';')[0]
 const raw = JSON.parse(readFileSync(new URL('../docs/2026-09-11-seed-batch-01.json', import.meta.url), 'utf8'))
 const imported = await api('/api/challenges/import', 'POST', { author: 'atlas', dry_run: false, challenges: raw.challenges ?? raw })

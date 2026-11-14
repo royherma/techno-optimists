@@ -88,13 +88,11 @@ The static asset handler otherwise returns a 404 for uploaded R2 files even
 though the upload succeeded. Check a real uploaded image in a browser after
 changing this routing, including opening it in a new tab.
 
-**Sign-in rate limiting counts rows in `magic_links`. Not the Workers binding, not KV.**
-5/hour per address, 20/hour per IP. The native binding cannot express an hour: `period`
-is an enum of exactly `[10, 60]` seconds (`node_modules/wrangler/config-schema.json`), so
-an attacker paces around it at one request every 61 seconds. KV caps at one write per
-second per key, and a counter is one key, so the limiter becomes the bottleneck under
-exactly the load it exists for. `magic_links` already stores `email`, `ip` and
-`created_at`, so the count is two indexed `COUNT(*)`s over a table we write anyway.
+**Sign-in quotas are reserved atomically in `request_limits` before sending mail.**
+The existing `magic_links` count also protects the rollout's prior hour. Limits remain
+5/hour per address and 20/hour per IP. The same additive table bounds posting and
+uploads; apply `community.sql` through the migration workflow before deploying.
+Scheduled execution prunes expired counters.
 
 **The Worker's CSP header must NOT restate `script-src`.** Astro's `security.csp`
 generates the page CSP with per-build script hashes; island hydration ships three inline
@@ -104,9 +102,8 @@ hydration - in the one case that looks most like hardening. The header carries w
 `<meta>` CSP cannot: `frame-ancestors` is ignored inside `<meta>`, so clickjacking
 protection lives only in the header.
 
-**`dev_link` is returned only when `ENVIRONMENT !== 'prod'`.** The magic link is a bearer
-token; returned unconditionally, POSTing a stranger's address hands over their account. A
-missing mail key in prod must break sign-in loudly, never open a door.
+**`dev_link` is restricted to explicit dev mode on loopback hosts.** Public hosts fail
+with 503 when mail is unconfigured or fails. Bearer links are never logged.
 
 **Admins come from the `ADMIN_EMAILS` secret. Unset demotes everyone, silently.**
 `apps/api/src/admin.ts` reads a comma-separated secret; `identities.is_admin` only
@@ -119,18 +116,10 @@ array in source, which is why this trap is new: an edit could not be forgotten, 
 deploy, before the first sign-in: `wrangler secret put ADMIN_EMAILS --env <env>`.
 `wrangler secret list --env <env>` is the check. Locally it goes in `.dev.vars`.
 
-**The two routers disagree about Origin, and only `community` checks it.**
-`apps/api/src/community.ts:32-40` rejects any non-GET whose `Origin` header does not
-match the request URL (403 `bad_origin`) and any without a JSON content-type (415).
-`grep -n 'Origin\|bad_origin' apps/api/src/index.ts` returns nothing, so the eight
-mutating routes there - `POST /api/challenges`, `/challenges/import`, `/:slug/updates`,
-`/:slug/action`, `PUT /api/uploads`, `/auth/request`, `PATCH /api/people/me`,
-`POST /auth/signout` - rest on `SameSite=Lax` alone (`apps/api/src/auth.ts:116`). Lax
-does block a cross-site POST, so this is defense in depth and an inconsistency, not a
-hole. Deliberately deferred past the launch announcement - Roy's call, 2026-09-11 - and
-left here so the asymmetry is not mistaken for a decision. Porting the check is six
-lines; porting the content-type gate with it is what risks 415ing a caller that works
-today, so weigh those separately.
+**All API mutations check Origin and Fetch Metadata before reading bodies.**
+Origin-less server clients remain supported. Magic links require the requesting
+browser's HttpOnly login cookie; opening one in another browser asks the reader
+to request a fresh link there. HTTPS uses a host-prefixed login cookie.
 
 **Email is stored in `identities`, never on `people`; `people.name` is returned by
 `/api/auth/me` alone.** `SELECT p.*` then cannot leak an address, and `name` is derived

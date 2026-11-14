@@ -148,6 +148,11 @@ export const signalCookie = (signal: string, secure: boolean) => {
   return parts.join('; ')
 }
 
+export const loginCookieName = (secure: boolean) => secure ? '__Host-to_login' : 'to_login'
+
+export const loginCookie = (hash: string, secure: boolean) =>
+  `${loginCookieName(secure)}=${hash}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${hash ? 900 : 0}${secure ? '; Secure' : ''}`
+
 export const clearCookie = (secure: boolean) => {
   const parts = [`${SESSION_COOKIE}=`, 'Path=/', 'HttpOnly', 'SameSite=Lax', 'Max-Age=0']
   if (secure) parts.push('Secure')
