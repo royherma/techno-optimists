@@ -33,6 +33,24 @@ describe('POST /api/client-errors', () => {
     expect(await r.json()).toEqual({ ok: true })
   })
 
+  it('accepts a same-origin beacon with no content-type', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const r = await app.request('https://technooptimists.org/api/client-errors', {
+      method: 'POST',
+      headers: { origin: 'https://technooptimists.org' },
+      body: JSON.stringify(validBody),
+    }, { DB: stubDb() })
+    expect(r.status).toBe(200)
+    expect(loggedLines(spy)[0]).toMatchObject({ source: 'browser', ...validBody })
+  })
+
+  it('does not log rejected reports', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect((await post(validBody, { origin: 'https://evil.example' })).status).toBe(403)
+    expect((await post({ ...validBody, message: ' ' })).status).toBe(400)
+    expect(spy).not.toHaveBeenCalled()
+  })
+
   it('refuses a cross-site report', async () => {
     const r = await post(validBody, { origin: 'https://evil.example' })
     expect(r.status).toBe(403)
@@ -179,6 +197,30 @@ describe('browser error reporter', () => {
     await vi.waitFor(() => expect(beacons).toHaveLength(5))
     await new Promise((r) => setTimeout(r, 20))
     expect(beacons).toHaveLength(5)
+  })
+
+  it('shares the five-report budget between errors and rejections', async () => {
+    const { listeners, beacons } = await loadReporter()
+    for (let i = 0; i < 10; i++) {
+      listeners.error({ message: 'error' })
+      listeners.unhandledrejection({ reason: new Error('rejection') })
+    }
+    await vi.waitFor(() => expect(beacons).toHaveLength(5))
+    expect(beacons.map(({ body }) => body.message)).toEqual(['error', 'rejection', 'error', 'rejection', 'error'])
+    expect(beacons[1].body.stack).toContain('Error: rejection')
+  })
+
+  it('falls back to POST when the beacon queue is full and contains network failures', async () => {
+    const { listeners } = await loadReporter()
+    vi.stubGlobal('navigator', { userAgent: 'TestUA', sendBeacon: () => false })
+    const fetcher = vi.fn().mockRejectedValue(new Error('offline'))
+    vi.stubGlobal('fetch', fetcher)
+    listeners.error({ message: 'boom' })
+    await Promise.resolve()
+    expect(fetcher).toHaveBeenCalledWith('/api/client-errors', expect.objectContaining({
+      method: 'POST', keepalive: true, headers: { 'content-type': 'application/json' },
+    }))
+    expect(JSON.parse(fetcher.mock.calls[0][1].body)).toMatchObject({ message: 'boom', ua: 'TestUA' })
   })
 
   it('every report it builds passes the route validation', async () => {
