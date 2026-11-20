@@ -97,3 +97,9 @@ describe('a magic link is redeemable exactly once', () => {
     expect(sqlite.prepare('SELECT used_at FROM magic_links').get()!.used_at).toBe(null)
   })
 })
+
+ it('rejects browser-normalized external next paths', async () => {
+    await mint()
+    const r = await app.request(`/api/auth/callback?token=${TOKEN}&next=${encodeURIComponent('/\\evil.example')}`, {}, { DB })
+    expect(r.headers.get('location')).toBe('/')
+  })
