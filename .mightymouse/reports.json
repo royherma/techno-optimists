@@ -12,6 +12,15 @@
       "link": "https://dash.cloudflare.com/db9eee5d30dc91c467044f8746e45206/workers/d1/databases/195e34f1-f441-49ce-9d47-21eb7ad78209"
     },
     {
+      "id": "scout-threads",
+      "title": "Threads Scout added",
+      "decides": "Keep Scout's current feeds or swap the ones that add nothing",
+      "run": "node .mightymouse/reports/scout-threads.mjs",
+      "keys": ["CLOUDFLARE_API_TOKEN"],
+      "unit": "count",
+      "better": "up"
+    },
+    {
       "id": "visitors",
       "title": "Visitor-days",
       "decides": "Keep or change where threads get posted to pull people in",
