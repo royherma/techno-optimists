@@ -16,7 +16,7 @@ function spark(values = []) {
   const max = Math.max(1, ...pts.map(([, v]) => v));
   const x = (i) => (i / Math.max(1, values.length - 1)) * 100;
   const y = (v) => 22 - (v / max) * 20;
-  return `<svg class="spark" viewBox="0 0 100 24" preserveAspectRatio="none"><polyline points="${pts.map(([i, v]) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ")}"/></svg>`;
+  return `<svg class="spark" data-v="${JSON.stringify(values)}" viewBox="0 0 100 24" preserveAspectRatio="none"><polyline points="${pts.map(([i, v]) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ")}"/></svg>`;
 }
 
 const tile = ({ label, value, sub, help, series, key }) =>
