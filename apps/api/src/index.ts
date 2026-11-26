@@ -867,7 +867,7 @@ app.post('/api/auth/request', async (c) => {
   const sent = await sendMagicLink(c.env, email, link)
 
   // In dev there is no mail key, so the link goes to the Worker log. Never in prod.
-  if (!sent) console.log(`[auth] magic link for ${email}: ${link}`)
+  if (!sent && c.env.ENVIRONMENT === 'dev') console.log(`[auth] magic link for ${email}: ${link}`)
 
   // The link is a bearer token for the account. Returning it in the response
   // body is a convenience for local dev ONLY - anywhere it is reachable by a
@@ -925,7 +925,7 @@ const sendMagicLink = async (env: Env, email: string, link: string): Promise<boo
     }),
   })
   if (!res.ok) {
-    console.log(`[auth] resend failed ${res.status}: ${await res.text()}`)
+    console.log(`[auth] resend failed ${res.status}`)
     return false
   }
   return true
