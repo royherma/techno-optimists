@@ -9,15 +9,15 @@ Astro.csp?.insertDirective("connect-src 'self' https://techguyverlabs.org")
 
 const { challenges } = await getFeed('?limit=50')
 const roles = [
-  { href: 'https://techguyverlabs.org/careers/growth-partner-openrobotkits/', title: 'Growth Partner, OpenRobotKits', proof: '5,040 visits last week, up from 2,010', pay: 'Ownership share, vesting over 4 years with a 1-year cliff' },
-  { href: 'https://techguyverlabs.org/careers/sales-partner-frontdoor/', title: 'Sales Partner, FrontDoor', proof: '$1,000 setup + $1,000/mo per client', pay: '20% of what you close for the first 12 months' },
+  { href: 'https://techguyverlabs.org/careers/growth-partner-openrobotkits/', title: 'Founding Growth Partner, OpenRobotKits', proof: 'Lead growth for an open-source robotics marketplace', pay: 'Remote · Part time · Equity' },
+  { href: 'https://techguyverlabs.org/careers/sales-partner-frontdoor/', title: 'Founding Sales Partner, FrontDoor', proof: 'Lead sales for our web and technology service for local businesses', pay: 'Remote · Part time · Commission' },
 ]
 ---
-<Base title="Careers - Techno Optimists" description="Work with TechGuyver Labs, the studio behind Techno Optimists. Partner roles on the customer side, paid in ownership or revenue share.">
+<Base title="Careers - Techno Optimists" description="Work with TechGuyver Labs, the studio behind Techno Optimists. Partner roles on the customer side, founding roles in growth and sales.">
   <NewspaperShell section="Careers" challenges={challenges}>
     <div class="np-careers">
       <h1>Work with us</h1>
-      <p class="np-careers-lede">Techno Optimists is built by TechGuyver Labs, one technical founder and 15 live products. We take partners on the customer side, paid in ownership or revenue share.</p>
+      <p class="np-careers-lede">Techno Optimists is built by TechGuyver Labs, a software studio that builds and operates products in AI, robotics and creator tools. We are adding founding partners to lead growth and sales.</p>
       <ul class="np-careers-roles">
         {roles.map((r) => (
           <li>
