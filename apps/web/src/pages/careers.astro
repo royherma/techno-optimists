@@ -1,0 +1,38 @@
+---
+import Base from '../layouts/Base.astro'
+import NewspaperShell from '../components/newspaper/NewspaperShell.astro'
+import { getFeed } from '../lib/api'
+import '../styles/careers.css'
+
+Astro.csp?.insertScriptResource('https://techguyverlabs.org')
+Astro.csp?.insertDirective("connect-src 'self' https://techguyverlabs.org")
+
+const { challenges } = await getFeed('?limit=50')
+const roles = [
+  { href: 'https://techguyverlabs.org/careers/growth-partner-openrobotkits/', title: 'Growth Partner, OpenRobotKits', proof: '5,040 visits last week, up from 2,010', pay: 'Ownership share, vesting over 4 years with a 1-year cliff' },
+  { href: 'https://techguyverlabs.org/careers/sales-partner-frontdoor/', title: 'Sales Partner, FrontDoor', proof: '$1,000 setup + $1,000/mo per client', pay: '20% of what you close for the first 12 months' },
+]
+---
+<Base title="Careers - Techno Optimists" description="Work with TechGuyver Labs, the studio behind Techno Optimists. Partner roles on the customer side, paid in ownership or revenue share.">
+  <NewspaperShell section="Careers" challenges={challenges}>
+    <div class="np-careers">
+      <h1>Work with us</h1>
+      <p class="np-careers-lede">Techno Optimists is built by TechGuyver Labs, one technical founder and 15 live products. We take partners on the customer side, paid in ownership or revenue share.</p>
+      <ul class="np-careers-roles">
+        {roles.map((r) => (
+          <li>
+            <a href={r.href}>
+              <h2>{r.title}</h2>
+              <p>{r.proof}</p>
+              <p>{r.pay}</p>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <p><a class="np-careers-all" href="https://techguyverlabs.org/careers/">All open roles at TechGuyver Labs</a></p>
+      <h2>Apply</h2>
+      <div data-tg-apply data-role="General application (Techno Optimists)"><p>Email <a href="mailto:roy@techguyverlabs.org">roy@techguyverlabs.org</a></p></div>
+      <script src="https://techguyverlabs.org/careers/apply.js" defer is:inline></script>
+    </div>
+  </NewspaperShell>
+</Base>

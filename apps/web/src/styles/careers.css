@@ -1,0 +1,12 @@
+.np-careers { flex:1; min-height:0; overflow-y:auto; max-width:860px; font:18px/1.55 Georgia,serif; padding-right:8px; }
+.np-careers h1 { font:bold 42px/1.06 Georgia,serif; letter-spacing:-.03em; margin:0 0 16px; }
+.np-careers h2 { font:bold 25px/1.15 Georgia,serif; margin:20px 0 10px; }
+.np-careers-lede { max-width:60ch; margin-bottom:22px; }
+.np-careers-roles { list-style:none; display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:18px; margin:0 0 22px; padding:0; }
+.np-careers-roles a { display:block; height:100%; padding:16px 18px; border:1px solid var(--np-rule); background:var(--np-input); text-decoration:none; }
+.np-careers-roles a:hover { border-color:var(--np-ink); }
+.np-careers-roles h2 { margin-top:0; }
+.np-careers-roles p { font-size:16px; margin-top:6px; }
+.np-careers a { text-decoration:underline; text-underline-offset:3px; }
+.np-careers-all { font-weight:bold; }
+[data-tg-apply] { margin:8px 0 28px; font-size:16px; }
