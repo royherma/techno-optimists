@@ -189,4 +189,63 @@ describe('browser error reporter', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
     expect((await post(beacons[0].body)).status).toBe(200)
   })
+
+  it('bounds long URLs and keeps multibyte reports within the route body cap', async () => {
+    const { listeners, beacons } = await loadReporter()
+    vi.stubGlobal('location', { origin: 'https://technooptimists.org', pathname: '/threads/pond', search: `?q=${'a'.repeat(5000)}` })
+    listeners.error({ message: '界'.repeat(500), error: Object.assign(new Error('big'), { stack: '\u0000'.repeat(2000) }) })
+    await vi.waitFor(() => expect(beacons).toHaveLength(1))
+    expect(String(beacons[0].body.url)).toHaveLength(1000)
+    expect(new Blob([JSON.stringify(beacons[0].body)]).size).toBeLessThanOrEqual(8000)
+    vi.unstubAllGlobals()
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect((await post(beacons[0].body)).status).toBe(200)
+    expect(loggedLines(spy)[0]).toMatchObject({ source: 'browser', message: '界'.repeat(500) })
+  })
+
+  it.each([
+    ['null', () => null],
+    ['undefined', () => undefined],
+    ['no prototype', () => Object.create(null)],
+    ['throwing toString', () => ({ toString() { throw new Error('no string') } })],
+  ] as const)('handles rejection values that have no usable message: %s', async (_, reason) => {
+    const { listeners, beacons } = await loadReporter()
+    expect(() => listeners.unhandledrejection({ reason: reason() })).not.toThrow()
+    await vi.waitFor(() => expect(beacons).toHaveLength(1))
+    expect(beacons[0].body).toMatchObject({ message: 'Unknown error', stack: '' })
+  })
+
+  it.each(['absent', 'refused', 'throws'])('uses POST fetch when sendBeacon is %s', async (mode) => {
+    const { listeners, beacons } = await loadReporter()
+    const fetch = vi.fn().mockResolvedValue(new Response())
+    vi.stubGlobal('fetch', fetch)
+    vi.stubGlobal('navigator', {
+      userAgent: 'TestUA/1.0',
+      sendBeacon: mode === 'absent' ? undefined : () => {
+        if (mode === 'throws') throw new Error('beacon blocked')
+        return false
+      },
+    })
+    listeners.error({ message: 'boom' })
+    expect(beacons).toHaveLength(0)
+    expect(fetch).toHaveBeenCalledExactlyOnceWith('/api/client-errors', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, keepalive: true,
+      body: JSON.stringify({ message: 'boom', stack: '', url: 'https://technooptimists.org/threads/pond?type=idea', ua: 'TestUA/1.0' }),
+    })
+  })
+
+  it.each(['rejects', 'throws'])('silences transport failures and keeps the five-report cap when fetch %s', async (mode) => {
+    const { listeners } = await loadReporter()
+    const fetch = vi.fn(() => {
+      if (mode === 'throws') throw new Error('offline')
+      return Promise.reject(new Error('offline'))
+    })
+    vi.stubGlobal('navigator', { userAgent: 'TestUA/1.0' })
+    vi.stubGlobal('fetch', fetch)
+    for (let i = 0; i < 12; i++) {
+      expect(() => listeners.unhandledrejection({ reason: new Error('boom') })).not.toThrow()
+    }
+    await Promise.resolve()
+    expect(fetch).toHaveBeenCalledTimes(5)
+  })
 })
