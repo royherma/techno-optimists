@@ -1350,6 +1350,15 @@ app.post('/api/challenges/:slug/ai/:action', async (c) => {
   if ((perPerson?.n ?? 0) >= AI_RUNS_PER_PERSON_HOUR) return c.json({ error: 'rate_limited_person' }, 429)
   if ((perChallenge?.n ?? 0) >= AI_RUNS_PER_CHALLENGE_DAY) return c.json({ error: 'rate_limited_challenge' }, 429)
 
+  const runId = `air_${mintToken().slice(0, 16)}`
+  const reserved = await c.env.DB.prepare(`INSERT INTO ai_runs (id, challenge_id, person_id, action, model, provider, output)
+    SELECT ?, ?, ?, ?, '', ?, ''
+    WHERE (SELECT COUNT(*) FROM ai_runs WHERE person_id = ? AND created_at > datetime('now', '-1 hour')) < ?
+      AND (SELECT COUNT(*) FROM ai_runs WHERE challenge_id = ? AND created_at > datetime('now', '-1 day')) < ?`)
+    .bind(runId, challenge.id, me.id, action, account.provider,
+      me.id, AI_RUNS_PER_PERSON_HOUR, challenge.id, AI_RUNS_PER_CHALLENGE_DAY).run()
+  if (reserved.meta.changes !== 1) return c.json({ error: 'rate_limited' }, 429)
+
   // Thread fields are concatenated as plain data. The system prompt in
   // ai-accounts.ts is fixed and says so; nothing here interpolates thread text
   // into an instruction.
@@ -1380,11 +1389,10 @@ app.post('/api/challenges/:slug/ai/:action', async (c) => {
   // the donor already paid for - see parseDraft.
   const draft = action === 'draft' ? parseDraft(result.text) : null
 
-  const runId = `air_${mintToken().slice(0, 16)}`
   await c.env.DB.batch([
     c.env.DB.prepare(
-      'INSERT INTO ai_runs (id, challenge_id, person_id, action, model, provider, cost_usd, output, draft_kind) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    ).bind(runId, challenge.id, me.id, action, result.model, account.provider, result.cost_usd, result.text, draft?.kind ?? null),
+      'UPDATE ai_runs SET model = ?, cost_usd = ?, output = ?, draft_kind = ? WHERE id = ?',
+    ).bind(result.model, result.cost_usd, result.text, draft?.kind ?? null, runId),
     c.env.DB.prepare("UPDATE ai_accounts SET last_used_at = datetime('now') WHERE person_id = ?").bind(me.id),
   ])
 
@@ -1417,7 +1425,7 @@ app.post('/api/ai/runs/:id/published', async (c) => {
 
   const linked = await c.env.DB.prepare(
     `UPDATE ai_runs SET published_comment_id = ?
-     WHERE id = ? AND person_id = ? AND published_comment_id IS NULL
+     WHERE id = ? AND person_id = ? AND published_comment_id IS NULL AND output != ''
        AND EXISTS (SELECT 1 FROM challenge_comments WHERE id = ? AND author_id = ?)`,
   ).bind(commentId, c.req.param('id'), me.id, commentId, me.id).run()
 
@@ -1448,7 +1456,7 @@ app.get('/api/challenges/:slug/ai/runs', async (c) => {
   const rows = await c.env.DB.prepare(
     `SELECT r.id, r.action, r.model, r.output, r.created_at, p.handle, p.name, p.avatar_url
      FROM ai_runs r JOIN people p ON p.id = r.person_id
-     WHERE r.challenge_id = ? ORDER BY r.created_at DESC LIMIT 20`,
+     WHERE r.challenge_id = ? AND r.output != '' ORDER BY r.created_at DESC LIMIT 20`,
   ).bind(challenge.id).all()
 
   // cost_usd is deliberately not returned: what a donor spent is between them
