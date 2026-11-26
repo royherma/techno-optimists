@@ -52,7 +52,7 @@ const stubDb = (rows: Record<string, unknown>[] = [], first: unknown = null) => 
     all: async () => ({ results: rows }),
     first: async () => first,
   }),
-  batch: async () => [],
+  batch: async (statements: unknown[]) => statements.map(() => ({ meta: { changes: 1 } })),
 })
 
 const env = () => ({ DB: stubDb() as unknown as D1Database })

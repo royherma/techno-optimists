@@ -856,11 +856,19 @@ app.post('/api/auth/request', async (c) => {
   // One live link per address at a time: requesting a second invalidates the
   // first, so a forwarded old email cannot be used to take the account.
   const token = mintToken()
-  await c.env.DB.batch([
-    c.env.DB.prepare("UPDATE magic_links SET used_at = datetime('now') WHERE email = ? AND used_at IS NULL").bind(email),
-    c.env.DB.prepare('INSERT INTO magic_links (token_hash, email, expires_at, ip) VALUES (?, ?, ?, ?)')
-      .bind(await hashToken(token), email, linkExpiry(), ip),
+  const tokenHash = await hashToken(token)
+  const claims = await c.env.DB.batch([
+    c.env.DB.prepare(`INSERT INTO magic_links (token_hash, email, expires_at, ip)
+      SELECT ?, ?, ?, ?
+      WHERE (SELECT COUNT(*) FROM magic_links WHERE email = ? AND created_at > datetime('now', '-1 hour')) < ?
+        AND (SELECT COUNT(*) FROM magic_links WHERE ip = ? AND created_at > datetime('now', '-1 hour')) < ?`)
+      .bind(tokenHash, email, linkExpiry(), ip, email, LINKS_PER_EMAIL_HOUR, ip, LINKS_PER_IP_HOUR),
+    c.env.DB.prepare(`UPDATE magic_links SET used_at = datetime('now')
+      WHERE email = ? AND used_at IS NULL AND token_hash != ?
+        AND EXISTS (SELECT 1 FROM magic_links WHERE token_hash = ?)`)
+      .bind(email, tokenHash, tokenHash),
   ])
+  if (claims[0].meta.changes !== 1) return c.json({ error: 'too_many_requests' }, 429)
 
   const next = safeNext(parsed.data.next)
   const link = `${new URL(c.req.url).origin}/api/auth/callback?token=${token}${next ? `&next=${encodeURIComponent(next)}` : ''}`
