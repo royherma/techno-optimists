@@ -1,4 +1,4 @@
-import { writeLimited } from './rate-limit'
+import { anonymousLimited, writeLimited } from './rate-limit'
 import { SCOUT_LIMITS, ScoutBudget } from './scout-budget'
 import { runPrizeEnrichment } from './prize-enrich'
 import { SCOUT_FEEDS, recentSourceRuns, sourceRunPage, summarizeSources } from './scout-sources'
@@ -1626,6 +1626,8 @@ app.post('/api/site/view', async (c) => {
   const origin = c.req.header('origin')
   if (origin && origin !== new URL(c.req.url).origin) return c.json({ error: 'bad_origin' }, 403)
 
+  if (await anonymousLimited(c, 'view')) return c.json({ error: 'slow_down' }, 429)
+
   const viewedOn = new Date().toISOString().slice(0, 10)
   await c.env.DB.prepare(
     'INSERT OR IGNORE INTO site_views (viewer_key, viewed_on) VALUES (?, ?)',
@@ -1668,6 +1670,7 @@ app.post('/api/client-errors', bodyLimit({ maxSize: 8_000, onError: (c) => c.jso
 
   const parsed = clientErrorBody.safeParse(await c.req.json().catch(() => null))
   if (!parsed.success) return c.json({ error: 'bad_body' }, 400)
+  if (await anonymousLimited(c, 'client_error')) return c.json({ error: 'slow_down' }, 429)
   const { message, stack, url, ua } = parsed.data
   const path = new URL(url).pathname
 
@@ -1833,6 +1836,7 @@ const secured = (res: Response, req: Request): Response => {
 export { app, secured }
 export default {
   async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(env.DB.prepare('DELETE FROM write_limits WHERE expires_at < unixepoch() - 86400').run())
     ctx.waitUntil(runScout(env, controller.scheduledTime))
   },
   /**

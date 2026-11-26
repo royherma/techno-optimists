@@ -92,7 +92,9 @@ changing this routing, including opening it in a new tab.
 migration must precede deployment; there is no fail-open fallback if the table is missing.
 Quotas are atomic per account: 5 threads/hour, 10 uploads/hour, 10 updates/minute,
 30 actions/minute and 5 comments/minute. Failed attempts after reservation consume quota;
-comment retries with an already saved request id do not.
+comment retries with an already saved request id do not. Anonymous views share a
+60/minute IP quota; browser errors get 5/minute per IP. User-agent changes do not
+reset these quotas. Scheduled runs prune counters expired for more than a day.
 
 **Sign-in rate limiting counts rows in `magic_links`. Not the Workers binding, not KV.**
 5/hour per address, 20/hour per IP. The native binding cannot express an hour: `period`
