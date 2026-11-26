@@ -1,3 +1,4 @@
+import { writeLimited } from './rate-limit'
 import { Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { z } from 'zod'
@@ -154,6 +155,7 @@ community.post('/:slug/comments', async (c) => {
   const recent = await c.env.DB.prepare("SELECT COUNT(*) n FROM challenge_comments WHERE author_id = ? AND created_at > datetime('now', '-1 minute')")
     .bind(me.id).first<{ n: number }>()
   if (recent && recent.n >= 5) return c.json({ error: 'slow_down' }, 429)
+  if (await writeLimited(c, me.id, 'comment')) return c.json({ error: 'slow_down' }, 429)
   const id = `cm_${mintToken().slice(0, 16)}`
   await c.env.DB.batch([
     c.env.DB.prepare(`INSERT OR IGNORE INTO challenge_comments (id, challenge_id, author_id, parent_id, kind, body, request_id)
