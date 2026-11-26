@@ -26,6 +26,61 @@ export const ALLOWED_TYPES: Record<string, { ext: string; kind: 'image' | 'video
 /** 100MB. A minute of phone video fits; a laptop dump does not. */
 export const MAX_BYTES = 100 * 1024 * 1024
 
+export class UploadError extends Error {
+  constructor(readonly status: 400 | 413, message: string) { super(message) }
+}
+
+export const storeUpload = async (
+  bucket: R2Bucket,
+  key: string,
+  body: ReadableStream<Uint8Array>,
+  options: { httpMetadata: R2HTTPMetadata; customMetadata: Record<string, string> },
+) => {
+  const reader = body.getReader()
+  const part = new Uint8Array(5 * 1024 * 1024)
+  const parts: R2UploadedPart[] = []
+  let multipart: R2MultipartUpload | undefined
+  let size = 0, offset = 0
+  let dimensions: { w: number; h: number } | null = null
+  try {
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      size += value.byteLength
+      if (size > MAX_BYTES) throw new UploadError(413, 'too_large')
+      for (let start = 0; start < value.byteLength;) {
+        const length = Math.min(part.byteLength - offset, value.byteLength - start)
+        part.set(value.subarray(start, start + length), offset)
+        offset += length
+        start += length
+        if (offset === part.byteLength) {
+          if (!multipart) {
+            dimensions = dimensionsOf(part)
+            multipart = await bucket.createMultipartUpload(key, options)
+          }
+          parts.push(await multipart.uploadPart(parts.length + 1, part))
+          offset = 0
+        }
+      }
+    }
+    if (size === 0) throw new UploadError(400, 'empty_body')
+    if (multipart) {
+      if (offset) parts.push(await multipart.uploadPart(parts.length + 1, part.subarray(0, offset)))
+      await multipart.complete(parts)
+    } else {
+      dimensions = dimensionsOf(part.subarray(0, offset))
+      await bucket.put(key, part.subarray(0, offset), options)
+    }
+    return { size, dimensions }
+  } catch (error) {
+    await reader.cancel().catch(() => {})
+    await multipart?.abort().catch(() => {})
+    throw error
+  } finally {
+    reader.releaseLock()
+  }
+}
+
 export type MediaCheck =
   | { ok: true; ext: string; kind: 'image' | 'video' }
   | { ok: false; error: string; status: 400 | 413 | 415 }
