@@ -789,7 +789,7 @@ const emailBody = z.object({
  * destination is not.
  */
 const safeNext = (raw: string | undefined) =>
-  raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : null
+  raw && raw.startsWith('/') && !raw.startsWith('//') && !/[\\\u0000-\u0020\u007f]/.test(raw) ? raw : null
 
 /**
  * How many sign-in links one address, and one IP, may ask for per hour.
