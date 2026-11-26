@@ -119,6 +119,81 @@ describe('POST /api/client-errors', () => {
     const r = await post(validBody, {}, { ANALYTICS: { writeDataPoint: () => { throw new Error('AE down') } } })
     expect(r.status).toBe(200)
   })
+
+  it('accepts a same-origin beacon without a content-type or database binding', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const r = await app.request('https://technooptimists.org/api/client-errors', {
+      method: 'POST', headers: { origin: 'https://technooptimists.org' },
+      body: JSON.stringify({ message: '  boom  ', url: validBody.url }),
+    })
+    expect(r.status).toBe(200)
+    expect(await r.json()).toEqual({ ok: true })
+    expect(loggedLines(spy)).toEqual([{
+      level: 'error', source: 'browser', ray: 'no-ray', method: 'POST',
+      path: '/threads/pond', url: validBody.url, message: 'boom', stack: '', ua: '',
+    }])
+  })
+
+  it.each([
+    null, [], 'boom',
+    { ...validBody, message: '   ' },
+    { ...validBody, message: 42 },
+    { ...validBody, message: 'x'.repeat(501) },
+    { ...validBody, stack: {} },
+    { ...validBody, stack: 'x'.repeat(4001) },
+    { ...validBody, url: `https://technooptimists.org/${'x'.repeat(1000)}` },
+    { ...validBody, ua: 'x'.repeat(401) },
+    { ...validBody, source: 'server' },
+  ])('rejects invalid report %# without logging or recording analytics', async (body) => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const writeDataPoint = vi.fn()
+    const r = await post(body, {}, { ANALYTICS: { writeDataPoint } })
+    expect(r.status).toBe(400)
+    expect(await r.json()).toEqual({ error: 'bad_body' })
+    expect(spy).not.toHaveBeenCalled()
+    expect(writeDataPoint).not.toHaveBeenCalled()
+  })
+
+  it('rejects cross-origin reports before logging or recording analytics', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const writeDataPoint = vi.fn()
+    const r = await post(validBody, { origin: 'null' }, { ANALYTICS: { writeDataPoint } })
+    expect(r.status).toBe(403)
+    expect(await r.json()).toEqual({ error: 'bad_origin' })
+    expect(spy).not.toHaveBeenCalled()
+    expect(writeDataPoint).not.toHaveBeenCalled()
+  })
+
+  it('accepts the maximum field lengths within the body limit', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const body = {
+      message: 'm'.repeat(500), stack: 's'.repeat(4000),
+      url: 'https://technooptimists.org/'.padEnd(1000, 'x'), ua: 'u'.repeat(400),
+    }
+    expect(body.url).toHaveLength(1000)
+    expect((await post(body)).status).toBe(200)
+    expect(loggedLines(spy)[0]).toMatchObject(body)
+  })
+
+  it('enforces the byte cap for streamed bodies with no content-length', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const body = new ReadableStream({
+      start(controller) {
+        const bytes = new TextEncoder().encode(JSON.stringify({ ...validBody, stack: '界'.repeat(3000) }))
+        controller.enqueue(bytes.slice(0, 4000))
+        controller.enqueue(bytes.slice(4000))
+        controller.close()
+      },
+    })
+    const request = new Request('https://technooptimists.org/api/client-errors', {
+      method: 'POST', body, duplex: 'half',
+    } as RequestInit)
+    expect(request.headers.has('content-length')).toBe(false)
+    const r = await app.request(request)
+    expect(r.status).toBe(413)
+    expect(await r.json()).toEqual({ error: 'body_too_large' })
+    expect(spy).not.toHaveBeenCalled()
+  })
 })
 
 describe('browser error reporter', () => {
