@@ -42,8 +42,8 @@ export default defineConfig({
     // /v1 is Classic: a second rendering of the same Challenges, canonicalised
     // to its newspaper twin. Listing those URLs would advertise ~30 duplicates
     // of pages already in this file.
-    // /settings and /signin are noindex too, matched on the exact pathname.
-    sitemap({ filter: (page) => !page.includes('/404') && !page.includes('/c/_shell') && !page.includes('/people') && !/\/v1(\/|$)/.test(new URL(page).pathname) && !/^\/(settings|signin)\/?$/.test(new URL(page).pathname) }),
+    // /settings and /signin are noindex; /challenges is canonicalised to /.
+    sitemap({ filter: (page) => !page.includes('/404') && !page.includes('/c/_shell') && !page.includes('/people') && !/\/v1(\/|$)/.test(new URL(page).pathname) && !/^\/(settings|signin|challenges)\/?$/.test(new URL(page).pathname) }),
   ],
   // Static output: the Worker serves /api/*, the assets binding serves the rest.
   output: 'static',
