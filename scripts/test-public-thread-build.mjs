@@ -53,4 +53,9 @@ for (const route of ['contribute', 'v1/contribute']) {
   assert.ok(csp.includes(`sha256-${createHash('sha256').update(ld).digest('base64')}`), `${route} ImageObject JSON-LD allowed by CSP`)
 }
 await readFile(new URL('images/diagrams/technooptimists-three-ways-to-help.svg', dist))
+for (const url of locations) {
+  const path = new URL(url).pathname.replace(/^\/|\/$/g, '')
+  const html = await read(path ? `${path}/index.html` : 'index.html')
+  assert.ok(!/<meta[^>]+name="robots"[^>]*noindex/.test(html), `${url} is in the sitemap but noindex`)
+}
 console.log(`${routes.length} public routes in both editions; unique sitemap; private/noindex surfaces preserved; contribute figure present`)

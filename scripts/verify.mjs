@@ -203,6 +203,28 @@ await check('sitemap is XML, not the 404 page', async () => {
   }
 })
 
+await check('no sitemap URL is noindex', async () => {
+  const robots = await (await fetch(`${BASE}/robots.txt`)).text()
+  const queue = [robots.match(/^Sitemap:\s*(\S+)/mi)?.[1]].filter(Boolean)
+  const pages = []
+  while (queue.length) {
+    const xml = await (await fetch(queue.shift())).text()
+    const locs = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map((m) => m[1])
+    ;(xml.includes('<sitemapindex') ? queue : pages).push(...locs)
+  }
+  if (!pages.length) return { ok: false, detail: 'sitemap lists no pages' }
+  const bad = []
+  for (let i = 0; i < pages.length; i += 8) {
+    await Promise.all(pages.slice(i, i + 8).map(async (url) => {
+      const r = await fetch(url.replace('https://technooptimists.org', BASE), { redirect: 'manual' })
+      const header = r.headers.get('x-robots-tag') ?? ''
+      const meta = /<meta[^>]+name=["']robots["'][^>]*noindex/i.test(await r.text())
+      if (r.status !== 200 || /noindex/i.test(header) || meta) bad.push(`${url} ${r.status}${meta ? ' meta-noindex' : ''}${header ? ` x-robots:${header}` : ''}`)
+    }))
+  }
+  return { ok: bad.length === 0, detail: bad.length ? bad.join(', ') : `${pages.length} URLs, all 200 and indexable` }
+})
+
 await check('a server error carries a ray', async () => {
   // /api/_throw exists to fail. Asserting the shape of a healthy response
   // proves nothing: every route working is indistinguishable from a missing
