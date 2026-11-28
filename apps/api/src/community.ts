@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { track } from './analytics'
 import { currentPerson, mintToken } from './auth'
 import { notify } from './slack'
+import { takeQuota } from './rate-limit'
 import { COMMENT_KINDS, type ChallengeComment } from '../../../packages/types/index'
 
 // A single grapheme accepts flags, skin tones and joined emoji, but not a string
@@ -103,6 +104,8 @@ community.post('/:slug/view', async (c) => {
   const row = await c.env.DB.prepare('SELECT id FROM challenges WHERE slug = ?').bind(c.req.param('slug')).first()
   if (!row) return c.json({ error: 'not_found' }, 404)
 
+  if (!await takeQuota(c.env.DB, 'thread-views', c.req.header('cf-connecting-ip') ?? 'unknown', 60, 60)) return c.json({ error: 'slow_down' }, 429)
+
   // IP and User-Agent identify a reload; the Challenge id salts them so the
   // same reader hashes differently on every Challenge. SHA-256 of that, stored
   // truncated - enough to collide rarely, not enough to reverse to an address.
@@ -154,6 +157,7 @@ community.post('/:slug/comments', async (c) => {
   const recent = await c.env.DB.prepare("SELECT COUNT(*) n FROM challenge_comments WHERE author_id = ? AND created_at > datetime('now', '-1 minute')")
     .bind(me.id).first<{ n: number }>()
   if (recent && recent.n >= 5) return c.json({ error: 'slow_down' }, 429)
+  if (!await takeQuota(c.env.DB, 'comments', me.id, 5, 60)) return c.json({ error: 'slow_down' }, 429)
   const id = `cm_${mintToken().slice(0, 16)}`
   await c.env.DB.batch([
     c.env.DB.prepare(`INSERT OR IGNORE INTO challenge_comments (id, challenge_id, author_id, parent_id, kind, body, request_id)

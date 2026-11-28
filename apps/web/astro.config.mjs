@@ -102,8 +102,8 @@ export default defineConfig({
     // misleading picture of the real one. Proxy both to the local API Worker.
     server: {
       proxy: {
-        '/api': { target: 'http://127.0.0.1:8791', changeOrigin: true },
-        '/media': { target: 'http://127.0.0.1:8791', changeOrigin: true },
+        '/api': { target: 'http://127.0.0.1:8791', changeOrigin: false },
+        '/media': { target: 'http://127.0.0.1:8791', changeOrigin: false },
       },
     },
   },

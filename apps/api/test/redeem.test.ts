@@ -53,7 +53,7 @@ const mint = async (expires = '2099-01-01 00:00:00') => {
   sqlite.prepare('INSERT INTO magic_links (token_hash, email, expires_at) VALUES (?, ?, ?)')
     .run(await hashToken(TOKEN), 'mei@example.com', expires)
 }
-const redeem = () => app.request(`/api/auth/callback?token=${TOKEN}`, {}, { DB })
+const redeem = async () => app.request(`/api/auth/callback?token=${TOKEN}`, { headers: { cookie: `to_login=${await hashToken(TOKEN)}` } }, { DB })
 
 describe('a magic link is redeemable exactly once', () => {
   it('signs the reader in on the first redeem', async () => {

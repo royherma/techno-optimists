@@ -1,17 +1,4 @@
-/**
- * Walks the whole sign-in flow against a deployed environment and says which
- * step broke. Every previous auth bug here was invisible because the failure
- * surfaced two layers above its cause: a cached 404 read as "link expired", a
- * consumed token read as "React is broken". This prints each hop's real status.
- *
- *   node scripts/auth-doctor.mjs                    # probe address, safe
- *   node scripts/auth-doctor.mjs --email you@x.com  # a real inbox
- *
- * The probe address never receives mail (Resend rejects unverified domains),
- * which is the point: the token comes back in `dev_link` and no real inbox is
- * touched. Redeeming a token CONSUMES it - never point --email at an address
- * whose link a human is about to click.
- */
+// Full redemption requires explicit dev mode on loopback; public hosts never expose a login token.
 
 const arg = (flag) => {
   const i = process.argv.indexOf(flag)
@@ -81,7 +68,7 @@ if (reqBody.sent === false && EMAIL !== 'claude-e2e-probe@example.com') {
 const link = reqBody.dev_link
 if (!link) {
   step(false, 'token available', 'no dev_link in the response - cannot redeem without reading D1')
-  console.log('\nA real address does not return the token by design. Read it from the mail, or use the probe address.')
+  console.log('\nPublic hosts never return tokens. Run the full probe against explicit local dev mode.')
   process.exit(1)
 }
 
@@ -91,6 +78,7 @@ const cbRes = await fetch(link, {
   headers: {
     accept: 'text/html,application/xhtml+xml',
     'user-agent': 'auth-doctor',
+    cookie: reqRes.headers.getSetCookie().map((value) => value.split(';')[0]).join('; '),
   },
 })
 const location = cbRes.headers.get('location')
@@ -102,7 +90,7 @@ step(cbRes.status === 302, 'GET /api/auth/callback', `HTTP ${cbRes.status} -> ${
 if (cbRes.status === 200) {
   step(false, 'worker ran', 'got 200, not a redirect - an asset was served instead of the Worker')
 }
-step(Boolean(setCookie), 'session cookie issued', setCookie ? setCookie.split(';')[0].slice(0, 24) + '...' : 'none')
+step(Boolean(setCookie), 'session cookie issued', setCookie ? 'present' : 'none')
 step(location === '/' || Boolean(location), 'redirect target', String(location))
 
 // An error redirect carries the reason in the query string; name it plainly.

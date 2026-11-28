@@ -38,9 +38,8 @@ So is anything in this shape:
 
 - **`ADMIN_EMAILS` unset means nobody is an admin.** A fresh clone has no admins,
   the site works and the import route stays closed. That is the intended default.
-- **`dev_link` in a sign-in response on dev or local.** It is returned only when
-  `ENVIRONMENT !== 'prod'`. In prod a missing mail key breaks sign-in loudly
-  rather than opening a door. Finding it in a **production** response is a real
-  report.
+- **`dev_link` on loopback in explicit dev mode.** Public hosts fail closed
+  when mail is unconfigured or fails. A bearer link in a public response or
+  a Worker log is a vulnerability.
 - Findings from an automated scanner with no reachable impact, pasted without a
   reproduction.
