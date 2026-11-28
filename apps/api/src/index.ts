@@ -1,3 +1,4 @@
+import { anonymousLimited, writeLimited } from './rate-limit'
 import { SCOUT_LIMITS, ScoutBudget } from './scout-budget'
 import { runPrizeEnrichment } from './prize-enrich'
 import { SCOUT_FEEDS, recentSourceRuns, sourceRunPage, summarizeSources } from './scout-sources'
@@ -20,7 +21,7 @@ import { isAdminEmail } from './admin'
 import { track } from './analytics'
 import { community } from './community'
 import { notify } from './slack'
-import { MAX_BYTES, checkUpload, dimensionsOf, mediaKey, mediaUrl } from './media'
+import { MAX_BYTES, UploadError, checkUpload, mediaKey, mediaUrl, storeUpload } from './media'
 import { slugify } from './slug'
 import {
   ACTION_KINDS, CHALLENGE_TYPES, EMPTY_ACTIONS, FEED_SORTS, HELP_KINDS, ROLES, STAGES,
@@ -80,6 +81,12 @@ type Env = {
 }
 
 const app = new Hono<{ Bindings: Env }>()
+
+app.use('/api/*', async (c, next) => {
+  if (c.req.path === '/api/uploads') return next()
+  const maxSize = c.req.path === '/api/challenges/import' ? 4_000_000 : 128_000
+  return bodyLimit({ maxSize, onError: (c) => c.json({ error: 'body_too_large' }, 413) })(c, next)
+})
 
 /*
  * One address per page: www is a 301 to the apex (Search Console listed both).
@@ -340,6 +347,8 @@ app.post('/api/challenges', async (c) => {
   if (!parsed.success) return c.json({ error: 'bad_body', detail: parsed.error.issues }, 400)
   const { type, title, summary, body, media, location, lat, lng, tags, impact } = parsed.data
 
+  if (await writeLimited(c, me.id, 'thread')) return c.json({ error: 'slow_down' }, 429)
+
   const id = `c_${mintToken().slice(0, 16)}`
   const slug = await uniqueSlug(c.env.DB, slugify(title))
 
@@ -569,6 +578,8 @@ app.post('/api/challenges/:slug/updates', async (c) => {
     return c.json({ error: 'not_yours' }, 403)
   }
 
+  if (await writeLimited(c, me.id, 'update')) return c.json({ error: 'slow_down' }, 429)
+
   const id = `u_${mintToken().slice(0, 16)}`
   const writes = [
     c.env.DB.prepare(
@@ -681,6 +692,8 @@ app.post('/api/challenges/:slug/action', async (c) => {
   const challenge = await c.env.DB.prepare('SELECT id FROM challenges WHERE slug = ?').bind(c.req.param('slug')).first()
   if (!challenge) return c.json({ error: 'not_found' }, 404)
 
+  if (await writeLimited(c, me.id, 'action')) return c.json({ error: 'slow_down' }, 429)
+
   await c.env.DB.batch([
     active ? c.env.DB.prepare(
       `INSERT INTO challenge_actions (challenge_id, person_id, kind, help_kind, note)
@@ -722,36 +735,24 @@ app.put('/api/uploads', async (c) => {
   if (!check.ok) return c.json({ error: check.error, max_bytes: MAX_BYTES }, check.status)
   if (!c.req.raw.body) return c.json({ error: 'empty_body' }, 400)
 
+  if (await writeLimited(c, me.id, 'upload')) return c.json({ error: 'slow_down' }, 429)
+
   const key = mediaKey(me.id, check.ext, mintToken().slice(0, 12))
 
-  /*
-   * Buffer once, then store and measure from the same bytes. Streaming the body
-   * straight through is cheaper, but the stream is consumed by the put and the
-   * dimensions are only readable from the header - and a second read of an R2
-   * object to recover them costs more than holding a file we already cap at
-   * 100MB.
-   */
-  const bytes = new Uint8Array(await c.req.raw.arrayBuffer())
-  if (bytes.byteLength === 0) return c.json({ error: 'empty_body' }, 400)
-
-  // A client can lie in content-length, so the cap is enforced on what actually
-  // arrived, before anything is written.
-  if (bytes.byteLength > MAX_BYTES) return c.json({ error: 'too_large', max_bytes: MAX_BYTES }, 413)
-
-  const stored = await c.env.MEDIA.put(key, bytes, {
-    httpMetadata: { contentType: c.req.header('content-type')!.split(';')[0].trim() },
-    customMetadata: { person_id: me.id },
-  })
-
-  // A format this cannot parse (video, HEIC) returns null and the surfaces fall
-  // back to their own shape, which is why w/h are optional on Media.
-  const size = dimensionsOf(bytes)
-
-  return c.json({
-    ok: true,
-    media: { kind: check.kind, url: mediaUrl(key), key, ...(size ?? {}) },
-    bytes: stored?.size ?? bytes.byteLength,
-  })
+  try {
+    const stored = await storeUpload(c.env.MEDIA, key, c.req.raw.body, {
+      httpMetadata: { contentType: c.req.header('content-type')!.split(';')[0].trim().toLowerCase() },
+      customMetadata: { person_id: me.id },
+    })
+    return c.json({
+      ok: true,
+      media: { kind: check.kind, url: mediaUrl(key), key, ...(stored.dimensions ?? {}) },
+      bytes: stored.size,
+    })
+  } catch (error) {
+    if (error instanceof UploadError) return c.json({ error: error.message, max_bytes: MAX_BYTES }, error.status)
+    throw error
+  }
 })
 
 /**
@@ -789,7 +790,7 @@ const emailBody = z.object({
  * destination is not.
  */
 const safeNext = (raw: string | undefined) =>
-  raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : null
+  raw && raw.startsWith('/') && !raw.startsWith('//') && !/[\\\u0000-\u0020\u007f]/.test(raw) ? raw : null
 
 /**
  * How many sign-in links one address, and one IP, may ask for per hour.
@@ -856,18 +857,26 @@ app.post('/api/auth/request', async (c) => {
   // One live link per address at a time: requesting a second invalidates the
   // first, so a forwarded old email cannot be used to take the account.
   const token = mintToken()
-  await c.env.DB.batch([
-    c.env.DB.prepare("UPDATE magic_links SET used_at = datetime('now') WHERE email = ? AND used_at IS NULL").bind(email),
-    c.env.DB.prepare('INSERT INTO magic_links (token_hash, email, expires_at, ip) VALUES (?, ?, ?, ?)')
-      .bind(await hashToken(token), email, linkExpiry(), ip),
+  const tokenHash = await hashToken(token)
+  const claims = await c.env.DB.batch([
+    c.env.DB.prepare(`INSERT INTO magic_links (token_hash, email, expires_at, ip)
+      SELECT ?, ?, ?, ?
+      WHERE (SELECT COUNT(*) FROM magic_links WHERE email = ? AND created_at > datetime('now', '-1 hour')) < ?
+        AND (SELECT COUNT(*) FROM magic_links WHERE ip = ? AND created_at > datetime('now', '-1 hour')) < ?`)
+      .bind(tokenHash, email, linkExpiry(), ip, email, LINKS_PER_EMAIL_HOUR, ip, LINKS_PER_IP_HOUR),
+    c.env.DB.prepare(`UPDATE magic_links SET used_at = datetime('now')
+      WHERE email = ? AND used_at IS NULL AND token_hash != ?
+        AND EXISTS (SELECT 1 FROM magic_links WHERE token_hash = ?)`)
+      .bind(email, tokenHash, tokenHash),
   ])
+  if (claims[0].meta.changes !== 1) return c.json({ error: 'too_many_requests' }, 429)
 
   const next = safeNext(parsed.data.next)
   const link = `${new URL(c.req.url).origin}/api/auth/callback?token=${token}${next ? `&next=${encodeURIComponent(next)}` : ''}`
   const sent = await sendMagicLink(c.env, email, link)
 
   // In dev there is no mail key, so the link goes to the Worker log. Never in prod.
-  if (!sent) console.log(`[auth] magic link for ${email}: ${link}`)
+  if (!sent && c.env.ENVIRONMENT === 'dev') console.log(`[auth] magic link for ${email}: ${link}`)
 
   // The link is a bearer token for the account. Returning it in the response
   // body is a convenience for local dev ONLY - anywhere it is reachable by a
@@ -925,7 +934,7 @@ const sendMagicLink = async (env: Env, email: string, link: string): Promise<boo
     }),
   })
   if (!res.ok) {
-    console.log(`[auth] resend failed ${res.status}: ${await res.text()}`)
+    console.log(`[auth] resend failed ${res.status}`)
     return false
   }
   return true
@@ -1254,6 +1263,8 @@ app.get('/api/ai/callback', async (c) => {
   // without a verifier it cannot succeed, and burning the code makes the
   // retry fail too.
   if (!attempt) return fail('unknown')
+  const me = await currentPerson(c)
+  if (!me || me.id !== attempt.person_id) return fail('session_mismatch')
   // Back button after a successful connect re-sends a spent code. That is not
   // an error to show anyone - they are connected.
   if (attempt.used_at) return c.redirect(withParam(safeNext(attempt.next ?? undefined) ?? '/settings#compute', 'connected', '1'), 302)
@@ -1331,6 +1342,15 @@ app.post('/api/challenges/:slug/ai/:action', async (c) => {
   if ((perPerson?.n ?? 0) >= AI_RUNS_PER_PERSON_HOUR) return c.json({ error: 'rate_limited_person' }, 429)
   if ((perChallenge?.n ?? 0) >= AI_RUNS_PER_CHALLENGE_DAY) return c.json({ error: 'rate_limited_challenge' }, 429)
 
+  const runId = `air_${mintToken().slice(0, 16)}`
+  const reserved = await c.env.DB.prepare(`INSERT INTO ai_runs (id, challenge_id, person_id, action, model, provider, output)
+    SELECT ?, ?, ?, ?, '', ?, ''
+    WHERE (SELECT COUNT(*) FROM ai_runs WHERE person_id = ? AND created_at > datetime('now', '-1 hour')) < ?
+      AND (SELECT COUNT(*) FROM ai_runs WHERE challenge_id = ? AND created_at > datetime('now', '-1 day')) < ?`)
+    .bind(runId, challenge.id, me.id, action, account.provider,
+      me.id, AI_RUNS_PER_PERSON_HOUR, challenge.id, AI_RUNS_PER_CHALLENGE_DAY).run()
+  if (reserved.meta.changes !== 1) return c.json({ error: 'rate_limited' }, 429)
+
   // Thread fields are concatenated as plain data. The system prompt in
   // ai-accounts.ts is fixed and says so; nothing here interpolates thread text
   // into an instruction.
@@ -1361,11 +1381,10 @@ app.post('/api/challenges/:slug/ai/:action', async (c) => {
   // the donor already paid for - see parseDraft.
   const draft = action === 'draft' ? parseDraft(result.text) : null
 
-  const runId = `air_${mintToken().slice(0, 16)}`
   await c.env.DB.batch([
     c.env.DB.prepare(
-      'INSERT INTO ai_runs (id, challenge_id, person_id, action, model, provider, cost_usd, output, draft_kind) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    ).bind(runId, challenge.id, me.id, action, result.model, account.provider, result.cost_usd, result.text, draft?.kind ?? null),
+      'UPDATE ai_runs SET model = ?, cost_usd = ?, output = ?, draft_kind = ? WHERE id = ?',
+    ).bind(result.model, result.cost_usd, result.text, draft?.kind ?? null, runId),
     c.env.DB.prepare("UPDATE ai_accounts SET last_used_at = datetime('now') WHERE person_id = ?").bind(me.id),
   ])
 
@@ -1398,7 +1417,7 @@ app.post('/api/ai/runs/:id/published', async (c) => {
 
   const linked = await c.env.DB.prepare(
     `UPDATE ai_runs SET published_comment_id = ?
-     WHERE id = ? AND person_id = ? AND published_comment_id IS NULL
+     WHERE id = ? AND person_id = ? AND published_comment_id IS NULL AND output != ''
        AND EXISTS (SELECT 1 FROM challenge_comments WHERE id = ? AND author_id = ?)`,
   ).bind(commentId, c.req.param('id'), me.id, commentId, me.id).run()
 
@@ -1427,9 +1446,9 @@ app.get('/api/challenges/:slug/ai/runs', async (c) => {
   if (!challenge) return c.json({ error: 'not_found' }, 404)
 
   const rows = await c.env.DB.prepare(
-    `SELECT r.id, r.action, r.model, r.output, r.created_at, p.handle, p.name, p.avatar_url
+    `SELECT r.id, r.action, r.model, r.output, r.created_at, p.handle, p.avatar_url
      FROM ai_runs r JOIN people p ON p.id = r.person_id
-     WHERE r.challenge_id = ? ORDER BY r.created_at DESC LIMIT 20`,
+     WHERE r.challenge_id = ? AND r.output != '' ORDER BY r.created_at DESC LIMIT 20`,
   ).bind(challenge.id).all()
 
   // cost_usd is deliberately not returned: what a donor spent is between them
@@ -1438,7 +1457,7 @@ app.get('/api/challenges/:slug/ai/runs', async (c) => {
     runs: (rows.results ?? []).map((r: Row) => ({
       id: String(r.id), action: String(r.action), model: String(r.model),
       output: String(r.output), created_at: String(r.created_at),
-      by: { handle: String(r.handle), name: String(r.name), avatar_url: r.avatar_url == null ? null : String(r.avatar_url) },
+      by: { handle: String(r.handle), avatar_url: r.avatar_url == null ? null : String(r.avatar_url) },
     })),
   })
 })
@@ -1599,6 +1618,8 @@ app.post('/api/site/view', async (c) => {
   const origin = c.req.header('origin')
   if (origin && origin !== new URL(c.req.url).origin) return c.json({ error: 'bad_origin' }, 403)
 
+  if (await anonymousLimited(c, 'view')) return c.json({ error: 'slow_down' }, 429)
+
   const viewedOn = new Date().toISOString().slice(0, 10)
   await c.env.DB.prepare(
     'INSERT OR IGNORE INTO site_views (viewer_key, viewed_on) VALUES (?, ?)',
@@ -1641,6 +1662,7 @@ app.post('/api/client-errors', bodyLimit({ maxSize: 8_000, onError: (c) => c.jso
 
   const parsed = clientErrorBody.safeParse(await c.req.json().catch(() => null))
   if (!parsed.success) return c.json({ error: 'bad_body' }, 400)
+  if (await anonymousLimited(c, 'client_error')) return c.json({ error: 'slow_down' }, 429)
   const { message, stack, url, ua } = parsed.data
   const path = new URL(url).pathname
 
@@ -1806,6 +1828,7 @@ const secured = (res: Response, req: Request): Response => {
 export { app, secured }
 export default {
   async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(env.DB.prepare('DELETE FROM write_limits WHERE expires_at < unixepoch() - 86400').run())
     ctx.waitUntil(runScout(env, controller.scheduledTime))
   },
   /**

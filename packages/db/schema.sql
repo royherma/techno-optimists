@@ -290,3 +290,12 @@ ALTER TABLE challenges ADD COLUMN solve_status  TEXT;
 -- 'low' | 'moderate' | 'high' | 'critical'. Distinct from `impact`, which is
 -- reach. A single household can be critical severity at impact 1.
 ALTER TABLE challenges ADD COLUMN severity      TEXT;
+
+CREATE TABLE IF NOT EXISTS write_limits (
+  scope TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  count INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL,
+  PRIMARY KEY (scope, subject)
+);
+CREATE INDEX IF NOT EXISTS idx_write_limits_expiry ON write_limits(expires_at);

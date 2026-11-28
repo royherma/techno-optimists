@@ -125,3 +125,12 @@ CREATE TABLE IF NOT EXISTS ai_runs (
 
 CREATE INDEX IF NOT EXISTS idx_ai_runs_challenge ON ai_runs(challenge_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_ai_runs_person ON ai_runs(person_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS write_limits (
+  scope TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  count INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL,
+  PRIMARY KEY (scope, subject)
+);
+CREATE INDEX IF NOT EXISTS idx_write_limits_expiry ON write_limits(expires_at);
